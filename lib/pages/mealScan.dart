@@ -22,7 +22,7 @@ class _MealScanPageState extends State<MealScanPage> {
 
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
-    final camera = cameras.first; // use rear camera
+    final camera = cameras.first;
 
     _controller = CameraController(camera, ResolutionPreset.medium);
     _initializeControllerFuture = _controller!.initialize();
@@ -42,9 +42,14 @@ class _MealScanPageState extends State<MealScanPage> {
     try {
       await _initializeControllerFuture;
       final image = await _controller!.takePicture();
-      // TODO: Process image or pass to ML
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image captured: ${image.path}')),
+        SnackBar(
+          content: Text(
+            'Image captured: ${image.path}',
+            style: const TextStyle(fontFamily: 'Grandstander'),
+          ),
+        ),
       );
     } catch (e) {
       debugPrint('Error taking picture: $e');
@@ -59,7 +64,11 @@ class _MealScanPageState extends State<MealScanPage> {
         backgroundColor: const Color(0xFFDDE2C6),
         title: const Text(
           'Ingredient Scanner',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Grandstander',
+          ),
         ),
         centerTitle: true,
         leading: const Icon(Icons.menu, color: Colors.black),
@@ -84,16 +93,14 @@ class _MealScanPageState extends State<MealScanPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Camera capture button
               IconButton(
                 onPressed: _captureImage,
                 icon: const Icon(Icons.camera, size: 40, color: Colors.white),
               ),
               const SizedBox(width: 30),
-              // Placeholder for gallery icon (optional)
               IconButton(
                 onPressed: () {
-                  // You can add image picker logic here later
+                  // Future: add image picker here
                 },
                 icon: const Icon(Icons.image, size: 32, color: Colors.white),
               ),
@@ -106,7 +113,7 @@ class _MealScanPageState extends State<MealScanPage> {
         backgroundColor: const Color(0xFFDDE2C6),
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.black54,
-        currentIndex: 1, // Current page is scan
+        currentIndex: 1,
         onTap: (index) {
           switch (index) {
             case 0:
@@ -116,7 +123,6 @@ class _MealScanPageState extends State<MealScanPage> {
               );
               break;
             case 1:
-              // Current page
               break;
             case 2:
               Navigator.pushReplacement(

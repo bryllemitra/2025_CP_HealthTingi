@@ -12,7 +12,11 @@ class BudgetPlanPage extends StatelessWidget {
         backgroundColor: const Color(0xFFDDE2C6),
         title: const Text(
           'Budget Meal Planner',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Grandstander',
+          ),
         ),
         centerTitle: true,
         leading: const Icon(Icons.menu, color: Colors.black),
@@ -32,8 +36,10 @@ class BudgetPlanPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextField(
+                style: const TextStyle(fontFamily: 'Grandstander'),
                 decoration: InputDecoration(
                   hintText: 'Enter Budget',
+                  hintStyle: const TextStyle(fontFamily: 'Grandstander'),
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -52,7 +58,7 @@ class BudgetPlanPage extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
-                fontFamily: 'monospace',
+                fontFamily: 'Grandstander',
               ),
             ),
             const SizedBox(height: 8),
@@ -69,7 +75,7 @@ class BudgetPlanPage extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
-                fontFamily: 'monospace',
+                fontFamily: 'Grandstander',
               ),
             ),
             const SizedBox(height: 8),
@@ -88,7 +94,6 @@ class BudgetPlanPage extends StatelessWidget {
         onTap: (index) {
           switch (index) {
             case 0:
-              // 🔙 Go back to main.dart (Search Meals page)
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -131,10 +136,13 @@ class BudgetPlanPage extends StatelessWidget {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    fontFamily: 'monospace',
+                    fontFamily: 'Grandstander',
                   ),
                 ),
-                subtitle: const Text('Estimated at Php 0.00'),
+                subtitle: const Text(
+                  'Estimated at Php 0.00',
+                  style: TextStyle(fontFamily: 'Grandstander'),
+                ),
               ),
             )
             .toList(),

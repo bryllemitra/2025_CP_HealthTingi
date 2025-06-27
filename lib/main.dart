@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/budgetPlan.dart';
-import 'pages/mealScan.dart'; // ✅ Import your meal scan page
+import 'pages/mealScan.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,6 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        fontFamily: 'Grandstander', // 👈 Apply Grandstander globally
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
@@ -45,7 +46,6 @@ class _MyHomePageState extends State<MyHomePage> {
         style: const TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 16,
-          fontFamily: 'monospace',
         ),
       ),
     );
@@ -60,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     switch (index) {
       case 0:
-        // Already on this page
+        // Already here
         break;
       case 1:
         Navigator.push(
@@ -120,7 +120,6 @@ class _MyHomePageState extends State<MyHomePage> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
-                fontFamily: 'monospace',
               ),
             ),
             Container(
@@ -141,7 +140,6 @@ class _MyHomePageState extends State<MyHomePage> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
-                fontFamily: 'monospace',
               ),
             ),
             Container(

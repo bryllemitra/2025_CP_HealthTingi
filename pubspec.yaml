@@ -90,3 +90,14 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+  assets:
+    - assets/fonts/
+
+  fonts:
+    - family: Grandstander
+      fonts:
+        - asset: assets/fonts/Grandstander-Regular.ttf
+        - asset: assets/fonts/Grandstander-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Grandstander-Italic.ttf
+          style: italic
