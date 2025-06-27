@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'pages/budgetPlan.dart';
+import 'pages/mealScan.dart'; // ✅ Import your meal scan page
 
 void main() {
   runApp(const MyApp());
@@ -7,47 +9,22 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Search Meals'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -55,71 +32,144 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  final List<String> merienda = ['Halo-Halo', 'Saging Prito', 'Binignit'];
+  final List<String> lunch = ['Adobong Manok', 'Sinigang Hipon', 'Chopsuey'];
 
-  void _incrementCounter() {
+  int _selectedIndex = 0;
+
+  Widget mealItem(String name) {
+    return ListTile(
+      leading: const Icon(Icons.image_outlined),
+      title: Text(
+        name,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          fontFamily: 'monospace',
+        ),
+      ),
+    );
+  }
+
+  void _onItemTapped(int index) {
+    if (index == _selectedIndex) return;
+
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _selectedIndex = index;
     });
+
+    switch (index) {
+      case 0:
+        // Already on this page
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MealScanPage()),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const BudgetPlanPage()),
+        );
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
+      backgroundColor: const Color(0xFF88A096),
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        backgroundColor: const Color(0xFFDDE2C6),
+        title: Text(
+          widget.title,
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        leading: const Icon(Icons.menu, color: Colors.black),
+        actions: const [Icon(Icons.info_outline, color: Colors.black)],
+        elevation: 0,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Search bar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDE2C6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const TextField(
+                decoration: InputDecoration(
+                  icon: Icon(Icons.search),
+                  border: InputBorder.none,
+                  hintText: 'Search Meals, Ingredients',
+                ),
+              ),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            const SizedBox(height: 20),
+
+            // Merienda Section
+            const Text(
+              'Merienda time!',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                fontFamily: 'monospace',
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(top: 8, bottom: 20),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDE2C6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: merienda.map((meal) => mealItem(meal)).toList(),
+              ),
+            ),
+
+            // Lunch Section
+            const Text(
+              'Not Late for Lunch!',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                fontFamily: 'monospace',
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(top: 8, bottom: 80),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDE2C6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: lunch.map((meal) => mealItem(meal)).toList(),
+              ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFFDDE2C6),
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.black54,
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: ''),
+        ],
+      ),
     );
   }
 }
