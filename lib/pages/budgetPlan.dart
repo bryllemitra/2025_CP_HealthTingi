@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart'; // ✅ Import the main.dart to access MyHomePage
+import '../main.dart';
 
 class BudgetPlanPage extends StatelessWidget {
   const BudgetPlanPage({super.key});
