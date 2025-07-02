@@ -91,13 +91,14 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
   assets:
+    - assets/tinola.jpg
+    - assets/escabeche.jpg
     - assets/fonts/
 
   fonts:
-    - family: Grandstander
+    - family: Orbitron
       fonts:
-        - asset: assets/fonts/Grandstander-Regular.ttf
-        - asset: assets/fonts/Grandstander-Bold.ttf
+        - asset: assets/fonts/Orbitron-Regular.ttf
+        - asset: assets/fonts/Orbitron-Bold.ttf
           weight: 700
-        - asset: assets/fonts/Grandstander-Italic.ttf
-          style: italic
+        
