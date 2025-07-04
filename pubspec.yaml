@@ -93,6 +93,10 @@ flutter:
   assets:
     - assets/tinola.jpg
     - assets/escabeche.jpg
+    - assets/green.jpg
+    - assets/smoothies.jpg
+    - assets/pasta.jpg
+    - assets/recipe.jpg
     - assets/fonts/
 
   fonts:

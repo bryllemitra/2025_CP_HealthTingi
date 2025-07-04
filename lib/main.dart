@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'pages/budgetPlan.dart';
 import 'pages/mealScan.dart';
+import 'searchIngredient/mealSrch.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -57,10 +59,16 @@ class _MyHomePageState extends State<MyHomePage> {
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MealScanPage()),
+          MaterialPageRoute(builder: (context) => const MealSearchPage()),
         );
         break;
       case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MealScanPage()),
+        );
+        break;
+      case 3:
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const BudgetPlanPage()),
