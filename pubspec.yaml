@@ -97,6 +97,23 @@ flutter:
     - assets/smoothies.jpg
     - assets/pasta.jpg
     - assets/recipe.jpg
+    - assets/egg-malunggay.jpg
+    - assets/ginataang_gulay.jpg
+    - assets/ginisang_kalabasa.jpg
+    - assets/ginisang_sayote.jpg
+    - assets/ginisang_upo.jpg
+    - assets/kamatis.jpg
+    - assets/laing.jpg
+    - assets/malunggay.jpg
+    - assets/sayote.jpg
+    - assets/adobong_manok.jpg
+    - assets/biko.jpg
+    - assets/binignit.jpg
+    - assets/chopsuey.jpg
+    - assets/halo_halo.jpg
+    - assets/saging prito.jpg
+    - assets/sinigang.jpg
+
     - assets/fonts/
 
   fonts:

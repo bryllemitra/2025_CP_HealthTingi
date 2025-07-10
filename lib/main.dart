@@ -183,7 +183,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEDEDED),
+      backgroundColor: const Color(0xFFF3F2DF),
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(widget.title,
@@ -270,21 +270,12 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 _navItem(Icons.home, "Home", 0),
                 _navItem(Icons.book, "Recipes", 1),
-                const SizedBox(width: 40), // Space for center FAB
                 _navItem(Icons.camera_alt, "Scan", 2),
                 _navItem(Icons.currency_ruble_rounded, "Budget", 3),
               ],
             ),
           ),
-          Positioned(
-            top: -30,
-            child: FloatingActionButton(
-              backgroundColor: Colors.yellowAccent,
-              elevation: 4,
-              onPressed: () => _onItemTapped(0),
-              child: const Icon(Icons.home, color: Colors.black),
-            ),
-          ),
+          
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import '../main.dart';
 import 'budgetPlan.dart';
+import '../searchIngredient/mealSrch.dart';
 
 class MealScanPage extends StatefulWidget {
   const MealScanPage({super.key});
@@ -61,20 +62,33 @@ class _MealScanPageState extends State<MealScanPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFDDE2C6),
-        title: const Text(
-          'Ingredient Scanner',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Grandstander',
-          ),
-        ),
-        centerTitle: true,
-        leading: const Icon(Icons.menu, color: Colors.black),
-        actions: const [Icon(Icons.info_outline, color: Colors.black)],
-        elevation: 0,
-      ),
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  centerTitle: true,
+  title: const Text(
+    'Scanner',
+    style: TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+      fontFamily: 'Orbitron',
+    ),
+  ),
+  leading: IconButton(
+    icon: const Icon(Icons.menu, color: Colors.white),
+    onPressed: () {
+      // TODO: Open drawer or perform action
+    },
+  ),
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.lightbulb_outline, color: Colors.white),
+      onPressed: () {
+        // TODO: Show cooking tips, scanner tips, or something clever
+      },
+    ),
+  ],
+),
+
       body: Column(
         children: [
           Expanded(
@@ -123,8 +137,14 @@ class _MealScanPageState extends State<MealScanPage> {
               );
               break;
             case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MealSearchPage()),
+              );
               break;
             case 2:
+              break;
+            case 3:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const BudgetPlanPage()),
@@ -133,9 +153,10 @@ class _MealScanPageState extends State<MealScanPage> {
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined), label: 'Recipes'),
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
+          BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Budget'),
         ],
       ),
     );
