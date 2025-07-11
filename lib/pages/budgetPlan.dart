@@ -86,8 +86,8 @@ class BudgetPlanPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Budget Sections
-            ...budgetMeals.map((section) => _buildBudgetSection(section)).toList(),
+            // Budget Sections with fixed context passing
+            ...budgetMeals.map((section) => _buildBudgetSection(context, section)).toList(),
           ],
         ),
       ),
@@ -110,17 +110,17 @@ class BudgetPlanPage extends StatelessWidget {
             case 1:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const MealSearchPage()), // Replace with MealSearchPage
+                MaterialPageRoute(builder: (context) => const MealSearchPage()),
               );
               break;
             case 2:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const MealScanPage()), // Replace with MealScanPage
+                MaterialPageRoute(builder: (context) => const MealScanPage()),
               );
               break;
             case 3:
-              break; // Current
+              break; // current
           }
         },
         items: const [
@@ -133,7 +133,8 @@ class BudgetPlanPage extends StatelessWidget {
     );
   }
 
-  Widget _buildBudgetSection(Map<String, dynamic> section) {
+  // 🔧 Updated to accept BuildContext
+  Widget _buildBudgetSection(BuildContext context, Map<String, dynamic> section) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -147,7 +148,9 @@ class BudgetPlanPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ...section['meals'].map<Widget>((meal) => _buildMealCard(meal)).toList(),
+        ...section['meals']
+            .map<Widget>((meal) => _buildMealCard(context, meal))
+            .toList(),
         const SizedBox(height: 8),
         const Align(
           alignment: Alignment.centerRight,
@@ -158,55 +161,66 @@ class BudgetPlanPage extends StatelessWidget {
     );
   }
 
-  Widget _buildMealCard(Map<String, dynamic> meal) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
-          BoxShadow(
-              color: Colors.black26, blurRadius: 3, offset: Offset(1, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              meal['image'],
-              width: 80,
-              height: 60,
-              fit: BoxFit.cover,
+  // 🔧 Updated to accept BuildContext
+  Widget _buildMealCard(BuildContext context, Map<String, dynamic> meal) {
+    return GestureDetector(
+      onTap: () {
+        if (meal['name'] == 'Ginisang Sayote') {
+          Navigator.pushNamed(context, '/meal-details');
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 3,
+              offset: Offset(1, 2),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  meal['name'],
-                  style: const TextStyle(
-                    fontFamily: 'Orbitron',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  "Estimated at Php ${meal['price'].toStringAsFixed(2)}",
-                  style: const TextStyle(
-                    fontFamily: 'Orbitron',
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
-                )
-              ],
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                meal['image'],
+                width: 80,
+                height: 60,
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    meal['name'],
+                    style: const TextStyle(
+                      fontFamily: 'Orbitron',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    "Estimated at Php ${meal['price'].toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontFamily: 'Orbitron',
+                      fontSize: 12,
+                      color: Colors.black54,
+                    ),
+                  )
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
       ),
     );
   }

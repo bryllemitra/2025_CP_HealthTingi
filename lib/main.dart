@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'pages/budgetPlan.dart';
 import 'pages/mealScan.dart';
 import 'searchIngredient/mealSrch.dart';
+import 'searchIngredient/favorites.dart';
+import 'pages/mealDetails.dart';
+import 'pages/reverseIngredient.dart';
+
+
 
 
 void main() {
@@ -22,6 +27,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellowAccent),
       ),
       home: const MyHomePage(title: 'HealthTingi'),
+      routes: {
+        '/meal-details': (context) => const MealDetailsPage(),
+        '/reverse-ingredient': (context) => const ReverseIngredientPage(),
+
+      },
     );
   }
 }
@@ -191,11 +201,19 @@ class _MyHomePageState extends State<MyHomePage> {
                 color: Colors.black, fontWeight: FontWeight.bold)),
         centerTitle: true,
         leading: const Icon(Icons.menu, color: Colors.black),
-        actions: const [
-          Icon(Icons.star_border, color: Colors.black),
-          SizedBox(width: 8),
-          Icon(Icons.settings, color: Colors.black),
-          SizedBox(width: 16),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.star, color: Colors.black),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FavoritesPage()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.settings, color: Colors.black),
+          const SizedBox(width: 16),
         ],
         elevation: 0,
       ),
