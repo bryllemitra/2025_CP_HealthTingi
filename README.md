@@ -1,4 +1,4 @@
-# heath_tingi
+# HealthTingi A Mobile App For Image-Based Ingredient Recognition And Budget-Constrained Meal Recommendations For Low-Income Filipino Households
 
 A new Flutter project.
 
