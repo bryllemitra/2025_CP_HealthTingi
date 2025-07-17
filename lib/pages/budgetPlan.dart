@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
+import 'home.dart';
 import 'mealScan.dart';
 import '../searchIngredient/mealSrch.dart';
+import 'navigation.dart'; // ✅ Import the reusable drawer
 
 class BudgetPlanPage extends StatelessWidget {
   const BudgetPlanPage({super.key});
@@ -10,16 +11,32 @@ class BudgetPlanPage extends StatelessWidget {
     {
       'budget': 50,
       'meals': [
-        {'name': 'Ginataang Gulay', 'price': 45.00, 'image': 'assets/ginataang_gulay.jpg'},
-        {'name': 'Ginisang Upo', 'price': 40.00, 'image': 'assets/ginisang_upo.jpg'},
+        {
+          'name': 'Ginataang Gulay',
+          'price': 45.00,
+          'image': 'assets/ginataang_gulay.jpg'
+        },
+        {
+          'name': 'Ginisang Upo',
+          'price': 40.00,
+          'image': 'assets/ginisang_upo.jpg'
+        },
       ],
     },
     {
       'budget': 70,
       'meals': [
-        {'name': 'Ginisang Sayote', 'price': 51.00, 'image': 'assets/ginisang_sayote.jpg'},
+        {
+          'name': 'Ginisang Sayote',
+          'price': 51.00,
+          'image': 'assets/ginisang_sayote.jpg'
+        },
         {'name': 'Laing', 'price': 65.00, 'image': 'assets/laing.jpg'},
-        {'name': 'Ginisang Kalabasa', 'price': 60.00, 'image': 'assets/ginisang_kalabasa.jpg'},
+        {
+          'name': 'Ginisang Kalabasa',
+          'price': 60.00,
+          'image': 'assets/ginisang_kalabasa.jpg'
+        },
       ],
     },
   ];
@@ -39,16 +56,23 @@ class BudgetPlanPage extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        leading: const Icon(Icons.menu, color: Colors.black),
-        actions: const [Icon(Icons.info_outline, color: Colors.black)],
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.black),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+        actions: const [
+          Icon(Icons.info_outline, color: Colors.black),
+        ],
         elevation: 0,
       ),
+      drawer: const NavigationDrawerWidget(), // ✅ Reusable sidebar
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Yellow Budget Input Card
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -85,9 +109,9 @@ class BudgetPlanPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Budget Sections with fixed context passing
-            ...budgetMeals.map((section) => _buildBudgetSection(context, section)).toList(),
+            ...budgetMeals
+                .map((section) => _buildBudgetSection(context, section))
+                .toList(),
           ],
         ),
       ),
@@ -103,7 +127,7 @@ class BudgetPlanPage extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (context) =>
-                        const MyHomePage(title: 'HealthTingi')),
+                        const HomePage(title: 'HealthTingi')),
                 (route) => false,
               );
               break;
@@ -120,7 +144,7 @@ class BudgetPlanPage extends StatelessWidget {
               );
               break;
             case 3:
-              break; // current
+              break; // Already on Budget
           }
         },
         items: const [
@@ -133,8 +157,8 @@ class BudgetPlanPage extends StatelessWidget {
     );
   }
 
-  // 🔧 Updated to accept BuildContext
-  Widget _buildBudgetSection(BuildContext context, Map<String, dynamic> section) {
+  Widget _buildBudgetSection(
+      BuildContext context, Map<String, dynamic> section) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -161,7 +185,6 @@ class BudgetPlanPage extends StatelessWidget {
     );
   }
 
-  // 🔧 Updated to accept BuildContext
   Widget _buildMealCard(BuildContext context, Map<String, dynamic> meal) {
     return GestureDetector(
       onTap: () {

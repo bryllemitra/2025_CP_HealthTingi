@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart'; // For navigating back to home
+import '../pages/home.dart'; // For navigating back to home
 
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
@@ -49,7 +49,7 @@ class FavoritesPage extends StatelessWidget {
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const MyHomePage(title: 'HealthTingi')),
+              MaterialPageRoute(builder: (context) => const HomePage(title: 'HealthTingi')),
               (route) => false,
             );
           },

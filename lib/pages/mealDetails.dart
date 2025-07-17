@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
+//import '../pages/home.dart';
 
 class MealDetailsPage extends StatelessWidget {
   const MealDetailsPage({super.key});

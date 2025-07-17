@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import '../main.dart';
+import 'home.dart';
 import 'budgetPlan.dart';
 import '../searchIngredient/mealSrch.dart';
+import 'navigation.dart'; // ⬅️ import the sidebar
 
 class MealScanPage extends StatefulWidget {
   const MealScanPage({super.key});
@@ -60,35 +61,30 @@ class _MealScanPageState extends State<MealScanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const NavigationDrawerWidget(), // ✅ Added drawer
       backgroundColor: Colors.black,
       appBar: AppBar(
-  backgroundColor: Colors.transparent,
-  elevation: 0,
-  centerTitle: true,
-  title: const Text(
-    'Scanner',
-    style: TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.bold,
-      fontFamily: 'Orbitron',
-    ),
-  ),
-  leading: IconButton(
-    icon: const Icon(Icons.menu, color: Colors.white),
-    onPressed: () {
-      // TODO: Open drawer or perform action
-    },
-  ),
-  actions: [
-    IconButton(
-      icon: const Icon(Icons.lightbulb_outline, color: Colors.white),
-      onPressed: () {
-        // TODO: Show cooking tips, scanner tips, or something clever
-      },
-    ),
-  ],
-),
-
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'Scanner',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Orbitron',
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white), // ✅ makes menu white
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.lightbulb_outline, color: Colors.white),
+            onPressed: () {
+              // Optional: add tooltip feature
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
@@ -114,7 +110,7 @@ class _MealScanPageState extends State<MealScanPage> {
               const SizedBox(width: 30),
               IconButton(
                 onPressed: () {
-                  // Future: add image picker here
+                  // TODO: Image picker
                 },
                 icon: const Icon(Icons.image, size: 32, color: Colors.white),
               ),
@@ -127,13 +123,13 @@ class _MealScanPageState extends State<MealScanPage> {
         backgroundColor: const Color(0xFFDDE2C6),
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.black54,
-        currentIndex: 1,
+        currentIndex: 2,
         onTap: (index) {
           switch (index) {
             case 0:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Search Meals')),
+                MaterialPageRoute(builder: (context) => const HomePage(title: 'Search Meals')),
               );
               break;
             case 1:
