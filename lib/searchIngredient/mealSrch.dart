@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
+import '../pages/home.dart';
 import '../pages/budgetPlan.dart';
 import '../pages/mealScan.dart';
 
@@ -58,7 +58,7 @@ class MealSearchPage extends StatelessWidget {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-              builder: (context) => const MyHomePage(title: 'HealthTingi')),
+              builder: (context) => const HomePage(title: 'HealthTingi')),
           (route) => false,
         );
         break;

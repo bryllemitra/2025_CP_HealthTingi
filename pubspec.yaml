@@ -114,6 +114,7 @@ flutter:
     - assets/saging prito.jpg
     - assets/sinigang.jpg
     - assets/tortang_sayote.jpg
+    - assets/logo.png
 
     - assets/fonts/
 
@@ -123,4 +124,44 @@ flutter:
         - asset: assets/fonts/Orbitron-Regular.ttf
         - asset: assets/fonts/Orbitron-Bold.ttf
           weight: 700
+    - family: Exo
+      fonts:
+        - asset: assets/fonts/Exo-Black.ttf
+        - asset: assets/fonts/Exo-BlackItalic.ttf
+        - asset: assets/fonts/Exo-Bold.ttf
+        - asset: assets/fonts/Exo-BoldItalic.ttf
+        - asset: assets/fonts/Exo-ExtraBold.ttf
+        - asset: assets/fonts/Exo-ExtraBoldItalic.ttf
+        - asset: assets/fonts/Exo-ExtraLight.ttf
+        - asset: assets/fonts/Exo-ExtraLightItalic.ttf
+        - asset: assets/fonts/Exo-Italic.ttf
+        - asset: assets/fonts/Exo-Light.ttf
+        - asset: assets/fonts/Exo-Medium.ttf
+        - asset: assets/fonts/Exo-Regular.ttf
+        - asset: assets/fonts/Exo-SemiBold.ttf
+        - asset: assets/fonts/Exo-SemiBoldItalic.ttf
+        - asset: assets/fonts/Exo-Thin.ttf
+        - asset: assets/fonts/Exo-ThinItalic.ttf
+        - asset: assets/fonts/Exo-LightItalic.ttf
+        - asset: assets/fonts/Exo-MediumItalic.ttf
+    - family: Exo2
+      fonts:
+        - asset: assets/fonts/Exo2-Black.ttf
+        - asset: assets/fonts/Exo2-BlackItalic.ttf
+        - asset: assets/fonts/Exo2-Bold.ttf
+        - asset: assets/fonts/Exo2-BoldItalic.ttf
+        - asset: assets/fonts/Exo2-ExtraBold.ttf
+        - asset: assets/fonts/Exo2-ExtraBoldItalic.ttf
+        - asset: assets/fonts/Exo2-ExtraLight.ttf
+        - asset: assets/fonts/Exo2-ExtraLightItalic.ttf
+        - asset: assets/fonts/Exo2-Italic.ttf
+        - asset: assets/fonts/Exo2-Light.ttf
+        - asset: assets/fonts/Exo2-Medium.ttf
+        - asset: assets/fonts/Exo2-Regular.ttf
+        - asset: assets/fonts/Exo2-SemiBold.ttf
+        - asset: assets/fonts/Exo2-SemiBoldItalic.ttf
+        - asset: assets/fonts/Exo2-Thin.ttf
+        - asset: assets/fonts/Exo2-ThinItalic.ttf
+        - asset: assets/fonts/Exo2-LightItalic.ttf
+        - asset: assets/fonts/Exo2-MediumItalic.ttf
         
