@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../information/profile.dart';
 import '../information/aboutUs.dart';
 import '../information/fAQs.dart';
-
+import 'index.dart'; // ✅ Import IndexPage here
 
 class NavigationDrawerWidget extends StatelessWidget {
   const NavigationDrawerWidget({super.key});
@@ -37,8 +37,7 @@ class NavigationDrawerWidget extends StatelessWidget {
     );
   }
 
-  Widget _drawerButton(
-      BuildContext context, IconData icon, String label) {
+  Widget _drawerButton(BuildContext context, IconData icon, String label) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFFFFF66),
@@ -49,7 +48,7 @@ class NavigationDrawerWidget extends StatelessWidget {
         ),
       ),
       onPressed: () {
-        Navigator.pop(context); // Close drawer before navigating
+        Navigator.pop(context); // Close drawer first
         switch (label) {
           case 'Profile':
             Navigator.push(
@@ -70,7 +69,12 @@ class NavigationDrawerWidget extends StatelessWidget {
             );
             break;
           case 'Logout':
-            // TODO: Add logout logic
+            // ✅ Redirect to IndexPage and remove previous stack
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const IndexPage()),
+              (Route<dynamic> route) => false,
+            );
             break;
         }
       },

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'pages/home.dart';
 import 'pages/mealDetails.dart';
 import 'pages/reverseIngredient.dart';
+import 'pages/index.dart'; 
+import 'pages/login.dart';
+import 'pages/register.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,10 +23,13 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellowAccent),
       ),
-      home: const HomePage(title: 'HealthTingi'),
+      home: const IndexPage(), // Set IndexPage as the initial page
       routes: {
         '/meal-details': (context) => const MealDetailsPage(),
         '/reverse-ingredient': (context) => const ReverseIngredientPage(),
+        '/home': (context) => const HomePage(title: 'HealthTingi'),
+        '/login': (context) => const LoginPage(),      
+        '/register': (context) => const RegisterPage(), 
       },
     );
   }
