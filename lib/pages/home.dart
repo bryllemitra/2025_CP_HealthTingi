@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'budgetPlan.dart';
-import 'mealScan.dart';
-import '../searchIngredient/mealSrch.dart';
+import 'budget_plan.dart';
+import 'meal_scan.dart';
+import '../searchIngredient/meal_search.dart';
 import '../searchIngredient/favorites.dart';
 import 'navigation.dart'; // ✅ import the shared drawer
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'home.dart';
-import 'budgetPlan.dart';
-import '../searchIngredient/mealSrch.dart';
+import 'budget_plan.dart';
+import '../searchIngredient/meal_search.dart';
 import 'navigation.dart'; // ⬅️ import the sidebar
 
 class MealScanPage extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
-import 'mealScan.dart';
-import '../searchIngredient/mealSrch.dart';
+import 'meal_scan.dart';
+import '../searchIngredient/meal_search.dart';
 import 'navigation.dart'; // ✅ Import the reusable drawer
 
 class BudgetPlanPage extends StatelessWidget {

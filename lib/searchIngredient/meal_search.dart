@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../pages/home.dart';
-import '../pages/budgetPlan.dart';
-import '../pages/mealScan.dart';
+import '../pages/budget_plan.dart';
+import '../pages/meal_scan.dart';
 
 class MealSearchPage extends StatelessWidget {
   const MealSearchPage({super.key});

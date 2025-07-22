@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/home.dart';
-import 'pages/mealDetails.dart';
-import 'pages/reverseIngredient.dart';
+import 'pages/meal_details.dart';
+import 'pages/reverse_ngredient.dart';
 import 'pages/index.dart'; 
 import 'pages/login.dart';
 import 'pages/register.dart';
