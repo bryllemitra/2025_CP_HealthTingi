@@ -94,7 +94,7 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
   assets:
-    - assets/tinola.jpg
+    - assets/tinolang_manok.jpg
     - assets/escabeche.jpg
     - assets/green.jpg
     - assets/smoothies.jpg

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'budget_plan.dart';
 import 'meal_scan.dart';
+import 'meal_details.dart';
 import '../searchIngredient/meal_search.dart';
 import '../searchIngredient/favorites.dart';
-import 'navigation.dart'; // ✅ import the shared drawer
+import 'navigation.dart';
+import '../database/db_helper.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.title});
@@ -15,20 +17,26 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  List<Map<String, dynamic>> popularRecipes = [];
 
-  final List<String> categories = [
-    'APPETIZERS',
-    'MAIN DISHES',
-    'DESSERTS',
-    'SALADS',
-    'SOUPS',
-    'MORE . . .',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadPopularRecipes();
+  }
 
-  final List<Map<String, String>> popularRecipes = [
-    {'name': 'Tinolang Manok', 'image': 'assets/tinola.jpg'},
-    {'name': 'Escabeche', 'image': 'assets/escabeche.jpg'},
-  ];
+  Future<void> _loadPopularRecipes() async {
+    final dbHelper = DatabaseHelper.instance;
+    final meals = await dbHelper.getAllMeals();
+    
+    setState(() {
+      popularRecipes = meals.map((meal) => {
+        'id': meal['mealID'],
+        'name': meal['mealName'],
+        'image': 'assets/${meal['mealName'].toLowerCase().replaceAll(' ', '_')}.jpg',
+      }).toList();
+    });
+  }
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
@@ -116,42 +124,52 @@ class _HomePageState extends State<HomePage> {
         itemCount: popularRecipes.length,
         itemBuilder: (context, index) {
           final recipe = popularRecipes[index];
-          return Container(
-            width: 160,
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 4,
-                  offset: Offset(2, 2),
-                )
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: Image.asset(
-                    recipe['image']!,
-                    height: 100,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MealDetailsPage(mealId: recipe['id']),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Text(
-                    recipe['name']!,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14),
+              );
+            },
+            child: Container(
+              width: 160,
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 4,
+                    offset: Offset(2, 2),
+                  )
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(12)),
+                    child: Image.asset(
+                      recipe['image'],
+                      height: 100,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(
+                      recipe['name'],
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -163,7 +181,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F2DF),
-      drawer: const NavigationDrawerWidget(), // ✅ using shared sidebar
+      drawer: const NavigationDrawerWidget(),
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(widget.title,
@@ -291,4 +309,14 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  // Categories list (moved inside the class to match your original structure)
+  final List<String> categories = [
+    'APPETIZERS',
+    'MAIN DISHES',
+    'DESSERTS',
+    'SALADS',
+    'SOUPS',
+    'MORE . . .',
+  ];
 }
