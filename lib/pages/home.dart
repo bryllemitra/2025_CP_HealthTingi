@@ -43,16 +43,18 @@ class _HomePageState extends State<HomePage> {
     setState(() => _selectedIndex = index);
 
     switch (index) {
-      case 1:
+      case 0:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MealSearchPage()),
+          MaterialPageRoute(builder: (context) => const MealScanPage()),
         );
+        break;
+      case 1:
         break;
       case 2:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MealScanPage()),
+          MaterialPageRoute(builder: (context) => const MealSearchPage()),
         );
         break;
       case 3:
@@ -278,9 +280,9 @@ class _HomePageState extends State<HomePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _navItem(Icons.home, "Home", 0),
-                _navItem(Icons.book, "Recipes", 1),
-                _navItem(Icons.camera_alt, "Scan", 2),
+                _navItem(Icons.camera_alt, "Scan", 0),
+                _navItem(Icons.home, "Home", 1),
+                _navItem(Icons.book, "Recipes", 2),
                 _navItem(Icons.currency_ruble_rounded, "Budget", 3),
               ],
             ),

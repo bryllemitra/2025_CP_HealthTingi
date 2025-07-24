@@ -55,6 +55,12 @@ class MealSearchPage extends StatelessWidget {
   void _onItemTapped(BuildContext context, int index) {
     switch (index) {
       case 0:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MealScanPage()),
+        );
+        break;
+      case 1:
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
@@ -62,14 +68,7 @@ class MealSearchPage extends StatelessWidget {
           (route) => false,
         );
         break;
-      case 1:
-        // Already here
-        break;
       case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const MealScanPage()),
-        );
         break;
       case 3:
         Navigator.push(
@@ -228,9 +227,9 @@ class MealSearchPage extends StatelessWidget {
         backgroundColor: const Color(0xEBE7D2),
         onTap: (index) => _onItemTapped(context, index),
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Recipes'),
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Budget'),
         ],
       ),

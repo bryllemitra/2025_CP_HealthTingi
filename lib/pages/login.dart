@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register.dart';
-import 'home.dart'; // Import your home page
+import 'meal_scan.dart'; // Import your home page
 import '../database/db_helper.dart';
 
 class LoginPage extends StatefulWidget {
@@ -38,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
       // Successful login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage(title: 'HealthTingi')),
+        MaterialPageRoute(builder: (context) => const MealScanPage()),
       );
     }
   }

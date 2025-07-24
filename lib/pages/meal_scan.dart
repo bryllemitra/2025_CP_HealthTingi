@@ -127,18 +127,18 @@ class _MealScanPageState extends State<MealScanPage> {
         onTap: (index) {
           switch (index) {
             case 0:
+              break;
+            case 1:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const HomePage(title: 'Search Meals')),
               );
               break;
-            case 1:
+            case 2:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const MealSearchPage()),
               );
-              break;
-            case 2:
               break;
             case 3:
               Navigator.pushReplacement(
@@ -149,9 +149,9 @@ class _MealScanPageState extends State<MealScanPage> {
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined), label: 'Recipes'),
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined), label: 'Recipes'),
           BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Budget'),
         ],
       ),

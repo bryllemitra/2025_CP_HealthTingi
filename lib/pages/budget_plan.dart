@@ -123,34 +123,32 @@ class BudgetPlanPage extends StatelessWidget {
         onTap: (index) {
           switch (index) {
             case 0:
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        const HomePage(title: 'HealthTingi')),
-                (route) => false,
-              );
-              break;
-            case 1:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MealSearchPage()),
-              );
-              break;
-            case 2:
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const MealScanPage()),
               );
               break;
+            case 1:
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const HomePage(title: 'HealthTingi')),
+                (route) => false,
+              );
+              break;
+            case 2:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MealSearchPage()),
+              );
+              break;              
             case 3:
               break; // Already on Budget
           }
         },
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Recipes'),
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Budget'),
         ],
       ),
