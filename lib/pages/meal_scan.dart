@@ -123,7 +123,7 @@ class _MealScanPageState extends State<MealScanPage> {
         backgroundColor: const Color(0xFFDDE2C6),
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.black54,
-        currentIndex: 2,
+        currentIndex: 0,
         onTap: (index) {
           switch (index) {
             case 0:

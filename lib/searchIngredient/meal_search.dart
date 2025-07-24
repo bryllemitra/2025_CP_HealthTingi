@@ -221,7 +221,7 @@ class MealSearchPage extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
+        currentIndex: 2,
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.black54,
         backgroundColor: const Color(0xEBE7D2),
