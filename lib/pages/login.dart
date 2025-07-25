@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'register.dart';
-import 'home.dart'; // Import your home page
+import 'meal_scan.dart'; // Import your home page
+import '../database/db_helper.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,15 +15,34 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      // Simulate successful login
+      final dbHelper = DatabaseHelper.instance;
+      final user = await dbHelper.getUserByEmail(_emailController.text);
+
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not found')),
+        );
+        return;
+      }
+
+      // In a real app, you should compare hashed passwords
+      if (user['password'] != _passwordController.text) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Incorrect password')),
+        );
+        return;
+      }
+
+      // Successful login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage(title: 'HealthTingi')),
+        MaterialPageRoute(builder: (context) => const MealScanPage()),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
