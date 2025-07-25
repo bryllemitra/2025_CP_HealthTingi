@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'budget_plan.dart';
-import 'meal_scan.dart';
-import 'meal_details.dart';
-import '../searchIngredient/meal_search.dart';
+import 'budgetPlan.dart';
+import 'mealScan.dart';
+import '../searchIngredient/mealSrch.dart';
 import '../searchIngredient/favorites.dart';
-import 'navigation.dart';
-import '../database/db_helper.dart';
+import 'navigation.dart'; // ✅ import the shared drawer
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.title});
@@ -17,44 +15,36 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  List<Map<String, dynamic>> popularRecipes = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _loadPopularRecipes();
-  }
+  final List<String> categories = [
+    'APPETIZERS',
+    'MAIN DISHES',
+    'DESSERTS',
+    'SALADS',
+    'SOUPS',
+    'MORE . . .',
+  ];
 
-  Future<void> _loadPopularRecipes() async {
-    final dbHelper = DatabaseHelper.instance;
-    final meals = await dbHelper.getAllMeals();
-    
-    setState(() {
-      popularRecipes = meals.map((meal) => {
-        'id': meal['mealID'],
-        'name': meal['mealName'],
-        'image': 'assets/${meal['mealName'].toLowerCase().replaceAll(' ', '_')}.jpg',
-      }).toList();
-    });
-  }
+  final List<Map<String, String>> popularRecipes = [
+    {'name': 'Tinolang Manok', 'image': 'assets/tinola.jpg'},
+    {'name': 'Escabeche', 'image': 'assets/escabeche.jpg'},
+  ];
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
     setState(() => _selectedIndex = index);
 
     switch (index) {
-      case 0:
+      case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MealScanPage()),
+          MaterialPageRoute(builder: (context) => const MealSearchPage()),
         );
-        break;
-      case 1:
         break;
       case 2:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MealSearchPage()),
+          MaterialPageRoute(builder: (context) => const MealScanPage()),
         );
         break;
       case 3:
@@ -126,52 +116,42 @@ class _HomePageState extends State<HomePage> {
         itemCount: popularRecipes.length,
         itemBuilder: (context, index) {
           final recipe = popularRecipes[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MealDetailsPage(mealId: recipe['id']),
+          return Container(
+            width: 160,
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 4,
+                  offset: Offset(2, 2),
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                  child: Image.asset(
+                    recipe['image']!,
+                    height: 100,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              );
-            },
-            child: Container(
-              width: 160,
-              margin: const EdgeInsets.only(right: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 4,
-                    offset: Offset(2, 2),
-                  )
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(12)),
-                    child: Image.asset(
-                      recipe['image'],
-                      height: 100,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    recipe['name']!,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Text(
-                      recipe['name'],
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },
@@ -183,7 +163,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F2DF),
-      drawer: const NavigationDrawerWidget(),
+      drawer: const NavigationDrawerWidget(), // ✅ using shared sidebar
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(widget.title,
@@ -280,9 +260,9 @@ class _HomePageState extends State<HomePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _navItem(Icons.camera_alt, "Scan", 0),
-                _navItem(Icons.home, "Home", 1),
-                _navItem(Icons.book, "Recipes", 2),
+                _navItem(Icons.home, "Home", 0),
+                _navItem(Icons.book, "Recipes", 1),
+                _navItem(Icons.camera_alt, "Scan", 2),
                 _navItem(Icons.currency_ruble_rounded, "Budget", 3),
               ],
             ),
@@ -311,14 +291,4 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  // Categories list (moved inside the class to match your original structure)
-  final List<String> categories = [
-    'APPETIZERS',
-    'MAIN DISHES',
-    'DESSERTS',
-    'SALADS',
-    'SOUPS',
-    'MORE . . .',
-  ];
 }

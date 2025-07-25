@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../information/profile.dart';
-import '../information/about_us.dart';
+import '../information/aboutUs.dart';
 import '../information/fAQs.dart';
 import 'index.dart'; // ✅ Import IndexPage here
 

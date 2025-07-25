@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'home.dart';
-import 'budget_plan.dart';
-import '../searchIngredient/meal_search.dart';
+import 'budgetPlan.dart';
+import '../searchIngredient/mealSrch.dart';
 import 'navigation.dart'; // ⬅️ import the sidebar
 
 class MealScanPage extends StatefulWidget {
@@ -123,22 +123,22 @@ class _MealScanPageState extends State<MealScanPage> {
         backgroundColor: const Color(0xFFDDE2C6),
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.black54,
-        currentIndex: 0,
+        currentIndex: 2,
         onTap: (index) {
           switch (index) {
             case 0:
-              break;
-            case 1:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const HomePage(title: 'Search Meals')),
               );
               break;
-            case 2:
+            case 1:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const MealSearchPage()),
               );
+              break;
+            case 2:
               break;
             case 3:
               Navigator.pushReplacement(
@@ -149,9 +149,9 @@ class _MealScanPageState extends State<MealScanPage> {
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined), label: 'Recipes'),
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Budget'),
         ],
       ),
