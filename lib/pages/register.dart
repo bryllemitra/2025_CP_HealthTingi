@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
-import '../information/termsAndCond.dart';
+import '../information/terms_and_cond.dart';
+import '../database/db_helper.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -35,7 +36,7 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       if (!agreeToTerms) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -50,10 +51,52 @@ class _RegisterPageState extends State<RegisterPage> {
         return;
       }
 
-      // Registration logic goes here
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registering user...')),
-      );
+      // Check if email or username already exists
+      final dbHelper = DatabaseHelper.instance;
+      final emailExists = await dbHelper.getUserByEmail(emailController.text);
+      final usernameExists = await dbHelper.getUserByUsername(usernameController.text);
+
+      if (emailExists != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email already registered.')),
+        );
+        return;
+      }
+
+      if (usernameExists != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Username already taken.')),
+        );
+        return;
+      }
+
+      // Register the user
+      final user = {
+        'firstName': firstNameController.text,
+        'middleInitial': middleInitialController.text,
+        'lastName': lastNameController.text,
+        'username': usernameController.text,
+        'email': emailController.text,
+        'password': passwordController.text, // In a real app, you should hash this
+        'hasDietaryRestrictions': hasDietaryRestrictions ? 1 : 0,
+        'dietaryRestriction': selectedDietaryRestriction,
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+
+      try {
+        await dbHelper.insertUser(user);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful!')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration failed: ${e.toString()}')),
+        );
+      }
     }
   }
 

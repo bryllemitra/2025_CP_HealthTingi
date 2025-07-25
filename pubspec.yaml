@@ -32,6 +32,13 @@ dependencies:
     sdk: flutter
   camera: ^0.10.5+2 # check for latest version
   path_provider: ^2.1.2
+<<<<<<< HEAD
+  sqflite: ^2.3.2  
+=======
+  sqflite: ^2.3.0
+  path: ^1.8.0
+  crypto: ^3.0.0
+>>>>>>> 1ac005e04088a1102416a987b68f10da1456b487
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -91,7 +98,12 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
   assets:
+<<<<<<< HEAD
+    - assets/ingredients.db
     - assets/tinola.jpg
+=======
+    - assets/tinolang_manok.jpg
+>>>>>>> 1ac005e04088a1102416a987b68f10da1456b487
     - assets/escabeche.jpg
     - assets/green.jpg
     - assets/smoothies.jpg
