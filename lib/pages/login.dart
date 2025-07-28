@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert'; // for the utf8.encode method
 import 'register.dart';
-import 'meal_scan.dart'; // Import your home page
+import 'meal_scan.dart';
 import '../database/db_helper.dart';
 
 class LoginPage extends StatefulWidget {
@@ -12,37 +14,83 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _emailOrUsernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+  bool _obscurePassword = true;
 
-  void _login() async {
-    if (_formKey.currentState!.validate()) {
-      final dbHelper = DatabaseHelper.instance;
-      final user = await dbHelper.getUserByEmail(_emailController.text);
-
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User not found')),
-        );
-        return;
-      }
-
-      // In a real app, you should compare hashed passwords
-      if (user['password'] != _passwordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Incorrect password')),
-        );
-        return;
-      }
-
-      // Successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MealScanPage()),
-      );
-    }
+  // Password hashing function (must match the one used in register.dart)
+  String _hashPassword(String password) {
+    var bytes = utf8.encode(password);
+    var digest = sha256.convert(bytes);
+    return digest.toString();
   }
 
+  // Basic input sanitization
+  String _sanitizeInput(String input) {
+    return input
+      .replaceAll('<', '')
+      .replaceAll('>', '')
+      .replaceAll('"', '')
+      .replaceAll("'", '')
+      .replaceAll(';', '');
+  }
+
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
+      try {
+        final dbHelper = DatabaseHelper();
+        final String input = _sanitizeInput(_emailOrUsernameController.text.trim());
+        final String hashedPassword = _hashPassword(_passwordController.text);
+
+        // Try to find user by email first
+        Map<String, dynamic>? user = await dbHelper.getUserByEmail(input);
+        
+        // If not found by email, try by username
+        if (user == null) {
+          user = await dbHelper.getUserByUsername(input);
+        }
+
+        if (user == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid credentials - please try again'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+
+        // Compare hashed passwords
+        if (user['password'] != hashedPassword) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid credentials - please try again'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+
+        // Successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MealScanPage()),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login error: ${e.toString()}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } finally {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,16 +123,16 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 40),
 
-                  // Email field
+                  // Email or Username field
                   Row(
                     children: [
                       const Icon(Icons.person_outline),
                       const SizedBox(width: 10),
                       Expanded(
                         child: TextFormField(
-                          controller: _emailController,
+                          controller: _emailOrUsernameController,
                           decoration: InputDecoration(
-                            hintText: 'Email',
+                            hintText: 'Email or Username',
                             filled: true,
                             fillColor: Colors.grey[300],
                             border: OutlineInputBorder(
@@ -93,7 +141,10 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Email is required';
+                              return 'Email or username is required';
+                            }
+                            if (value.length < 4) {
+                              return 'Input too short';
                             }
                             return null;
                           },
@@ -111,7 +162,7 @@ class _LoginPageState extends State<LoginPage> {
                       Expanded(
                         child: TextFormField(
                           controller: _passwordController,
-                          obscureText: true,
+                          obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             hintText: 'Password',
                             filled: true,
@@ -119,10 +170,25 @@ class _LoginPageState extends State<LoginPage> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
                             ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword 
+                                  ? Icons.visibility_off 
+                                  : Icons.visibility,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Password is required';
+                            }
+                            if (value.length < 8) {
+                              return 'Password must be at least 8 characters';
                             }
                             return null;
                           },
@@ -147,7 +213,7 @@ class _LoginPageState extends State<LoginPage> {
 
                   // Login button
                   ElevatedButton(
-                    onPressed: _login,
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFFFF66),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -158,15 +224,24 @@ class _LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    child: const Text(
-                      'LOGIN',
-                      style: TextStyle(
-                        fontFamily: 'PixelifySans',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.black,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
+                          )
+                        : const Text(
+                            'LOGIN',
+                            style: TextStyle(
+                              fontFamily: 'PixelifySans',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 20),
 
@@ -175,21 +250,23 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        'New to cooking? ',
+                        'Don\'t have an account? ',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.black87,
                         ),
                       ),
                       GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const RegisterPage()),
-                          );
-                        },
+                        onTap: _isLoading
+                            ? null
+                            : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const RegisterPage()),
+                                );
+                              },
                         child: const Text(
-                          'Sign up',
+                          'Register now',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,

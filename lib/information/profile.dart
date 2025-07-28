@@ -1,10 +1,82 @@
 import 'package:flutter/material.dart';
+import '../database/db_helper.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final dbHelper = DatabaseHelper();
+  Map<String, dynamic> userData = {};
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    // In a real app, you would get the current user's ID
+    final user = await dbHelper.getUserById(1); // Replace with actual user ID
+    setState(() {
+      userData = user ?? {};
+      isLoading = false;
+    });
+  }
+
+  String getInitials() {
+    final firstName = userData['firstName']?.toString() ?? '';
+    final lastName = userData['lastName']?.toString() ?? '';
+    if (firstName.isEmpty && lastName.isEmpty) return '?';
+    return '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}';
+  }
+
+  Future<void> _updateUserData(Map<String, dynamic> updates) async {
+    setState(() => isLoading = true);
+    await dbHelper.updateUser(1, updates); // Replace with actual user ID
+    await _loadUserData();
+  }
+
+  void _showEditDialog(BuildContext context, String field, String currentValue) {
+    final controller = TextEditingController(text: currentValue);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit $field'),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(hintText: 'Enter new $field'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              _updateUserData({field.toLowerCase(): controller.text});
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF3F2DF),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F2DF),
       appBar: AppBar(
@@ -37,16 +109,23 @@ class ProfilePage extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.black, width: 3),
               ),
-              child: const CircleAvatar(
+              child: CircleAvatar(
                 radius: 45,
                 backgroundColor: Colors.yellow,
-                child: Icon(Icons.face_3, color: Colors.black, size: 40),
+                child: Text(
+                  getInitials(),
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Nochucook',
-              style: TextStyle(
+            Text(
+              '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}',
+              style: const TextStyle(
                 fontFamily: 'Orbitron',
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -61,18 +140,80 @@ class ProfilePage extends StatelessWidget {
             ),
             const Divider(thickness: 1),
             const SizedBox(height: 8),
-            _infoTile(title: 'First Name', value: 'Juan'),
-            _infoTile(title: 'Last Name', value: 'Dela Cruz'),
-            _infoTile(title: 'Username', value: 'Nochucook'),
-            _infoTile(title: 'Email', value: 'juandelacruz@gmail.com'),
+            _editableInfoTile(
+              context,
+              title: 'First Name',
+              value: userData['firstName']?.toString() ?? '',
+              field: 'firstName',
+            ),
+            _editableInfoTile(
+              context,
+              title: 'Middle Name',
+              value: userData['middleName']?.toString() ?? '',
+              field: 'middleName',
+            ),
+            _editableInfoTile(
+              context,
+              title: 'Last Name',
+              value: userData['lastName']?.toString() ?? '',
+              field: 'lastName',
+            ),
+            _editableInfoTile(
+              context,
+              title: 'Username',
+              value: userData['username']?.toString() ?? '',
+              field: 'username',
+            ),
+            _editableInfoTile(
+              context,
+              title: 'Email',
+              value: userData['emailAddress']?.toString() ?? '',
+              field: 'emailAddress',
+            ),
+            _editableInfoTile(
+              context,
+              title: 'Age',
+              value: userData['age']?.toString() ?? '',
+              field: 'age',
+            ),
+            _editableInfoTile(
+              context,
+              title: 'Gender',
+              value: userData['gender']?.toString() ?? '',
+              field: 'gender',
+            ),
+            _editableInfoTile(
+              context,
+              title: 'Street',
+              value: userData['street']?.toString() ?? '',
+              field: 'street',
+            ),
+            _editableInfoTile(
+              context,
+              title: 'Barangay',
+              value: userData['barangay']?.toString() ?? '',
+              field: 'barangay',
+            ),
+            _editableInfoTile(
+              context,
+              title: 'City',
+              value: userData['city']?.toString() ?? '',
+              field: 'city',
+            ),
+            _editableInfoTile(
+              context,
+              title: 'Nationality',
+              value: userData['nationality']?.toString() ?? '',
+              field: 'nationality',
+            ),
             _infoTile(
-              title: 'Health Problems',
-              value: '・ Hypertension',
+              title: 'Dietary Restrictions',
+              value: userData['dietaryRestriction']?.toString() ?? 'None',
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Perform update logic
+                // Perform bulk update if needed
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.yellowAccent,
@@ -90,6 +231,56 @@ class ProfilePage extends StatelessWidget {
             const SizedBox(height: 30),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _editableInfoTile(
+      BuildContext context, {
+      required String title,
+      required String value,
+      required String field,
+    }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            offset: Offset(2, 2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                      fontFamily: 'Orbitron',
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    )),
+                const SizedBox(height: 2),
+                Text(value.isEmpty ? 'Not set' : value,
+                    style: const TextStyle(
+                      fontFamily: 'Orbitron',
+                      fontSize: 12,
+                    )),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit, size: 20),
+            onPressed: () => _showEditDialog(context, title, value),
+          )
+        ],
       ),
     );
   }
@@ -130,12 +321,6 @@ class ProfilePage extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.edit, size: 20),
-            onPressed: () {
-              // Handle edit logic
-            },
-          )
         ],
       ),
     );

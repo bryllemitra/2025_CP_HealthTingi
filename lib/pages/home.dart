@@ -18,24 +18,92 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   List<Map<String, dynamic>> popularRecipes = [];
+  List<Map<String, dynamic>> allMeals = [];
+  List<Map<String, dynamic>> searchResults = [];
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  bool showSearchResults = false;
 
   @override
   void initState() {
     super.initState();
     _loadPopularRecipes();
+    _loadAllMeals();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPopularRecipes() async {
-    final dbHelper = DatabaseHelper.instance;
+    final dbHelper = DatabaseHelper();
     final meals = await dbHelper.getAllMeals();
     
     setState(() {
       popularRecipes = meals.map((meal) => {
         'id': meal['mealID'],
         'name': meal['mealName'],
-        'image': 'assets/${meal['mealName'].toLowerCase().replaceAll(' ', '_')}.jpg',
+        'image': meal['mealPicture'] ?? 'assets/${meal['mealName'].toLowerCase().replaceAll(' ', '_')}.jpg',
       }).toList();
     });
+  }
+
+  Future<void> _loadAllMeals() async {
+    final dbHelper = DatabaseHelper();
+    final meals = await dbHelper.getAllMeals();
+    setState(() {
+      allMeals = meals;
+    });
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    if (query.isEmpty) {
+      setState(() {
+        searchResults = [];
+        showSearchResults = false;
+      });
+      return;
+    }
+
+    setState(() {
+      searchResults = allMeals.where((meal) {
+        return meal['mealName'].toString().toLowerCase().contains(query);
+      }).toList();
+      showSearchResults = true;
+    });
+  }
+
+  void _performSearch() {
+    if (_searchController.text.isEmpty) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MealSearchPage(),
+      ),
+    );
+  }
+
+  // Add this method to handle missing images
+  Widget _buildMealImage(String imagePath) {
+    return Image.asset(
+      imagePath,
+      height: 100,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          height: 100,
+          color: Colors.grey[200],
+          child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+        );
+      },
+    );
   }
 
   void _onItemTapped(int index) {
@@ -155,12 +223,7 @@ class _HomePageState extends State<HomePage> {
                   ClipRRect(
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(12)),
-                    child: Image.asset(
-                      recipe['image'],
-                      height: 100,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
+                    child: _buildMealImage(recipe['image']),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8),
@@ -173,6 +236,57 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    if (!showSearchResults || searchResults.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: searchResults.length,
+        itemBuilder: (context, index) {
+          final meal = searchResults[index];
+          return ListTile(
+            leading: meal['mealPicture'] != null
+                ? Image.asset(
+                    meal['mealPicture'],
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.fastfood);
+                    },
+                  )
+                : const Icon(Icons.fastfood),
+            title: Text(meal['mealName']),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MealDetailsPage(mealId: meal['mealID']),
+                ),
+              );
+            },
           );
         },
       ),
@@ -217,26 +331,54 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(2, 2))
-                ],
-              ),
-              child: const TextField(
-                decoration: InputDecoration(
-                  icon: Icon(Icons.search),
-                  suffixIcon: Icon(Icons.camera_alt),
-                  hintText: 'Search or Scan your ingredients',
-                  border: InputBorder.none,
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(2, 2))
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.search),
+                        onPressed: _performSearch,
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          focusNode: _searchFocusNode,
+                          decoration: const InputDecoration(
+                            hintText: 'Search or Scan your ingredients',
+                            border: InputBorder.none,
+                          ),
+                          onSubmitted: (value) {
+                            _performSearch();
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.camera_alt),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const MealScanPage()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                _buildSearchResults(),
+              ],
             ),
             const SizedBox(height: 24),
             const Row(
@@ -312,7 +454,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Categories list (moved inside the class to match your original structure)
   final List<String> categories = [
     'APPETIZERS',
     'MAIN DISHES',

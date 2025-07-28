@@ -1,45 +1,94 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../database/db_helper.dart';
 import 'home.dart';
 import 'meal_scan.dart';
 import '../searchIngredient/meal_search.dart';
-import 'navigation.dart'; // ✅ Import the reusable drawer
+import 'navigation.dart';
+import 'meal_details.dart';
 
-class BudgetPlanPage extends StatelessWidget {
+class BudgetPlanPage extends StatefulWidget {
   const BudgetPlanPage({super.key});
 
-  final List<Map<String, dynamic>> budgetMeals = const [
-    {
-      'budget': 50,
-      'meals': [
-        {
-          'name': 'Ginataang Gulay',
-          'price': 45.00,
-          'image': 'assets/ginataang_gulay.jpg'
-        },
-        {
-          'name': 'Ginisang Upo',
-          'price': 40.00,
-          'image': 'assets/ginisang_upo.jpg'
-        },
-      ],
-    },
-    {
-      'budget': 70,
-      'meals': [
-        {
-          'name': 'Ginisang Sayote',
-          'price': 51.00,
-          'image': 'assets/ginisang_sayote.jpg'
-        },
-        {'name': 'Laing', 'price': 65.00, 'image': 'assets/laing.jpg'},
-        {
-          'name': 'Ginisang Kalabasa',
-          'price': 60.00,
-          'image': 'assets/ginisang_kalabasa.jpg'
-        },
-      ],
-    },
-  ];
+  @override
+  State<BudgetPlanPage> createState() => _BudgetPlanPageState();
+}
+
+class _BudgetPlanPageState extends State<BudgetPlanPage> {
+  final DatabaseHelper _dbHelper = DatabaseHelper();
+  late Future<List<Map<String, dynamic>>> _mealsFuture;
+  final TextEditingController _budgetController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _mealsFuture = _fetchMeals();
+  }
+
+  @override
+  void dispose() {
+    _budgetController.dispose();
+    super.dispose();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchMeals() async {
+    final meals = await _dbHelper.getAllMeals();
+    // Ensure all prices are treated as doubles
+    return meals.map((meal) {
+      if (meal['price'] is int) {
+        meal['price'] = (meal['price'] as int).toDouble();
+      }
+      return meal;
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> _filterMealsByBudget(
+      List<Map<String, dynamic>> meals, double budget) {
+    try {
+      meals.sort((a, b) {
+        final aPrice = (a['price'] as num).toDouble();
+        final bPrice = (b['price'] as num).toDouble();
+        final aDiff = (aPrice - budget).abs();
+        final bDiff = (bPrice - budget).abs();
+        return aDiff.compareTo(bDiff);
+      });
+      return meals;
+    } catch (e) {
+      debugPrint('Error sorting meals by budget: $e');
+      return [];
+    }
+  }
+
+  List<Map<String, dynamic>> _groupMealsByPriceRange(
+      List<Map<String, dynamic>> meals) {
+    final groupedMeals = <Map<String, dynamic>>[];
+
+    final List<Map<String, dynamic>> priceRanges = [
+      {'min': 0.0, 'max': 50.0, 'label': '50'},
+      {'min': 51.0, 'max': 70.0, 'label': '70'},
+      {'min': 71.0, 'max': 100.0, 'label': '100'},
+      {'min': 101.0, 'max': double.infinity, 'label': '100+'},
+    ];
+
+    for (var range in priceRanges) {
+      final rangeMeals = meals.where((meal) {
+        final price = (meal['price'] as num).toDouble();
+        final min = range['min'] as double;
+        final max = range['max'] as double;
+        return price >= min && price <= max;
+      }).toList();
+
+      if (rangeMeals.isNotEmpty) {
+        groupedMeals.add({
+          'budget': range['label'],
+          'meals': rangeMeals,
+        });
+      }
+    }
+
+    return groupedMeals;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +116,7 @@ class BudgetPlanPage extends StatelessWidget {
         ],
         elevation: 0,
       ),
-      drawer: const NavigationDrawerWidget(), // ✅ Reusable sidebar
+      drawer: const NavigationDrawerWidget(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -83,7 +132,7 @@ class BudgetPlanPage extends StatelessWidget {
                     color: Colors.black26,
                     blurRadius: 4,
                     offset: Offset(2, 2),
-                  ),
+                  )
                 ],
               ),
               child: Column(
@@ -95,23 +144,63 @@ class BudgetPlanPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   TextField(
+                    controller: _budgetController,
                     style: const TextStyle(fontFamily: 'Orbitron'),
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                    ],
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
+                      hintText: 'e.g. 57',
                     ),
+                    onChanged: (value) {
+                      if (value.isEmpty) {
+                        setState(() => _searchQuery = '');
+                        return;
+                      }
+                      if (double.tryParse(value) != null) {
+                        setState(() => _searchQuery = value);
+                      }
+                    },
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            ...budgetMeals
-                .map((section) => _buildBudgetSection(context, section))
-                .toList(),
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: _mealsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No meals available'));
+                }
+
+                final allMeals = snapshot.data!;
+                final categorizedMeals = _searchQuery.isEmpty
+                    ? _groupMealsByPriceRange(allMeals)
+                    : [
+                        {
+                          'budget': 'Near ${_searchQuery}',
+                          'meals': _filterMealsByBudget(
+                              allMeals, double.parse(_searchQuery)),
+                        }
+                      ];
+
+                return Column(
+                  children: categorizedMeals
+                      .map((section) => _buildBudgetSection(context, section))
+                      .toList(),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -131,7 +220,8 @@ class BudgetPlanPage extends StatelessWidget {
             case 1:
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => const HomePage(title: 'HealthTingi')),
+                MaterialPageRoute(
+                    builder: (context) => const HomePage(title: 'HealthTingi')),
                 (route) => false,
               );
               break;
@@ -140,16 +230,17 @@ class BudgetPlanPage extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (context) => const MealSearchPage()),
               );
-              break;              
+              break;
             case 3:
-              break; // Already on Budget
+              break;
           }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Recipes'),
-          BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Budget'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.currency_ruble), label: 'Budget'),
         ],
       ),
     );
@@ -157,6 +248,9 @@ class BudgetPlanPage extends StatelessWidget {
 
   Widget _buildBudgetSection(
       BuildContext context, Map<String, dynamic> section) {
+    final meals = section['meals'] as List<Map<String, dynamic>>;
+    if (meals.isEmpty) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -170,9 +264,7 @@ class BudgetPlanPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ...section['meals']
-            .map<Widget>((meal) => _buildMealCard(context, meal))
-            .toList(),
+        ...meals.map<Widget>((meal) => _buildMealCard(context, meal)).toList(),
         const SizedBox(height: 8),
         const Align(
           alignment: Alignment.centerRight,
@@ -186,9 +278,12 @@ class BudgetPlanPage extends StatelessWidget {
   Widget _buildMealCard(BuildContext context, Map<String, dynamic> meal) {
     return GestureDetector(
       onTap: () {
-        if (meal['name'] == 'Ginisang Sayote') {
-          Navigator.pushNamed(context, '/meal-details');
-        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MealDetailsPage(mealId: meal['mealID']),
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -201,19 +296,32 @@ class BudgetPlanPage extends StatelessWidget {
               color: Colors.black26,
               blurRadius: 3,
               offset: Offset(1, 2),
-            ),
+            )
           ],
         ),
         child: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                meal['image'],
-                width: 80,
-                height: 60,
-                fit: BoxFit.cover,
-              ),
+              child: meal['mealPicture'] != null
+                  ? Image.network(
+                      meal['mealPicture'],
+                      width: 80,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 80,
+                        height: 60,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.fastfood),
+                      ),
+                    )
+                  : Container(
+                      width: 80,
+                      height: 60,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.fastfood),
+                    ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -221,7 +329,7 @@ class BudgetPlanPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    meal['name'],
+                    meal['mealName'],
                     style: const TextStyle(
                       fontFamily: 'Orbitron',
                       fontWeight: FontWeight.bold,
@@ -229,7 +337,7 @@ class BudgetPlanPage extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    "Estimated at Php ${meal['price'].toStringAsFixed(2)}",
+                    "Php ${meal['price'].toStringAsFixed(2)}",
                     style: const TextStyle(
                       fontFamily: 'Orbitron',
                       fontSize: 12,

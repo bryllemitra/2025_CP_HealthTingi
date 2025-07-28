@@ -2,225 +2,313 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 class DatabaseHelper {
-  static final DatabaseHelper instance = DatabaseHelper._init();
+  static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
+  static const int _currentVersion = 4; // Updated version for picture additions
 
-  DatabaseHelper._init();
+  factory DatabaseHelper() => _instance;
+
+  DatabaseHelper._internal();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('healthtingi.db');
+    _database = await _initDatabase();
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
-
+  Future<Database> _initDatabase() async {
+    final path = join(await getDatabasesPath(), 'healthtingi.db');
     return await openDatabase(
       path,
-      version: 2, // Incremented version number
-      onCreate: _createDB,
-      onUpgrade: _upgradeDB,
+      version: _currentVersion,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+      onDowngrade: onDowngrade,
     );
   }
 
-  Future _createDB(Database db, int version) async {
-    // Create users table
+  Future<void> _onCreate(Database db, int version) async {
+    // Create tables in proper order considering foreign key dependencies
+    await _createIngredientsTable(db);
+    await _createMealsTable(db);
+    await _createMealIngredientsTable(db);
+    await _createUsersTable(db);
+    await _insertInitialData(db);
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE meals ADD COLUMN availableFrom TEXT');
+      await db.execute('ALTER TABLE meals ADD COLUMN availableTo TEXT');
+    }
+    if (oldVersion < 3) {
+      await _createMealIngredientsTable(db);
+      // Migrate existing data if needed
+    }
+    if (oldVersion < 4) {
+      // Add picture columns if they don't exist
+      try {
+        await db.execute('ALTER TABLE ingredients ADD COLUMN ingredientPicture TEXT');
+        await db.execute('ALTER TABLE meals ADD COLUMN mealPicture TEXT');
+        // Update existing records with picture paths
+        await _updateExistingRecordsWithPictures(db);
+      } catch (e) {
+        // Columns might already exist, ignore
+      }
+    }
+  }
+
+  Future<void> _updateExistingRecordsWithPictures(Database db) async {
+    // Update ingredients with picture paths
+    await db.update('ingredients', {
+      'ingredientPicture': 'assets/chicken_neck_wings.jpg'
+    }, where: 'ingredientName = ?', whereArgs: ['Chicken (neck/wings)']);
+
+    await db.update('ingredients', {
+      'ingredientPicture': 'assets/sayote.jpg'
+    }, where: 'ingredientName = ?', whereArgs: ['Sayote']);
+
+    await db.update('ingredients', {
+      'ingredientPicture': 'assets/malunggay.jpg'
+    }, where: 'ingredientName = ?', whereArgs: ['Malunggay']);
+
+    await db.update('ingredients', {
+      'ingredientPicture': 'assets/ginger.jpg'
+    }, where: 'ingredientName = ?', whereArgs: ['Ginger']);
+
+    await db.update('ingredients', {
+      'ingredientPicture': 'assets/onion.jpg'
+    }, where: 'ingredientName = ?', whereArgs: ['Onion']);
+
+    await db.update('ingredients', {
+      'ingredientPicture': 'assets/garlic.jpg'
+    }, where: 'ingredientName = ?', whereArgs: ['Garlic']);
+
+    await db.update('ingredients', {
+      'ingredientPicture': 'assets/cooking_oil.jpg'
+    }, where: 'ingredientName = ?', whereArgs: ['Cooking oil']);
+
+    await db.update('ingredients', {
+      'ingredientPicture': 'assets/bagoong.jpg'
+    }, where: 'ingredientName = ?', whereArgs: ['Bagoong']);
+
+    await db.update('ingredients', {
+      'ingredientPicture': 'assets/tomato.jpg'
+    }, where: 'ingredientName = ?', whereArgs: ['Tomato']);
+
+    await db.update('ingredients', {
+      'ingredientPicture': 'assets/soy_sauce.jpg'
+    }, where: 'ingredientName = ?', whereArgs: ['Soy Sauce']);
+
+    // Update meals with picture paths
+    await db.update('meals', {
+      'mealPicture': 'assets/tinolang_manok.jpg'
+    }, where: 'mealName = ?', whereArgs: ['Tinolang Manok']);
+
+    await db.update('meals', {
+      'mealPicture': 'assets/ginisang_sayote.jpg'
+    }, where: 'mealName = ?', whereArgs: ['Ginisang Sayote']);
+  }
+
+  Future<void> onDowngrade(Database db, int oldVersion, int newVersion) async {
+    await db.execute('DROP TABLE IF EXISTS users');
+    await db.execute('DROP TABLE IF EXISTS ingredients');
+    await db.execute('DROP TABLE IF EXISTS meals');
+    await db.execute('DROP TABLE IF EXISTS meal_ingredients');
+    await _onCreate(db, _currentVersion);
+  }
+
+  Future<void> _createUsersTable(Database db) async {
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         firstName TEXT NOT NULL,
-        middleInitial TEXT,
+        middleName TEXT,
         lastName TEXT NOT NULL,
+        emailAddress TEXT NOT NULL UNIQUE,
         username TEXT NOT NULL UNIQUE,
-        email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
-        hasDietaryRestrictions INTEGER NOT NULL,
+        hasDietaryRestriction INTEGER DEFAULT 0,
         dietaryRestriction TEXT,
+        favorites TEXT,
+        age INTEGER,
+        gender TEXT,
+        street TEXT,
+        barangay TEXT,
+        city TEXT,
+        nationality TEXT,
         createdAt TEXT NOT NULL
       )
     ''');
+  }
 
-    // Create ingredients table
+  Future<void> _createIngredientsTable(Database db) async {
     await db.execute('''
       CREATE TABLE ingredients (
         ingredientID INTEGER PRIMARY KEY AUTOINCREMENT,
-        ingredientName TEXT NOT NULL UNIQUE,
+        ingredientName TEXT NOT NULL,
         price REAL NOT NULL,
         calories INTEGER NOT NULL,
         nutritionalValue TEXT NOT NULL,
-        ingredientPicture TEXT
+        ingredientPicture TEXT,
+        category TEXT
       )
     ''');
+  }
 
-    // Create meals table
+  Future<void> _createMealsTable(Database db) async {
     await db.execute('''
       CREATE TABLE meals (
         mealID INTEGER PRIMARY KEY AUTOINCREMENT,
-        mealName TEXT NOT NULL UNIQUE,
+        mealName TEXT NOT NULL,
         price REAL NOT NULL,
         calories INTEGER NOT NULL,
-        servings TEXT NOT NULL,
+        servings INTEGER NOT NULL,
         cookingTime TEXT NOT NULL,
-        ingredientPrice REAL NOT NULL,
-        hasDietaryRestrictions INTEGER NOT NULL,
         mealPicture TEXT,
-        instructions TEXT NOT NULL
+        category TEXT,
+        content TEXT,
+        instructions TEXT,
+        hasDietaryRestrictions TEXT,
+        availableFrom TEXT,
+        availableTo TEXT
       )
     ''');
+  }
 
-    // Create junction table for meal-ingredient relationships
+  Future<void> _createMealIngredientsTable(Database db) async {
     await db.execute('''
       CREATE TABLE meal_ingredients (
-        mealID INTEGER,
-        ingredientID INTEGER,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        mealID INTEGER NOT NULL,
+        ingredientID INTEGER NOT NULL,
         quantity TEXT,
-        PRIMARY KEY (mealID, ingredientID),
-        FOREIGN KEY (mealID) REFERENCES meals (mealID) ON DELETE CASCADE,
-        FOREIGN KEY (ingredientID) REFERENCES ingredients (ingredientID) ON DELETE CASCADE
+        FOREIGN KEY (mealID) REFERENCES meals(mealID) ON DELETE CASCADE,
+        FOREIGN KEY (ingredientID) REFERENCES ingredients(ingredientID)
       )
     ''');
-
-    // Insert initial data
-    await _insertInitialData(db);
   }
 
-  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await db.execute('''
-        CREATE TABLE ingredients (
-          ingredientID INTEGER PRIMARY KEY AUTOINCREMENT,
-          ingredientName TEXT NOT NULL UNIQUE,
-          price REAL NOT NULL,
-          calories INTEGER NOT NULL,
-          nutritionalValue TEXT NOT NULL,
-          ingredientPicture TEXT
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE meals (
-          mealID INTEGER PRIMARY KEY AUTOINCREMENT,
-          mealName TEXT NOT NULL UNIQUE,
-          price REAL NOT NULL,
-          calories INTEGER NOT NULL,
-          servings TEXT NOT NULL,
-          cookingTime TEXT NOT NULL,
-          ingredientPrice REAL NOT NULL,
-          hasDietaryRestrictions INTEGER NOT NULL,
-          mealPicture TEXT,
-          instructions TEXT NOT NULL
-        )
-      ''');
-      
-      await db.execute('''
-        CREATE TABLE meal_ingredients (
-          mealID INTEGER,
-          ingredientID INTEGER,
-          quantity TEXT,
-          PRIMARY KEY (mealID, ingredientID),
-          FOREIGN KEY (mealID) REFERENCES meals (mealID) ON DELETE CASCADE,
-          FOREIGN KEY (ingredientID) REFERENCES ingredients (ingredientID) ON DELETE CASCADE
-        )
-      ''');
-      
-      await _insertInitialData(db);
-    }
-  }
-
-  Future _insertInitialData(Database db) async {
+  Future<void> _insertInitialData(Database db) async {
     // Insert ingredients
-    final sayoteId = await db.insert('ingredients', {
-      'ingredientName': 'Sayote',
-      'price': 12.0,
-      'calories': 19,
-      'nutritionalValue': 'Rich in Vitamin C – boosts immune system and helps wound healing. Contains Folate (Vitamin B9) – important for cell growth and pregnancy. Low in Calories – good for weight management. High in Fiber – supports digestion and helps prevent constipation. Good source of Potassium – helps regulate blood pressure. Contains Manganese – supports metabolism and bone health. Mild Diuretic Effect – helps flush excess fluids. Supports Heart Health – due to its low sodium and fat content. May Help Control Blood Sugar – low glycemic index, good for diabetics.',
-      'ingredientPicture': 'assets/ingredients/sayote.jpg'
-    });
+    await _insertIngredients(db);
+    // Insert meals and their relationships
+    await _insertMeals(db);
+  }
 
-    final chickenId = await db.insert('ingredients', {
+  Future<void> _insertIngredients(Database db) async {
+    // Chicken
+    await db.insert('ingredients', {
       'ingredientName': 'Chicken (neck/wings)',
       'price': 30.0,
       'calories': 239,
-      'nutritionalValue': 'High in protein, contains B vitamins, particularly niacin and B6, which are important for energy production and brain health. Also provides selenium, which supports immune function.',
-      'ingredientPicture': 'assets/ingredients/chicken.jpg'
+      'nutritionalValue': 'Good source of protein, niacin, selenium, phosphorus, and vitamin B6.',
+      'ingredientPicture': 'assets/chicken_neck_wings.jpg',
+      'category': 'main dish'
     });
 
-    final malunggayId = await db.insert('ingredients', {
+    // Sayote
+    await db.insert('ingredients', {
+      'ingredientName': 'Sayote',
+      'price': 12.0,
+      'calories': 19,
+      'nutritionalValue': 'Rich in Vitamin C, Folate, Fiber, Potassium, Manganese.',
+      'ingredientPicture': 'assets/sayote.jpg',
+      'category': 'soup, main dish, appetizer'
+    });
+
+    // Malunggay
+    await db.insert('ingredients', {
       'ingredientName': 'Malunggay',
       'price': 10.0,
       'calories': 64,
-      'nutritionalValue': 'Extremely rich in vitamins A, C, and E, calcium, potassium, and protein. Contains powerful antioxidants and has anti-inflammatory properties.',
-      'ingredientPicture': 'assets/ingredients/malunggay.jpg'
+      'nutritionalValue': 'Rich in vitamins A, C, E, calcium, potassium, and protein. Boosts immunity and reduces inflammation.',
+      'ingredientPicture': 'assets/malunggay.jpg',
+      'category': 'soup, garnish'
     });
 
-    final gingerId = await db.insert('ingredients', {
+    // Ginger
+    await db.insert('ingredients', {
       'ingredientName': 'Ginger',
       'price': 3.0,
       'calories': 80,
-      'nutritionalValue': 'Contains gingerol, a substance with powerful anti-inflammatory and antioxidant properties. May help reduce nausea, muscle pain, and lower blood sugar levels.',
-      'ingredientPicture': 'assets/ingredients/ginger.jpg'
+      'nutritionalValue': 'Contains gingerol with powerful anti-inflammatory and antioxidant effects. Aids digestion and nausea relief.',
+      'ingredientPicture': 'assets/ginger.jpg',
+      'category': 'spice, seasoning'
     });
 
-    final onionId = await db.insert('ingredients', {
+    // Onion
+    await db.insert('ingredients', {
       'ingredientName': 'Onion',
       'price': 5.0,
       'calories': 40,
-      'nutritionalValue': 'Rich in vitamin C, B vitamins, and potassium. Contains antioxidants and compounds that fight inflammation, reduce cholesterol, and may help lower blood sugar levels.',
-      'ingredientPicture': 'assets/ingredients/onion.jpg'
+      'nutritionalValue': 'Rich in vitamin C, B vitamins, and potassium. Contains antioxidants and compounds with anti-inflammatory effects.',
+      'ingredientPicture': 'assets/onion.jpg',
+      'category': 'seasoning, garnish'
     });
 
-    final garlicId = await db.insert('ingredients', {
+    // Garlic
+    await db.insert('ingredients', {
       'ingredientName': 'Garlic',
       'price': 2.0,
       'calories': 149,
-      'nutritionalValue': 'Contains compounds with potent medicinal properties, including allicin. May help boost immune function, reduce blood pressure, and improve cholesterol levels.',
-      'ingredientPicture': 'assets/ingredients/garlic.jpg'
+      'nutritionalValue': 'Contains allicin with medicinal properties. Boosts immune function and reduces blood pressure.',
+      'ingredientPicture': 'assets/garlic.jpg',
+      'category': 'seasoning'
     });
 
-    final oilId = await db.insert('ingredients', {
+    // Cooking oil
+    await db.insert('ingredients', {
       'ingredientName': 'Cooking oil',
       'price': 1.0,
-      'calories': 120,
-      'nutritionalValue': 'Provides essential fatty acids and helps with absorption of fat-soluble vitamins. Should be consumed in moderation.',
-      'ingredientPicture': 'assets/ingredients/oil.jpg'
+      'calories': 884,
+      'nutritionalValue': 'Source of healthy fats and vitamin E. Use in moderation.',
+      'ingredientPicture': 'assets/cooking_oil.jpg',
+      'category': 'cooking essential'
     });
 
-    final bagoongId = await db.insert('ingredients', {
+    // Bagoong
+    await db.insert('ingredients', {
       'ingredientName': 'Bagoong',
       'price': 10.0,
       'calories': 80,
-      'nutritionalValue': 'Fermented fish or shrimp paste that adds umami flavor. High in sodium but provides some protein and minerals.',
-      'ingredientPicture': 'assets/ingredients/bagoong.jpg'
+      'nutritionalValue': 'Fermented fish paste rich in protein and probiotics. High in sodium.',
+      'ingredientPicture': 'assets/bagoong.jpg',
+      'category': 'seasoning'
     });
 
-    final tomatoId = await db.insert('ingredients', {
+    // Tomato
+    await db.insert('ingredients', {
       'ingredientName': 'Tomato',
       'price': 5.0,
       'calories': 18,
-      'nutritionalValue': 'Excellent source of vitamin C, potassium, folate, and vitamin K. Contains lycopene, a powerful antioxidant.',
-      'ingredientPicture': 'assets/ingredients/tomato.jpg'
+      'nutritionalValue': 'Rich in lycopene, vitamin C, potassium, and antioxidants. Supports heart health.',
+      'ingredientPicture': 'assets/tomato.jpg',
+      'category': 'vegetable, garnish'
     });
 
-    final soySauceId = await db.insert('ingredients', {
+    // Soy Sauce
+    await db.insert('ingredients', {
       'ingredientName': 'Soy Sauce',
       'price': 10.0,
-      'calories': 10,
-      'nutritionalValue': 'Contains small amounts of protein and minerals but is high in sodium. Provides umami flavor to dishes.',
-      'ingredientPicture': 'assets/ingredients/soy_sauce.jpg'
+      'calories': 53,
+      'nutritionalValue': 'Contains antioxidants and may improve digestion. High in sodium.',
+      'ingredientPicture': 'assets/soy_sauce.jpg',
+      'category': 'seasoning'
     });
+  }
 
-    // Insert meals
-    final tinolangManokId = await db.insert('meals', {
+  Future<void> _insertMeals(Database db) async {
+    // Insert Tinolang Manok
+    final tinolangId = await db.insert('meals', {
       'mealName': 'Tinolang Manok',
       'price': 65.0,
-      'calories': 350,
-      'servings': '1-2 serving',
+      'calories': 250,
+      'servings': 2,
       'cookingTime': '15-20 minutes',
-      'ingredientPrice': 65.0,
-      'hasDietaryRestrictions': 0,
       'mealPicture': 'assets/tinolang_manok.jpg',
+      'category': 'main dish, soup',
+      'content': 'Chicken soup with sayote, malunggay, and ginger',
       'instructions': '''
 1. Prep the Ingredients
 Peel and slice garlic, onion, and ginger.
@@ -245,18 +333,59 @@ Add sayote wedges and cook for another 5–7 minutes until tender.
 6. Add Greens
 Add malunggay or pechay, and simmer for another 1–2 minutes.
 Adjust seasoning to taste.
-'''
+''',
+      'hasDietaryRestrictions': 'hypertension, chicken allergy',
+      'availableFrom': '16:00',
+      'availableTo': '19:00'
     });
 
-    final ginisangSayoteId = await db.insert('meals', {
+    // Insert Tinolang Manok ingredients
+    await db.insert('meal_ingredients', {
+      'mealID': tinolangId,
+      'ingredientID': 1, // Chicken
+      'quantity': '1/4 kg'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tinolangId,
+      'ingredientID': 2, // Sayote
+      'quantity': '1 small'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tinolangId,
+      'ingredientID': 4, // Ginger
+      'quantity': '1 small thumb'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tinolangId,
+      'ingredientID': 5, // Onion
+      'quantity': '1 small'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tinolangId,
+      'ingredientID': 6, // Garlic
+      'quantity': '2 cloves'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tinolangId,
+      'ingredientID': 7, // Cooking oil
+      'quantity': '1 tbsp'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tinolangId,
+      'ingredientID': 3, // Malunggay
+      'quantity': '1 small bundle'
+    });
+
+    // Insert Ginisang Sayote
+    final ginisangId = await db.insert('meals', {
       'mealName': 'Ginisang Sayote',
       'price': 57.0,
-      'calories': 250,
-      'servings': '1-2 serving',
+      'calories': 180,
+      'servings': 2,
       'cookingTime': '10-15 minutes',
-      'ingredientPrice': 57.0,
-      'hasDietaryRestrictions': 0,
       'mealPicture': 'assets/ginisang_sayote.jpg',
+      'category': 'main dish',
+      'content': 'Sauteed sayote with tomato, onion, garlic, and bagoong',
       'instructions': '''
 1. Prep Time (5 mins)
 Peel and slice the sayote into thin strips or matchsticks.
@@ -283,128 +412,68 @@ Optional: Add chili flakes or ground pepper for heat.
 
 7. Serve
 Serve hot with steamed rice. Great with fried fish or just on its own!
-'''
+''',
+      'hasDietaryRestrictions': 'pescatarian',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
     });
 
-    // Insert meal-ingredient relationships for Tinolang Manok
+    // Insert Ginisang Sayote ingredients
     await db.insert('meal_ingredients', {
-      'mealID': tinolangManokId,
-      'ingredientID': chickenId,
-      'quantity': '1/4 kg'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangManokId,
-      'ingredientID': sayoteId,
+      'mealID': ginisangId,
+      'ingredientID': 2, // Sayote
       'quantity': '1 small'
     });
     await db.insert('meal_ingredients', {
-      'mealID': tinolangManokId,
-      'ingredientID': malunggayId,
-      'quantity': '1 small bundle'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangManokId,
-      'ingredientID': gingerId,
-      'quantity': '1 small thumb'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangManokId,
-      'ingredientID': onionId,
-      'quantity': '1 small'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangManokId,
-      'ingredientID': garlicId,
-      'quantity': '2 cloves'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangManokId,
-      'ingredientID': oilId,
-      'quantity': '1 tbsp'
-    });
-
-    // Insert meal-ingredient relationships for Ginisang Sayote
-    await db.insert('meal_ingredients', {
-      'mealID': ginisangSayoteId,
-      'ingredientID': sayoteId,
-      'quantity': '1 small'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': ginisangSayoteId,
-      'ingredientID': bagoongId,
+      'mealID': ginisangId,
+      'ingredientID': 8, // Bagoong
       'quantity': '1/4 tsp'
     });
     await db.insert('meal_ingredients', {
-      'mealID': ginisangSayoteId,
-      'ingredientID': onionId,
+      'mealID': ginisangId,
+      'ingredientID': 5, // Onion
       'quantity': '1 small'
     });
     await db.insert('meal_ingredients', {
-      'mealID': ginisangSayoteId,
-      'ingredientID': garlicId,
+      'mealID': ginisangId,
+      'ingredientID': 6, // Garlic
       'quantity': '4 cloves'
     });
     await db.insert('meal_ingredients', {
-      'mealID': ginisangSayoteId,
-      'ingredientID': tomatoId,
+      'mealID': ginisangId,
+      'ingredientID': 9, // Tomato
       'quantity': '1 small'
     });
     await db.insert('meal_ingredients', {
-      'mealID': ginisangSayoteId,
-      'ingredientID': oilId,
+      'mealID': ginisangId,
+      'ingredientID': 7, // Cooking oil
       'quantity': '1/8 cup'
     });
     await db.insert('meal_ingredients', {
-      'mealID': ginisangSayoteId,
-      'ingredientID': soySauceId,
+      'mealID': ginisangId,
+      'ingredientID': 10, // Soy Sauce
       'quantity': '1/4 cup'
     });
   }
 
-  // User operations (existing)
-  Future<int> insertUser(Map<String, dynamic> user) async {
-    final db = await instance.database;
-    return await db.insert('users', user);
-  }
-
-  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
-    final db = await instance.database;
-    final result = await db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: [email],
-    );
-    return result.isNotEmpty ? result.first : null;
-  }
-
-  Future<Map<String, dynamic>?> getUserByUsername(String username) async {
-    final db = await instance.database;
-    final result = await db.query(
-      'users',
-      where: 'username = ?',
-      whereArgs: [username],
-    );
-    return result.isNotEmpty ? result.first : null;
-  }
-
-  // Meal operations
+  // ========== MEAL OPERATIONS ==========
   Future<List<Map<String, dynamic>>> getAllMeals() async {
-    final db = await instance.database;
+    final db = await database;
     return await db.query('meals');
   }
 
-  Future<Map<String, dynamic>?> getMealById(int id) async {
-    final db = await instance.database;
+  Future<Map<String, dynamic>?> getMealById(int mealId) async {
+    final db = await database;
     final result = await db.query(
       'meals',
       where: 'mealID = ?',
-      whereArgs: [id],
+      whereArgs: [mealId],
     );
     return result.isNotEmpty ? result.first : null;
   }
 
   Future<List<Map<String, dynamic>>> getMealIngredients(int mealId) async {
-    final db = await instance.database;
+    final db = await database;
     return await db.rawQuery('''
       SELECT i.*, mi.quantity 
       FROM ingredients i
@@ -413,24 +482,69 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     ''', [mealId]);
   }
 
-  // Ingredient operations
-  Future<List<Map<String, dynamic>>> getAllIngredients() async {
-    final db = await instance.database;
-    return await db.query('ingredients');
+  // ========== USER OPERATIONS ==========
+  Future<int> insertUser(Map<String, dynamic> user) async {
+    final db = await database;
+    return await db.insert('users', user);
   }
 
-  Future<Map<String, dynamic>?> getIngredientById(int id) async {
-    final db = await instance.database;
+  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
+    final db = await database;
     final result = await db.query(
-      'ingredients',
-      where: 'ingredientID = ?',
+      'users',
+      where: 'emailAddress = ?',
+      whereArgs: [email],
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<Map<String, dynamic>?> getUserByUsername(String username) async {
+    final db = await database;
+    final result = await db.query(
+      'users',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<Map<String, dynamic>?> getUserById(int id) async {
+    final db = await database;
+    final result = await db.query(
+      'users',
+      where: 'id = ?',
       whereArgs: [id],
     );
     return result.isNotEmpty ? result.first : null;
   }
 
-  Future<void> close() async {
-    final db = await instance.database;
-    db.close();
+  Future<int> updateUser(int id, Map<String, dynamic> updates) async {
+    final db = await database;
+    return await db.update(
+      'users',
+      updates,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ========== UTILITY METHODS ==========
+  Future<void> verifyDatabaseSchema() async {
+    final db = await database;
+    try {
+      // Verify all tables exist
+      final tables = ['users', 'ingredients', 'meals', 'meal_ingredients'];
+      for (var table in tables) {
+        final result = await db.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='$table'"
+        );
+        if (result.isEmpty) {
+          throw Exception('Missing table: $table');
+        }
+      }
+    } catch (e) {
+      await onDowngrade(db, 0, _currentVersion);
+      throw Exception('Database recreated due to schema issues');
+    }
   }
 }
