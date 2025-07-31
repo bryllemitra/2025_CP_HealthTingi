@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart';
+
 import 'home.dart';
 import 'budget_plan.dart';
 import '../searchIngredient/meal_search.dart';
-import 'navigation.dart'; // ⬅️ import the sidebar
+import 'navigation.dart';
+import '../mealScanner/success.dart'; // ✅ For success page
 
 class MealScanPage extends StatefulWidget {
   const MealScanPage({super.key});
@@ -40,28 +43,51 @@ class _MealScanPageState extends State<MealScanPage> {
     super.dispose();
   }
 
+  // ✅ For capturing image via camera
   Future<void> _captureImage() async {
     try {
       await _initializeControllerFuture;
       final image = await _controller!.takePicture();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Image captured: ${image.path}',
-            style: const TextStyle(fontFamily: 'Grandstander'),
-          ),
-        ),
+        const SnackBar(content: Text('Image captured!')),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ScanSuccessPage()),
       );
     } catch (e) {
       debugPrint('Error taking picture: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to capture image.')),
+      );
+    }
+  }
+
+  // ✅ For picking image from gallery
+  Future<void> _pickImageFromGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      debugPrint('Gallery image path: ${pickedFile.path}');
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ScanSuccessPage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No image selected.')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const NavigationDrawerWidget(), // ✅ Added drawer
+      drawer: const NavigationDrawerWidget(),
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -75,12 +101,12 @@ class _MealScanPageState extends State<MealScanPage> {
             fontFamily: 'Orbitron',
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white), // ✅ makes menu white
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.lightbulb_outline, color: Colors.white),
             onPressed: () {
-              // Optional: add tooltip feature
+              // Optional tooltip
             },
           ),
         ],
@@ -109,9 +135,7 @@ class _MealScanPageState extends State<MealScanPage> {
               ),
               const SizedBox(width: 30),
               IconButton(
-                onPressed: () {
-                  // TODO: Image picker
-                },
+                onPressed: _pickImageFromGallery,
                 icon: const Icon(Icons.image, size: 32, color: Colors.white),
               ),
             ],

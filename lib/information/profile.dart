@@ -12,6 +12,10 @@ class _ProfilePageState extends State<ProfilePage> {
   final dbHelper = DatabaseHelper();
   Map<String, dynamic> userData = {};
   bool isLoading = true;
+  final Map<String, dynamic> _editedValues = {};
+  final TextEditingController _otherRestrictionController = TextEditingController();
+  List<String> selectedDietaryRestrictions = [];
+  bool hasDietaryRestrictions = false;
 
   @override
   void initState() {
@@ -20,10 +24,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    // In a real app, you would get the current user's ID
     final user = await dbHelper.getUserById(1); // Replace with actual user ID
     setState(() {
       userData = user ?? {};
+      hasDietaryRestrictions = user?['hasDietaryRestriction'] == 1;
+      selectedDietaryRestrictions = user?['dietaryRestriction']?.toString().split(', ') ?? [];
       isLoading = false;
     });
   }
@@ -35,21 +40,51 @@ class _ProfilePageState extends State<ProfilePage> {
     return '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}';
   }
 
-  Future<void> _updateUserData(Map<String, dynamic> updates) async {
-    setState(() => isLoading = true);
-    await dbHelper.updateUser(1, updates); // Replace with actual user ID
-    await _loadUserData();
+  void _handleFieldChange(String field, dynamic value) {
+    _editedValues[field] = value;
   }
 
-  void _showEditDialog(BuildContext context, String field, String currentValue) {
+  Future<void> _updateProfile() async {
+    if (_editedValues.isEmpty) return;
+
+    setState(() => isLoading = true);
+    try {
+      // Add dietary restrictions to updates if they were modified
+      if (hasDietaryRestrictions != (userData['hasDietaryRestriction'] == 1)) {
+        _editedValues['hasDietaryRestriction'] = hasDietaryRestrictions ? 1 : 0;
+      }
+      
+      if (hasDietaryRestrictions) {
+        _editedValues['dietaryRestriction'] = selectedDietaryRestrictions.join(', ');
+      } else {
+        _editedValues['dietaryRestriction'] = null;
+      }
+
+      await dbHelper.updateUser(1, _editedValues); // Replace with actual user ID
+      await _loadUserData();
+      _editedValues.clear();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update profile: ${e.toString()}')),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _showEditDialog(BuildContext context, String field, String currentValue) async {
     final controller = TextEditingController(text: currentValue);
-    showDialog(
+    await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Edit $field'),
+        title: Text('Edit ${field.replaceAll('_', ' ')}'),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(hintText: 'Enter new $field'),
+          decoration: InputDecoration(hintText: 'Enter new ${field.replaceAll('_', ' ')}'),
         ),
         actions: [
           TextButton(
@@ -58,12 +93,131 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           TextButton(
             onPressed: () {
-              _updateUserData({field.toLowerCase(): controller.text});
+              _handleFieldChange(field, controller.text);
               Navigator.pop(context);
             },
             child: const Text('Save'),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showDietaryRestrictionsDialog() async {
+    final List<String> allRestrictions = [
+      'Vegan',
+      'Vegetarian',
+      'Gluten-Free',
+      'Lactose Intolerant',
+      'Halal',
+      'Kosher',
+      'Nut Allergy',
+      'Shellfish Allergy',
+    ];
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Dietary Restrictions'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: hasDietaryRestrictions,
+                        onChanged: (val) => setState(() => hasDietaryRestrictions = val!),
+                      ),
+                      const Text('I have dietary restrictions'),
+                    ],
+                  ),
+                  if (hasDietaryRestrictions) ...[
+                    const SizedBox(height: 16),
+                    const Text('Select your restrictions:'),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8.0,
+                      children: allRestrictions.map((restriction) {
+                        return FilterChip(
+                          label: Text(restriction),
+                          selected: selectedDietaryRestrictions.contains(restriction),
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                selectedDietaryRestrictions.add(restriction);
+                              } else {
+                                selectedDietaryRestrictions.remove(restriction);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _otherRestrictionController,
+                            decoration: const InputDecoration(
+                              hintText: 'Other restriction',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            if (_otherRestrictionController.text.trim().isNotEmpty) {
+                              setState(() {
+                                selectedDietaryRestrictions.add(_otherRestrictionController.text.trim());
+                                _otherRestrictionController.clear();
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    if (selectedDietaryRestrictions.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      const Text('Selected:'),
+                      Wrap(
+                        spacing: 8.0,
+                        children: selectedDietaryRestrictions.map((r) => Chip(
+                          label: Text(r),
+                          onDeleted: () {
+                            setState(() => selectedDietaryRestrictions.remove(r));
+                          },
+                        )).toList(),
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  _handleFieldChange('hasDietaryRestriction', hasDietaryRestrictions ? 1 : 0);
+                  if (hasDietaryRestrictions) {
+                    _handleFieldChange('dietaryRestriction', selectedDietaryRestrictions.join(', '));
+                  } else {
+                    _handleFieldChange('dietaryRestriction', null);
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -143,84 +297,86 @@ class _ProfilePageState extends State<ProfilePage> {
             _editableInfoTile(
               context,
               title: 'First Name',
-              value: userData['firstName']?.toString() ?? '',
+              value: _editedValues['firstName'] ?? userData['firstName']?.toString() ?? '',
               field: 'firstName',
             ),
             _editableInfoTile(
               context,
               title: 'Middle Name',
-              value: userData['middleName']?.toString() ?? '',
+              value: _editedValues['middleName'] ?? userData['middleName']?.toString() ?? '',
               field: 'middleName',
             ),
             _editableInfoTile(
               context,
               title: 'Last Name',
-              value: userData['lastName']?.toString() ?? '',
+              value: _editedValues['lastName'] ?? userData['lastName']?.toString() ?? '',
               field: 'lastName',
             ),
             _editableInfoTile(
               context,
               title: 'Username',
-              value: userData['username']?.toString() ?? '',
+              value: _editedValues['username'] ?? userData['username']?.toString() ?? '',
               field: 'username',
             ),
             _editableInfoTile(
               context,
               title: 'Email',
-              value: userData['emailAddress']?.toString() ?? '',
+              value: _editedValues['emailAddress'] ?? userData['emailAddress']?.toString() ?? '',
               field: 'emailAddress',
             ),
             _editableInfoTile(
               context,
               title: 'Age',
-              value: userData['age']?.toString() ?? '',
+              value: _editedValues['age'] ?? userData['age']?.toString() ?? '',
               field: 'age',
             ),
             _editableInfoTile(
               context,
               title: 'Gender',
-              value: userData['gender']?.toString() ?? '',
+              value: _editedValues['gender'] ?? userData['gender']?.toString() ?? '',
               field: 'gender',
             ),
             _editableInfoTile(
               context,
               title: 'Street',
-              value: userData['street']?.toString() ?? '',
+              value: _editedValues['street'] ?? userData['street']?.toString() ?? '',
               field: 'street',
             ),
             _editableInfoTile(
               context,
               title: 'Barangay',
-              value: userData['barangay']?.toString() ?? '',
+              value: _editedValues['barangay'] ?? userData['barangay']?.toString() ?? '',
               field: 'barangay',
             ),
             _editableInfoTile(
               context,
               title: 'City',
-              value: userData['city']?.toString() ?? '',
+              value: _editedValues['city'] ?? userData['city']?.toString() ?? '',
               field: 'city',
             ),
             _editableInfoTile(
               context,
               title: 'Nationality',
-              value: userData['nationality']?.toString() ?? '',
+              value: _editedValues['nationality'] ?? userData['nationality']?.toString() ?? '',
               field: 'nationality',
             ),
-            _infoTile(
-              title: 'Dietary Restrictions',
-              value: userData['dietaryRestriction']?.toString() ?? 'None',
+            GestureDetector(
+              onTap: _showDietaryRestrictionsDialog,
+              child: _infoTile(
+                title: 'Dietary Restrictions',
+                value: _editedValues.containsKey('dietaryRestriction')
+                    ? (_editedValues['dietaryRestriction'] ?? 'None')
+                    : (userData['dietaryRestriction']?.toString() ?? 'None'),
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Perform bulk update if needed
-              },
+              onPressed: _updateProfile,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.yellowAccent,
                 foregroundColor: Colors.black,
                 elevation: 3,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 textStyle: const TextStyle(
                   fontFamily: 'Orbitron',
                   fontWeight: FontWeight.bold,
@@ -236,11 +392,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _editableInfoTile(
-      BuildContext context, {
-      required String title,
-      required String value,
-      required String field,
-    }) {
+    BuildContext context, {
+    required String title,
+    required String value,
+    required String field,
+  }) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -278,7 +434,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           IconButton(
             icon: const Icon(Icons.edit, size: 20),
-            onPressed: () => _showEditDialog(context, title, value),
+            onPressed: () => _showEditDialog(context, field, value),
           )
         ],
       ),
@@ -321,6 +477,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
+          const Icon(Icons.edit, size: 20),
         ],
       ),
     );

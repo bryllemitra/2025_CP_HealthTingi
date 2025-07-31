@@ -367,3 +367,4 @@ class _MealSearchPageState extends State<MealSearchPage> {
     );
   }
 }
+

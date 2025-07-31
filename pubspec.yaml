@@ -35,6 +35,8 @@ dependencies:
   sqflite: ^2.3.0
   path: ^1.8.0
   crypto: ^3.0.0
+  font_awesome_flutter: ^10.6.0
+  image_picker: ^1.0.4
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -118,6 +120,7 @@ flutter:
     - assets/sinigang.jpg
     - assets/tortang_sayote.jpg
     - assets/logo.png
+    - assets/chef.jpg
 
     - assets/fonts/
 

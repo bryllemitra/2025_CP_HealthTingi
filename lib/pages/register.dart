@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
-import 'dart:convert'; // for the utf8.encode method
+import 'dart:convert';
 import 'login.dart';
 import '../information/terms_and_cond.dart';
 import '../database/db_helper.dart';
@@ -15,9 +15,10 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   bool hasDietaryRestrictions = false;
-  String selectedDietaryRestriction = '';
+  List<String> selectedDietaryRestrictions = [];
   bool agreeToTerms = false;
   bool _isLoading = false;
+  final TextEditingController _otherRestrictionController = TextEditingController();
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController middleNameController = TextEditingController();
@@ -29,7 +30,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void dispose() {
-    // Clear all controllers to prevent memory leaks
     firstNameController.dispose();
     middleNameController.dispose();
     lastNameController.dispose();
@@ -37,27 +37,69 @@ class _RegisterPageState extends State<RegisterPage> {
     usernameController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    _otherRestrictionController.dispose();
     super.dispose();
   }
 
-  // Password hashing function
   String _hashPassword(String password) {
-    var bytes = utf8.encode(password); // Convert password to bytes
-    var digest = sha256.convert(bytes); // Create SHA-256 hash
-    return digest.toString(); // Return the hashed password
+    var bytes = utf8.encode(password);
+    var digest = sha256.convert(bytes);
+    return digest.toString();
   }
 
-  // Email validation
   bool _validateEmail(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
-  // Password strength validation
   bool _validatePasswordStrength(String password) {
     return password.length >= 8 &&
-        RegExp(r'[A-Z]').hasMatch(password) && // At least one uppercase
-        RegExp(r'[a-z]').hasMatch(password) && // At least one lowercase
-        RegExp(r'[0-9]').hasMatch(password); // At least one number
+        RegExp(r'[A-Z]').hasMatch(password) &&
+        RegExp(r'[a-z]').hasMatch(password) &&
+        RegExp(r'[0-9]').hasMatch(password);
+  }
+
+  Future<void> _addCustomRestriction() async {
+    if (_otherRestrictionController.text.trim().isEmpty) return;
+
+    setState(() {
+      selectedDietaryRestrictions.add(_otherRestrictionController.text.trim());
+      _otherRestrictionController.clear();
+    });
+
+    // Hide the keyboard
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
+  Future<void> _showCustomRestrictionDialog() async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add Custom Restriction'),
+          content: TextField(
+            controller: _otherRestrictionController,
+            decoration: const InputDecoration(
+              hintText: 'Enter your dietary restriction',
+              border: OutlineInputBorder(),
+            ),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _addCustomRestriction();
+                Navigator.pop(context);
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _submitForm() async {
@@ -93,10 +135,16 @@ class _RegisterPageState extends State<RegisterPage> {
         return;
       }
 
+      if (hasDietaryRestrictions && selectedDietaryRestrictions.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select at least one dietary restriction.')),
+        );
+        return;
+      }
+
       setState(() => _isLoading = true);
 
       try {
-        // Check if email or username already exists
         final dbHelper = DatabaseHelper();
         final emailExists = await dbHelper.getUserByEmail(emailController.text);
         final usernameExists = await dbHelper.getUserByUsername(usernameController.text);
@@ -115,16 +163,17 @@ class _RegisterPageState extends State<RegisterPage> {
           return;
         }
 
-        // Register the user with hashed password
         final user = {
           'firstName': _sanitizeInput(firstNameController.text),
           'middleName': _sanitizeInput(middleNameController.text),
           'lastName': _sanitizeInput(lastNameController.text),
           'emailAddress': _sanitizeInput(emailController.text),
           'username': _sanitizeInput(usernameController.text),
-          'password': _hashPassword(passwordController.text), // Hashing the password
+          'password': _hashPassword(passwordController.text),
           'hasDietaryRestriction': hasDietaryRestrictions ? 1 : 0,
-          'dietaryRestriction': hasDietaryRestrictions ? _sanitizeInput(selectedDietaryRestriction) : null,
+          'dietaryRestriction': hasDietaryRestrictions 
+              ? selectedDietaryRestrictions.join(', ') 
+              : null,
           'favorites': null,
           'age': null,
           'gender': null,
@@ -155,7 +204,6 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  // Basic input sanitization
   String _sanitizeInput(String input) {
     return input
       .replaceAll('<', '')
@@ -293,31 +341,78 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     if (hasDietaryRestrictions) ...[
                       const SizedBox(height: 8),
-                      const Text('Please select your dietary restriction:'),
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                        ),
-                        hint: const Text('Select one'),
-                        items: [
+                      const Text('Please select your dietary restriction(s):'),
+                      Wrap(
+                        spacing: 8.0,
+                        children: [
                           'Vegan',
                           'Vegetarian',
                           'Gluten-Free',
                           'Lactose Intolerant',
+                          'Halal',
+                          'Kosher',
+                          'Nut Allergy',
+                          'Shellfish Allergy',
                         ].map((restriction) {
-                          return DropdownMenuItem<String>(
-                            value: restriction,
-                            child: Text(restriction),
+                          return FilterChip(
+                            label: Text(restriction),
+                            selected: selectedDietaryRestrictions.contains(restriction),
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  selectedDietaryRestrictions.add(restriction);
+                                } else {
+                                  selectedDietaryRestrictions.remove(restriction);
+                                }
+                              });
+                            },
                           );
                         }).toList(),
-                        onChanged: (val) => setState(() => selectedDietaryRestriction = val!),
-                        validator: (value) {
-                          if (hasDietaryRestrictions && (value == null || value.isEmpty)) {
-                            return 'Please select a dietary restriction';
-                          }
-                          return null;
-                        },
                       ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8.0,
+                        children: [
+                          ActionChip(
+                            label: const Text('Other...'),
+                            onPressed: _showCustomRestrictionDialog,
+                            avatar: const Icon(Icons.add),
+                          ),
+                          if (selectedDietaryRestrictions.isNotEmpty)
+                            ActionChip(
+                              label: const Text('Clear All'),
+                              onPressed: () {
+                                setState(() {
+                                  selectedDietaryRestrictions.clear();
+                                });
+                              },
+                              backgroundColor: Colors.red[100],
+                              avatar: const Icon(Icons.clear, color: Colors.red),
+                            ),
+                        ],
+                      ),
+                      if (selectedDietaryRestrictions.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        const Text('Selected Restrictions:'),
+                        Wrap(
+                          spacing: 8.0,
+                          children: selectedDietaryRestrictions.map((restriction) {
+                            return Chip(
+                              label: Text(restriction),
+                              onDeleted: () {
+                                setState(() {
+                                  selectedDietaryRestrictions.remove(restriction);
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                      if (selectedDietaryRestrictions.isEmpty && hasDietaryRestrictions)
+                        const Text(
+                          'Please select at least one dietary restriction',
+                          style: TextStyle(color: Colors.red),
+                        ),
                     ],
 
                     const SizedBox(height: 12),

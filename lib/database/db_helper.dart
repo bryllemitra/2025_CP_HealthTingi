@@ -4,7 +4,7 @@ import 'package:path/path.dart';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _currentVersion = 4; // Updated version for picture additions
+  static const int _currentVersion = 5; 
 
   factory DatabaseHelper() => _instance;
 
