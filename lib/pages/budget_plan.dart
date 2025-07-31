@@ -304,7 +304,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: meal['mealPicture'] != null
-                  ? Image.network(
+                  ? Image.asset(
                       meal['mealPicture'],
                       width: 80,
                       height: 60,
@@ -313,14 +313,14 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                         width: 80,
                         height: 60,
                         color: Colors.grey[200],
-                        child: const Icon(Icons.fastfood),
+                        child: const Icon(Icons.fastfood, color: Colors.grey),
                       ),
                     )
                   : Container(
                       width: 80,
                       height: 60,
                       color: Colors.grey[200],
-                      child: const Icon(Icons.fastfood),
+                      child: const Icon(Icons.fastfood, color: Colors.grey),
                     ),
             ),
             const SizedBox(width: 12),
@@ -347,7 +347,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right),
+            const Icon(Icons.chevron_right, color: Colors.black54),
           ],
         ),
       ),
