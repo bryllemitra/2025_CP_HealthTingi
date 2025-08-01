@@ -6,10 +6,12 @@ import 'home.dart';
 import 'budget_plan.dart';
 import '../searchIngredient/meal_search.dart';
 import 'navigation.dart';
-import '../mealScanner/success.dart'; // ✅ For success page
+import '../mealScanner/success.dart';
 
 class MealScanPage extends StatefulWidget {
-  const MealScanPage({super.key});
+  final int userId;
+
+  const MealScanPage({super.key, required this.userId});
 
   @override
   State<MealScanPage> createState() => _MealScanPageState();
@@ -18,6 +20,7 @@ class MealScanPage extends StatefulWidget {
 class _MealScanPageState extends State<MealScanPage> {
   CameraController? _controller;
   late Future<void> _initializeControllerFuture;
+  bool _isFlashOn = false;
 
   @override
   void initState() {
@@ -26,14 +29,42 @@ class _MealScanPageState extends State<MealScanPage> {
   }
 
   Future<void> _initializeCamera() async {
-    final cameras = await availableCameras();
-    final camera = cameras.first;
+    try {
+      final cameras = await availableCameras();
+      final camera = cameras.first;
 
-    _controller = CameraController(camera, ResolutionPreset.medium);
-    _initializeControllerFuture = _controller!.initialize();
+      _controller = CameraController(
+        camera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+      _initializeControllerFuture = _controller!.initialize();
 
-    if (mounted) {
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      debugPrint('Camera initialization error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to initialize camera')),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleFlash() async {
+    try {
+      if (_controller == null || !_controller!.value.isInitialized) return;
+
+      await _controller!.setFlashMode(
+        _isFlashOn ? FlashMode.off : FlashMode.torch,
+      );
+      setState(() {
+        _isFlashOn = !_isFlashOn;
+      });
+    } catch (e) {
+      debugPrint('Flash toggle error: $e');
     }
   }
 
@@ -43,11 +74,12 @@ class _MealScanPageState extends State<MealScanPage> {
     super.dispose();
   }
 
-  // ✅ For capturing image via camera
   Future<void> _captureImage() async {
     try {
       await _initializeControllerFuture;
       final image = await _controller!.takePicture();
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Image captured!')),
@@ -55,39 +87,56 @@ class _MealScanPageState extends State<MealScanPage> {
 
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const ScanSuccessPage()),
+        MaterialPageRoute(
+          builder: (context) => ScanSuccessPage(userId: widget.userId),
+        ),
       );
     } catch (e) {
       debugPrint('Error taking picture: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to capture image.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to capture image')),
+        );
+      }
     }
   }
 
-  // ✅ For picking image from gallery
   Future<void> _pickImageFromGallery() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      debugPrint('Gallery image path: ${pickedFile.path}');
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const ScanSuccessPage()),
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No image selected.')),
-      );
+
+      if (pickedFile != null && mounted) {
+        debugPrint('Gallery image path: ${pickedFile.path}');
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ScanSuccessPage(userId: widget.userId),
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No image selected')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Gallery pick error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to pick image')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const NavigationDrawerWidget(),
+      drawer: NavigationDrawerWidget(userId: widget.userId,),
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -104,10 +153,11 @@ class _MealScanPageState extends State<MealScanPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.lightbulb_outline, color: Colors.white),
-            onPressed: () {
-              // Optional tooltip
-            },
+            icon: Icon(
+              _isFlashOn ? Icons.flash_on : Icons.flash_off,
+              color: Colors.white,
+            ),
+            onPressed: _toggleFlash,
           ),
         ],
       ),
@@ -118,29 +168,56 @@ class _MealScanPageState extends State<MealScanPage> {
               future: _initializeControllerFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.done) {
-                  return CameraPreview(_controller!);
+                  if (_controller != null && _controller!.value.isInitialized) {
+                    return CameraPreview(_controller!);
+                  } else {
+                    return const Center(
+                      child: Text(
+                        'Camera not available',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
                 } else {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  );
                 }
               },
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                onPressed: _captureImage,
-                icon: const Icon(Icons.camera, size: 40, color: Colors.white),
-              ),
-              const SizedBox(width: 30),
-              IconButton(
-                onPressed: _pickImageFromGallery,
-                icon: const Icon(Icons.image, size: 32, color: Colors.white),
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                IconButton(
+                  onPressed: _pickImageFromGallery,
+                  icon: const Icon(Icons.photo_library, size: 32),
+                  color: Colors.white,
+                ),
+                GestureDetector(
+                  onTap: _captureImage,
+                  child: Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 4),
+                    ),
+                    child: const Icon(
+                      Icons.camera,
+                      size: 40,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 48), // Placeholder for balance
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -151,32 +228,57 @@ class _MealScanPageState extends State<MealScanPage> {
         onTap: (index) {
           switch (index) {
             case 0:
-              break;
+              break; // Already on scan page
             case 1:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const HomePage(title: 'Search Meals')),
+                MaterialPageRoute(
+                  builder: (context) => HomePage(
+                    title: 'HealthTingi',
+                    userId: widget.userId,
+                  ),
+                ),
               );
               break;
             case 2:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const MealSearchPage()),
+                MaterialPageRoute(
+                  builder: (context) => MealSearchPage(
+                    userId: widget.userId,
+                  ),
+                ),
               );
               break;
             case 3:
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const BudgetPlanPage()),
+                MaterialPageRoute(
+                  builder: (context) => BudgetPlanPage(
+                    userId: widget.userId,
+                  ),
+                ),
               );
               break;
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined), label: 'Recipes'),
-          BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Budget'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.camera_alt),
+            label: 'Scan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu_book_outlined),
+            label: 'Recipes',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.currency_ruble),
+            label: 'Budget',
+          ),
         ],
       ),
     );

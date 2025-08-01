@@ -6,7 +6,9 @@ import '../pages/meal_scan.dart';
 import '../pages/meal_details.dart';
 
 class MealSearchPage extends StatefulWidget {
-  const MealSearchPage({super.key});
+  final int userId;
+
+  const MealSearchPage({super.key, required this.userId});
 
   @override
   State<MealSearchPage> createState() => _MealSearchPageState();
@@ -42,7 +44,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
     });
   }
 
-  // Get current Philippine time (UTC+8)
   DateTime _getPhilippineTime() {
     return DateTime.now().toUtc().add(const Duration(hours: 8));
   }
@@ -161,10 +162,15 @@ class _MealSearchPageState extends State<MealSearchPage> {
                         child: const Icon(Icons.fastfood),
                       ),
               ),
-              const Positioned(
+              Positioned(
                 top: 6,
                 right: 6,
-                child: Icon(Icons.star_border, color: Colors.white),
+                child: IconButton(
+                  icon: const Icon(Icons.star_border, color: Colors.white),
+                  onPressed: () {
+                    // Add to favorites functionality here
+                  },
+                ),
               ),
             ],
           ),
@@ -173,16 +179,22 @@ class _MealSearchPageState extends State<MealSearchPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(meal['mealName'],
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(
+                  meal['mealName'],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold, 
+                    fontSize: 14
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
                     const Icon(Icons.access_time, size: 12),
                     const SizedBox(width: 4),
-                    Text("Est. ${meal['cookingTime']}",
-                        style: const TextStyle(fontSize: 10)),
+                    Text(
+                      "Est. ${meal['cookingTime']}",
+                      style: const TextStyle(fontSize: 10),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -194,7 +206,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
                     minimumSize: const Size.fromHeight(30),
                     textStyle: const TextStyle(fontSize: 12),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6)),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                     elevation: 0,
                   ),
                   onPressed: () {
@@ -203,6 +216,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                       MaterialPageRoute(
                         builder: (context) => MealDetailsPage(
                           mealId: meal['mealID'],
+                          userId: widget.userId,
                         ),
                       ),
                     );
@@ -229,11 +243,17 @@ class _MealSearchPageState extends State<MealSearchPage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 18)),
-              const Text("Browse All",
-                  style: TextStyle(fontSize: 12, color: Colors.black54)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold, 
+                  fontSize: 18
+                ),
+              ),
+              const Text(
+                "Browse All",
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+              ),
             ],
           ),
         ),
@@ -265,7 +285,10 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: const [
                     BoxShadow(
-                        color: Colors.black26, blurRadius: 4, offset: Offset(2, 2))
+                      color: Colors.black26, 
+                      blurRadius: 4, 
+                      offset: Offset(2, 2)
+                    )
                   ],
                 ),
                 child: TextField(
@@ -309,7 +332,10 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   return ListView(
                     children: [
                       if (sortedCurrentMeals.isNotEmpty)
-                        _buildSection(_getMealTimeGreeting(currentTime), sortedCurrentMeals),
+                        _buildSection(
+                          _getMealTimeGreeting(currentTime), 
+                          sortedCurrentMeals
+                        ),
                       if (sortedOtherMeals.isNotEmpty)
                         _buildSection("Other Meal Options", sortedOtherMeals),
                       if (filteredMeals.isEmpty)
@@ -321,7 +347,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
                         ),
                     ],
                   );
-                }),
+                },
+              ),
             ),
           ],
         ),
@@ -336,14 +363,20 @@ class _MealSearchPageState extends State<MealSearchPage> {
             case 0:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const MealScanPage()),
+                MaterialPageRoute(
+                  builder: (context) => MealScanPage(userId: widget.userId),
+                ),
               );
               break;
             case 1:
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const HomePage(title: 'HealthTingi')),
+                  builder: (context) => HomePage(
+                    title: 'HealthTingi',
+                    userId: widget.userId,
+                  ),
+                ),
                 (route) => false,
               );
               break;
@@ -352,7 +385,9 @@ class _MealSearchPageState extends State<MealSearchPage> {
             case 3:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const BudgetPlanPage()),
+                MaterialPageRoute(
+                  builder: (context) => BudgetPlanPage(userId: widget.userId),
+                ),
               );
               break;
           }
@@ -361,10 +396,12 @@ class _MealSearchPageState extends State<MealSearchPage> {
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Recipes'),
-          BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Budget'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.currency_ruble), 
+            label: 'Budget'
+          ),
         ],
       ),
     );
   }
 }
-

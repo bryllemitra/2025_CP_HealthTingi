@@ -8,7 +8,9 @@ import 'navigation.dart';
 import 'meal_details.dart';
 
 class BudgetPlanPage extends StatefulWidget {
-  const BudgetPlanPage({super.key});
+  final int userId;
+
+  const BudgetPlanPage({super.key, required this.userId});
 
   @override
   State<BudgetPlanPage> createState() => _BudgetPlanPageState();
@@ -34,7 +36,6 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
 
   Future<List<Map<String, dynamic>>> _fetchMeals() async {
     final meals = await _dbHelper.getAllMeals();
-    // Ensure all prices are treated as doubles
     return meals.map((meal) {
       if (meal['price'] is int) {
         meal['price'] = (meal['price'] as int).toDouble();
@@ -63,8 +64,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
   List<Map<String, dynamic>> _groupMealsByPriceRange(
       List<Map<String, dynamic>> meals) {
     final groupedMeals = <Map<String, dynamic>>[];
-
-    final List<Map<String, dynamic>> priceRanges = [
+    final priceRanges = [
       {'min': 0.0, 'max': 50.0, 'label': '50'},
       {'min': 51.0, 'max': 70.0, 'label': '70'},
       {'min': 71.0, 'max': 100.0, 'label': '100'},
@@ -88,6 +88,117 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
     }
 
     return groupedMeals;
+  }
+
+  Widget _buildMealCard(BuildContext context, Map<String, dynamic> meal) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MealDetailsPage(
+              mealId: meal['mealID'],
+              userId: widget.userId,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 3,
+              offset: Offset(1, 2),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: meal['mealPicture'] != null
+                  ? Image.asset(
+                      meal['mealPicture'],
+                      width: 80,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 80,
+                        height: 60,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.fastfood, color: Colors.grey),
+                      ),
+                    )
+                  : Container(
+                      width: 80,
+                      height: 60,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.fastfood, color: Colors.grey),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    meal['mealName'],
+                    style: const TextStyle(
+                      fontFamily: 'Orbitron',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    "Php ${meal['price'].toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontFamily: 'Orbitron',
+                      fontSize: 12,
+                      color: Colors.black54,
+                    ),
+                  )
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.black54),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBudgetSection(
+      BuildContext context, Map<String, dynamic> section) {
+    final meals = section['meals'] as List<Map<String, dynamic>>;
+    if (meals.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          "Meals at Php ${section['budget']}",
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Orbitron',
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...meals.map((meal) => _buildMealCard(context, meal)).toList(),
+        const SizedBox(height: 8),
+        const Align(
+          alignment: Alignment.centerRight,
+          child: Text("See more →", style: TextStyle(fontFamily: 'Orbitron')),
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
   }
 
   @override
@@ -116,7 +227,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
         ],
         elevation: 0,
       ),
-      drawer: const NavigationDrawerWidget(),
+      drawer: NavigationDrawerWidget(userId: widget.userId,),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -214,21 +325,28 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
             case 0:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const MealScanPage()),
+                MaterialPageRoute(
+                  builder: (context) => MealScanPage(userId: widget.userId)),
               );
               break;
             case 1:
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const HomePage(title: 'HealthTingi')),
+                  builder: (context) => HomePage(
+                    title: 'HealthTingi',
+                    userId: widget.userId,
+                  ),
+                ),
                 (route) => false,
               );
               break;
             case 2:
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const MealSearchPage()),
+                MaterialPageRoute(
+                  builder: (context) => MealSearchPage(userId: widget.userId),
+                ),
               );
               break;
             case 3:
@@ -242,114 +360,6 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
           BottomNavigationBarItem(
               icon: Icon(Icons.currency_ruble), label: 'Budget'),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBudgetSection(
-      BuildContext context, Map<String, dynamic> section) {
-    final meals = section['meals'] as List<Map<String, dynamic>>;
-    if (meals.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 16),
-        Text(
-          "Meals at Php ${section['budget']}",
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Orbitron',
-          ),
-        ),
-        const SizedBox(height: 12),
-        ...meals.map<Widget>((meal) => _buildMealCard(context, meal)).toList(),
-        const SizedBox(height: 8),
-        const Align(
-          alignment: Alignment.centerRight,
-          child: Text("See more →", style: TextStyle(fontFamily: 'Orbitron')),
-        ),
-        const SizedBox(height: 12),
-      ],
-    );
-  }
-
-  Widget _buildMealCard(BuildContext context, Map<String, dynamic> meal) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MealDetailsPage(mealId: meal['mealID']),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 3,
-              offset: Offset(1, 2),
-            )
-          ],
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: meal['mealPicture'] != null
-                  ? Image.asset(
-                      meal['mealPicture'],
-                      width: 80,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 80,
-                        height: 60,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.fastfood, color: Colors.grey),
-                      ),
-                    )
-                  : Container(
-                      width: 80,
-                      height: 60,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.fastfood, color: Colors.grey),
-                    ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    meal['mealName'],
-                    style: const TextStyle(
-                      fontFamily: 'Orbitron',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  Text(
-                    "Php ${meal['price'].toStringAsFixed(2)}",
-                    style: const TextStyle(
-                      fontFamily: 'Orbitron',
-                      fontSize: 12,
-                      color: Colors.black54,
-                    ),
-                  )
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.black54),
-          ],
-        ),
       ),
     );
   }

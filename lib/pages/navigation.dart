@@ -5,7 +5,8 @@ import '../information/fAQs.dart';
 import 'index.dart'; // ✅ Import IndexPage here
 
 class NavigationDrawerWidget extends StatelessWidget {
-  const NavigationDrawerWidget({super.key});
+  final int userId;
+  const NavigationDrawerWidget({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +54,7 @@ class NavigationDrawerWidget extends StatelessWidget {
           case 'Profile':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ProfilePage()),
+              MaterialPageRoute(builder: (context) => ProfilePage(userId: userId,)),
             );
             break;
           case 'About Us':

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'scanned_ingredient.dart';
 
 class ScanSuccessPage extends StatelessWidget {
-  const ScanSuccessPage({super.key});
+  final int userId;
+
+  const ScanSuccessPage({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -37,14 +39,16 @@ class ScanSuccessPage extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32, 
+                  vertical: 12,
+                ),
               ),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ScannedIngredientPage(),
+                    builder: (context) => ScannedIngredientPage(userId: userId),
                   ),
                 );
               },
@@ -55,6 +59,21 @@ class ScanSuccessPage extends StatelessWidget {
                   fontSize: 16,
                   color: Colors.black,
                   letterSpacing: 1.2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Go back to camera screen
+              },
+              child: const Text(
+                'SCAN AGAIN',
+                style: TextStyle(
+                  fontFamily: 'Courier',
+                  fontSize: 14,
+                  color: Colors.black54,
+                  decoration: TextDecoration.underline,
                 ),
               ),
             ),

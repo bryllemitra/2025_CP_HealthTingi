@@ -2,36 +2,40 @@ import 'package:flutter/material.dart';
 import '../pages/meal_scan.dart';
 
 class ScannedIngredientPage extends StatelessWidget {
-  const ScannedIngredientPage({super.key});
+  final int userId;
+
+  const ScannedIngredientPage({super.key, required this.userId});
 
   @override
-    Widget build(BuildContext context) {
-      final ingredients = ['Chicken', 'Sayote', 'Petchay'];
+  Widget build(BuildContext context) {
+    final ingredients = ['Chicken', 'Sayote', 'Petchay'];
 
-      return Scaffold(
+    return Scaffold(
+      backgroundColor: const Color(0xFFEDEBD1),
+      appBar: AppBar(
         backgroundColor: const Color(0xFFEDEBD1),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFFEDEBD1),
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const MealScanPage()),
-              );
-            },
-          ),
-          title: const Text(
-            "Ingredient/s",
-            style: TextStyle(
-              fontFamily: 'Orbitron',
-              color: Colors.black,
-              fontSize: 20,
-            ),
-          ),
-          centerTitle: true,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MealScanPage(userId: userId),
+              ),
+            );
+          },
         ),
+        title: const Text(
+          "Ingredient/s",
+          style: TextStyle(
+            fontFamily: 'Orbitron',
+            color: Colors.black,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
@@ -141,7 +145,7 @@ class ScannedIngredientPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          "A classic Filipino comfort dish — a light, gingery chicken soup that’s both nourishing and flavorful.",
+                          "A classic Filipino comfort dish — a light, gingery chicken soup that's both nourishing and flavorful.",
                           style: TextStyle(fontSize: 12),
                         ),
                         const SizedBox(height: 8),
@@ -153,7 +157,7 @@ class ScannedIngredientPage extends StatelessWidget {
                                 horizontal: 10, vertical: 2),
                           ),
                           onPressed: () {
-                            // TODO: Navigate to recipe detail
+                            // TODO: Navigate to recipe detail with userId
                           },
                           child: const Text(
                             'View Recipe →',
@@ -170,7 +174,7 @@ class ScannedIngredientPage extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: Image.asset(
-                      'assets/tinolang_manok.jpg', // Make sure this image is added in assets
+                      'assets/tinolang_manok.jpg',
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,

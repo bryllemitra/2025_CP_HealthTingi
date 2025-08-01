@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'pages/home.dart';
-//import 'pages/meal_details.dart';
 import 'pages/reverse_ingredient.dart';
-import 'pages/index.dart'; 
+import 'pages/index.dart';
 import 'pages/login.dart';
 import 'pages/register.dart';
+import 'pages/meal_scan.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,13 +23,23 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellowAccent),
       ),
-      home: const IndexPage(), // Set IndexPage as the initial page
+      initialRoute: '/',
       routes: {
-        //'/meal-details': (context) => const MealDetailsPage(),
+        '/': (context) => const IndexPage(),
+        '/home': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return HomePage(
+            title: 'HealthTingi',
+            userId: args['userId'],
+          );
+        },
+        '/login': (context) => const LoginPage(),
+        '/register': (context) => const RegisterPage(),
+        '/meal-scan': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return MealScanPage(userId: args['userId']);
+        },
         '/reverse-ingredient': (context) => const ReverseIngredientPage(),
-        '/home': (context) => const HomePage(title: 'HealthTingi'),
-        '/login': (context) => const LoginPage(),      
-        '/register': (context) => const RegisterPage(), 
       },
     );
   }

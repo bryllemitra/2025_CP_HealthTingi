@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
+import '../searchIngredient/favorites.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final int userId;
+  const ProfilePage({super.key, required this.userId});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -289,7 +291,7 @@ class _ProfilePageState extends State<ProfilePage> {
             _menuTile(
               title: 'Saved Recipes',
               onTap: () {
-                // Navigate to saved recipes
+                Navigator.push(context, MaterialPageRoute(builder: (context) => FavoritesPage(userId: widget.userId)));
               },
             ),
             const Divider(thickness: 1),

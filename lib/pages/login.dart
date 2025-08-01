@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
-import 'dart:convert'; // for the utf8.encode method
+import 'dart:convert';
 import 'register.dart';
 import 'meal_scan.dart';
 import '../database/db_helper.dart';
@@ -19,14 +19,12 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  // Password hashing function (must match the one used in register.dart)
   String _hashPassword(String password) {
     var bytes = utf8.encode(password);
     var digest = sha256.convert(bytes);
     return digest.toString();
   }
 
-  // Basic input sanitization
   String _sanitizeInput(String input) {
     return input
       .replaceAll('<', '')
@@ -45,15 +43,13 @@ class _LoginPageState extends State<LoginPage> {
         final String input = _sanitizeInput(_emailOrUsernameController.text.trim());
         final String hashedPassword = _hashPassword(_passwordController.text);
 
-        // Try to find user by email first
         Map<String, dynamic>? user = await dbHelper.getUserByEmail(input);
         
-        // If not found by email, try by username
         if (user == null) {
           user = await dbHelper.getUserByUsername(input);
         }
 
-        if (user == null) {
+        if (user == null || user['password'] != hashedPassword) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Invalid credentials - please try again'),
@@ -63,21 +59,17 @@ class _LoginPageState extends State<LoginPage> {
           return;
         }
 
-        // Compare hashed passwords
-        if (user['password'] != hashedPassword) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invalid credentials - please try again'),
-              duration: Duration(seconds: 3),
-            ),
-          );
-          return;
-        }
+        // Add debug print to verify the user ID
+        print('User ID: ${user['id']} (Type: ${user['id'].runtimeType})');
 
-        // Successful login
+        // Explicitly convert the ID to int if it's not already
+        final userId = user['id'] is int ? user['id'] : int.parse(user['id'].toString());
+
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const MealScanPage()),
+          MaterialPageRoute(
+            builder: (context) => MealScanPage(userId: userId),
+          ),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -105,14 +97,11 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo
                   Image.asset(
                     'assets/logo.png',
                     height: 150,
                   ),
                   const SizedBox(height: 20),
-
-                  // App title
                   const Text(
                     'HealthTingi',
                     style: TextStyle(
@@ -122,8 +111,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 40),
-
-                  // Email or Username field
                   Row(
                     children: [
                       const Icon(Icons.person_outline),
@@ -153,8 +140,6 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // Password field
                   Row(
                     children: [
                       const Icon(Icons.lock_outline),
@@ -197,8 +182,6 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                   const SizedBox(height: 10),
-
-                  // Forgot password
                   Align(
                     alignment: Alignment.centerRight,
                     child: Text(
@@ -210,8 +193,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // Login button
                   ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
@@ -244,8 +225,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                   ),
                   const SizedBox(height: 20),
-
-                  // Sign up
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -262,7 +241,9 @@ class _LoginPageState extends State<LoginPage> {
                             : () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const RegisterPage()),
+                                  MaterialPageRoute(
+                                    builder: (context) => const RegisterPage(),
+                                  ),
                                 );
                               },
                         child: const Text(
