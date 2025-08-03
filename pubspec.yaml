@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  timezone: ^0.9.1
   flutter:
     sdk: flutter
   camera: ^0.10.5+2 # check for latest version
@@ -35,8 +36,12 @@ dependencies:
   sqflite: ^2.3.0
   path: ^1.8.0
   crypto: ^3.0.0
+  http: ^1.2.1
   font_awesome_flutter: ^10.6.0
   image_picker: ^1.0.4
+  image: ^4.0.15
+  #tflite_flutter_plus: ^0.0.1
+
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -116,13 +121,21 @@ flutter:
     - assets/binignit.jpg
     - assets/chopsuey.jpg
     - assets/halo_halo.jpg
-    - assets/saging prito.jpg
+    - assets/saging_prito.jpg
     - assets/sinigang.jpg
     - assets/tortang_sayote.jpg
     - assets/logo.png
     - assets/chef.jpg
+    - assets/adobong_baboy.jpg
+    - assets/adobong_pusit.jpg
+    - assets/ginataang_alimango.jpg
+    - assets/sinigang_na_baboy.jpg
+    - assets/sinigang_na_hipon.jpg
+    - assets/sinigang_na_isda.jpg
+    - assets/fried_egg_malunggay.jpg
 
     - assets/fonts/
+    #- assets/model/best_float32.tflite
 
   fonts:
     - family: Orbitron
