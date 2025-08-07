@@ -19,18 +19,30 @@ class _MealSearchPageState extends State<MealSearchPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  Set<int> _favoriteMealIds = {};
 
   @override
   void initState() {
     super.initState();
     _mealsFuture = _fetchMeals();
     _searchController.addListener(_onSearchChanged);
+    _loadUserFavorites();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserFavorites() async {
+    final user = await _dbHelper.getUserById(widget.userId);
+    if (user != null && user['favorites'] != null) {
+      final favorites = user['favorites'].toString();
+      setState(() {
+        _favoriteMealIds = favorites.split(',').where((id) => id.isNotEmpty).map(int.parse).toSet();
+      });
+    }
   }
 
   Future<List<Map<String, dynamic>>> _fetchMeals() async {
@@ -42,6 +54,34 @@ class _MealSearchPageState extends State<MealSearchPage> {
     setState(() {
       _searchQuery = _searchController.text.toLowerCase();
     });
+  }
+
+  Future<void> _toggleFavorite(int mealId) async {
+    try {
+      final user = await _dbHelper.getUserById(widget.userId);
+      if (user == null) return;
+
+      final isFavorite = _favoriteMealIds.contains(mealId);
+      final newFavorites = Set<int>.from(_favoriteMealIds);
+
+      if (isFavorite) {
+        newFavorites.remove(mealId);
+      } else {
+        newFavorites.add(mealId);
+      }
+
+      await _dbHelper.updateUser(widget.userId, {
+        'favorites': newFavorites.join(','),
+      });
+
+      setState(() {
+        _favoriteMealIds = newFavorites;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update favorites: ${e.toString()}')),
+      );
+    }
   }
 
   DateTime _getPhilippineTime() {
@@ -126,6 +166,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
   }
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
+    final isFavorite = _favoriteMealIds.contains(meal['mealID']);
+    
     return Container(
       width: 155,
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
@@ -165,11 +207,13 @@ class _MealSearchPageState extends State<MealSearchPage> {
               Positioned(
                 top: 6,
                 right: 6,
-                child: IconButton(
-                  icon: const Icon(Icons.star_border, color: Colors.white),
-                  onPressed: () {
-                    // Add to favorites functionality here
-                  },
+                child: GestureDetector(
+                  onTap: () => _toggleFavorite(meal['mealID']),
+                  child: Icon(
+                    isFavorite ? Icons.star : Icons.star_border,
+                    color: isFavorite ? Colors.yellow : Colors.white,
+                    size: 22,
+                  ),
                 ),
               ),
             ],
@@ -288,7 +332,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                       color: Colors.black26, 
                       blurRadius: 4, 
                       offset: Offset(2, 2)
-                    )
+                    ),
                   ],
                 ),
                 child: TextField(

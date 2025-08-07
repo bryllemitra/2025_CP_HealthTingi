@@ -25,6 +25,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
   void initState() {
     super.initState();
     _loadData();
+    _trackMealView();
   }
 
   Future<void> _loadData() async {
@@ -75,20 +76,20 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       final dbHelper = DatabaseHelper();
       final meal = await dbHelper.getMealById(widget.mealId);
       final ingredients = await dbHelper.getMealIngredients(widget.mealId);
-      
-      if (meal == null) {
-        throw Exception('Meal not found');
-      }
+      final user = await dbHelper.getUserById(widget.userId);
+
+      if (meal == null) throw Exception('Meal not found');
+      if (user == null) throw Exception('User not found');
 
       return {
         ...meal,
         'ingredients': ingredients,
+        'hasRestriction': (user['hasDietaryRestriction'] ?? 0) == 1,
+        'restriction': user['dietaryRestriction'] ?? '',
       };
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _errorMessage = 'Failed to load meal: ${e.toString()}';
-        });
+        setState(() => _errorMessage = 'Failed to load meal: ${e.toString()}');
       }
       rethrow;
     }
@@ -148,6 +149,11 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     }
   }
 
+  Future<void> _trackMealView() async {
+    final dbHelper = DatabaseHelper();
+    await dbHelper.addToRecentlyViewed(widget.userId, widget.mealId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -175,7 +181,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(strokeWidth: 2),
-                  )  // Added this closing parenthesis
+                  )
                 : Icon(
                     _isFavorite ? Icons.star : Icons.star_border,
                     color: _isFavorite ? Colors.yellow : Colors.black,
@@ -241,7 +247,11 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                 }
 
                 final mealData = snapshot.data!;
+                final hasRestriction = mealData['hasRestriction'] ?? false;
+                final restriction = mealData['restriction'] ?? '';
                 final ingredients = mealData['ingredients'] as List<Map<String, dynamic>>;
+                final price = mealData['price'] ?? 0.0;
+                final categories = (mealData['category'] as String?)?.split(', ') ?? [];
                 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(12),
@@ -249,6 +259,48 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Meal Image Card
+                      if (hasRestriction)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.red[400],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(
+                                      fontFamily: 'Orbitron',
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                    ),
+                                    children: [
+                                      const TextSpan(text: '⚠️ Warning: '),
+                                      TextSpan(
+                                        text:
+                                            'If you have ',
+                                      ),
+                                      TextSpan(
+                                        text: restriction.isNotEmpty ? restriction : 'dietary restrictions',
+                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                      const TextSpan(
+                                        text:
+                                            ', we recommend choosing a healthier meal option. You may also consider cooking this dish for family or friends instead.',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -275,6 +327,40 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                 color: Colors.black54,
                               ),
                             ),
+                            const SizedBox(height: 4),
+                            // Add price display
+                            Text(
+                              'Price: Php ${price.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontFamily: 'Orbitron',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            // Add categories display
+                            if (categories.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  children: categories.map((category) {
+                                    return Chip(
+                                      label: Text(
+                                        category,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontFamily: 'Orbitron',
+                                        ),
+                                      ),
+                                      backgroundColor: const Color(0xFFE0E0E0),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
                           ],
                         ),
                       ),

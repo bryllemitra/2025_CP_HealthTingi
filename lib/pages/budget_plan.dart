@@ -21,6 +21,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
   late Future<List<Map<String, dynamic>>> _mealsFuture;
   final TextEditingController _budgetController = TextEditingController();
   String _searchQuery = '';
+  bool _showInfo = false;
 
   @override
   void initState() {
@@ -222,9 +223,17 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        actions: const [
-          Icon(Icons.info_outline, color: Colors.black),
-        ],
+        actions: [
+      IconButton(
+        icon: const Icon(Icons.info_outline, color: Colors.black),
+        onPressed: () {
+          setState(() {
+            _showInfo = !_showInfo;
+          });
+        },
+      ),
+    ],
+
         elevation: 0,
       ),
       drawer: NavigationDrawerWidget(userId: widget.userId,),
@@ -233,6 +242,32 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_showInfo)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black87,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(1, 2),
+                    ),
+                  ],
+                ),
+                child: const Text(
+                  'Enter your budget to get suggested meals that match or come close to it.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Orbitron',
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(

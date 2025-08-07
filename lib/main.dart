@@ -5,6 +5,7 @@ import 'pages/index.dart';
 import 'pages/login.dart';
 import 'pages/register.dart';
 import 'pages/meal_scan.dart';
+import 'searchIngredient/categories.dart';
 
 void main() {
   runApp(const MyApp());
@@ -40,6 +41,13 @@ class MyApp extends StatelessWidget {
           return MealScanPage(userId: args['userId']);
         },
         '/reverse-ingredient': (context) => const ReverseIngredientPage(),
+        '/searchIngredient/categories': (context) {
+        final args = ModalRoute.of(context)!.settings.arguments as Map;
+        return CategoryPage(
+          category: args['category'],
+          userId: args['userId'],
+        );
+      },
       },
     );
   }

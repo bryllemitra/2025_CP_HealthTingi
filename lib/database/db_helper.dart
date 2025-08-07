@@ -4,7 +4,7 @@ import 'package:path/path.dart';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _currentVersion = 6; 
+  static const int _currentVersion = 7; 
 
   factory DatabaseHelper() => _instance;
 
@@ -136,6 +136,7 @@ class DatabaseHelper {
         hasDietaryRestriction INTEGER DEFAULT 0,
         dietaryRestriction TEXT,
         favorites TEXT,
+        recentlyViewed TEXT,
         age INTEGER,
         gender TEXT,
         street TEXT,
@@ -2272,6 +2273,61 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<List<String>> getAllMealCategories() async {
+    final db = await database;
+    final meals = await db.query('meals');
+    
+    Set<String> uniqueCategories = {};
+    for (var meal in meals) {
+      final categories = (meal['category'] as String?)?.split(', ') ?? [];
+      uniqueCategories.addAll(categories);
+    }
+    
+    return uniqueCategories.toList()..sort();
+  }
+
+  // Add to database/db_helper.dart
+  Future<void> addToRecentlyViewed(int userId, int mealId) async {
+    final db = await database;
+    final user = await getUserById(userId);
+    if (user == null) return;
+
+    String recentlyViewed = user['recentlyViewed']?.toString() ?? '';
+    List<String> viewedList = recentlyViewed.split(',').where((id) => id.isNotEmpty).toList();
+
+    // Remove if already exists to avoid duplicates
+    viewedList.remove(mealId.toString());
+    // Add to beginning
+    viewedList.insert(0, mealId.toString());
+    // Keep only last 5
+    if (viewedList.length > 5) {
+      viewedList = viewedList.sublist(0, 5);
+    }
+
+    await db.update(
+      'users',
+      {'recentlyViewed': viewedList.join(',')},
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getRecentlyViewedMeals(int userId) async {
+    final db = await database;
+    final user = await getUserById(userId);
+    if (user == null) return [];
+
+    String recentlyViewed = user['recentlyViewed']?.toString() ?? '';
+    if (recentlyViewed.isEmpty) return [];
+
+    final viewedIds = recentlyViewed.split(',').map(int.parse).toList();
+    final allMeals = await getAllMeals();
+
+    return viewedIds.map((id) {
+      return allMeals.firstWhere((meal) => meal['mealID'] == id, orElse: () => {});
+    }).where((meal) => meal.isNotEmpty).toList();
   }
 
   // ========== UTILITY METHODS ==========

@@ -21,6 +21,7 @@ class _MealScanPageState extends State<MealScanPage> {
   CameraController? _controller;
   late Future<void> _initializeControllerFuture;
   bool _isFlashOn = false;
+  bool _showInfo = false;
 
   @override
   void initState() {
@@ -153,73 +154,109 @@ class _MealScanPageState extends State<MealScanPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: Icon(
-              _isFlashOn ? Icons.flash_on : Icons.flash_off,
-              color: Colors.white,
-            ),
-            onPressed: _toggleFlash,
+            icon: const Icon(Icons.info_outline, color: Colors.white),
+            onPressed: () {
+              setState(() {
+                _showInfo = !_showInfo; // 👈 toggle popout on/off
+              });
+            },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: FutureBuilder<void>(
-              future: _initializeControllerFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  if (_controller != null && _controller!.value.isInitialized) {
-                    return CameraPreview(_controller!);
-                  } else {
-                    return const Center(
-                      child: Text(
-                        'Camera not available',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    );
-                  }
-                } else {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: Stack(
+          children: [
+            Column(
               children: [
-                IconButton(
-                  onPressed: _pickImageFromGallery,
-                  icon: const Icon(Icons.photo_library, size: 32),
-                  color: Colors.white,
+                Expanded(
+                  child: FutureBuilder<void>(
+                    future: _initializeControllerFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        if (_controller != null && _controller!.value.isInitialized) {
+                          return CameraPreview(_controller!);
+                        } else {
+                          return const Center(
+                            child: Text(
+                              'Camera not available',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          );
+                        }
+                      } else {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        );
+                      }
+                    },
+                  ),
                 ),
-                GestureDetector(
-                  onTap: _captureImage,
-                  child: Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 4),
-                    ),
-                    child: const Icon(
-                      Icons.camera,
-                      size: 40,
-                      color: Colors.white,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                        onPressed: _pickImageFromGallery,
+                        icon: const Icon(Icons.photo_library, size: 32),
+                        color: Colors.white,
+                      ),
+                      GestureDetector(
+                        onTap: _captureImage,
+                        child: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 4),
+                          ),
+                          child: const Icon(
+                            Icons.camera,
+                            size: 40,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 48), // Placeholder for balance
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // 👇 This is the small popout info
+            if (_showInfo)
+              Positioned(
+                top: 10,
+                left: 10,
+                right: 10,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFFDD),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Text(
+                    'Scan one or more ingredients in a photo. Automatically get names, nutrition facts, and meal suggestions.',
+                    style: TextStyle(
+                      fontFamily: 'Orbitron',
+                      fontSize: 14,
+                      color: Colors.black,
                     ),
                   ),
                 ),
-                const SizedBox(width: 48), // Placeholder for balance
-              ],
-            ),
-          ),
-        ],
-      ),
+              ),
+          ],
+        ),
+
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xFFDDE2C6),
         selectedItemColor: Colors.black,
