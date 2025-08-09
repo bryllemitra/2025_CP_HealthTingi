@@ -32,6 +32,7 @@ class _HomePageState extends State<HomePage> {
   int _currentPage = 0;
   late PageController _pageController;
   Timer? _carouselTimer;
+  bool _showAllCategories = false;
 
   @override
   void initState() {
@@ -382,38 +383,69 @@ class _HomePageState extends State<HomePage> {
         }
         
         final categories = snapshot.data!;
+        final displayedCategories = _showAllCategories ? categories : categories.take(6).toList();
         
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: categories.map((category) => SizedBox(
-            width: 110,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.black,
-                backgroundColor: Colors.white,
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Recipe Categories',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-              ),
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/searchIngredient/categories',
-                  arguments: {
-                    'category': category,
-                    'userId': widget.userId,
-                  },
-                );
-              },
-              child: Text(
-                category.toUpperCase(),
-                style: const TextStyle(fontSize: 12),
-                textAlign: TextAlign.center,
-              ),
+                if (!_showAllCategories && categories.length > 6)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showAllCategories = true;
+                      });
+                    },
+                    child: const Text(
+                      'Explore All',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          )).toList(),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: displayedCategories.map((category) => SizedBox(
+                width: 110,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    backgroundColor: Colors.white,
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/searchIngredient/categories',
+                      arguments: {
+                        'category': category,
+                        'userId': widget.userId,
+                      },
+                    );
+                  },
+                  child: Text(
+                    category.toUpperCase(),
+                    style: const TextStyle(fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )).toList(),
+            ),
+          ],
         );
       },
     );
@@ -478,7 +510,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 200,
+            height: 150, // Reduced height for the new layout
             child: PageView.builder(
               controller: _pageController,
               itemCount: recentlyViewedMeals.length,
@@ -514,20 +546,23 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    child: Column(
+                    child: Row( // Changed from Column to Row for horizontal layout
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Square image on the left
                         ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(8)),
+                          borderRadius: const BorderRadius.horizontal(
+                            left: Radius.circular(8),
+                          ),
                           child: Image.asset(
                             meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                            height: 120,
-                            width: double.infinity,
+                            height: 150, // Square height
+                            width: 150,  // Square width
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                height: 120,
+                                height: 150,
+                                width: 150,
                                 color: Colors.grey[200],
                                 child: const Icon(Icons.fastfood,
                                     size: 40, color: Colors.grey),
@@ -535,37 +570,41 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                meal['mealName'],
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                        // Text content on the right
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  meal['mealName'],
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16, // Slightly larger font
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black54,
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                meal['content']?.toString().split('.').first ??
-                                    '',
-                                style: const TextStyle(
-                                  fontSize: 12,
+                                const SizedBox(height: 8),
+                                Text(
+                                  meal['content']?.toString().split('.').first ??
+                                      '',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 3, // Allow more lines for content
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -695,11 +734,6 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 24),
             
             // Recipe Categories
-            const Text(
-              'Recipe Categories',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
             _buildCategoryButtons(),
             
             // Specials Card

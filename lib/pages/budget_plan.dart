@@ -6,6 +6,7 @@ import 'meal_scan.dart';
 import '../searchIngredient/meal_search.dart';
 import 'navigation.dart';
 import 'meal_details.dart';
+import '../searchIngredient/price_search.dart';
 
 class BudgetPlanPage extends StatefulWidget {
   final int userId;
@@ -173,8 +174,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
     );
   }
 
-  Widget _buildBudgetSection(
-      BuildContext context, Map<String, dynamic> section) {
+  Widget _buildBudgetSection(BuildContext context, Map<String, dynamic> section) {
     final meals = section['meals'] as List<Map<String, dynamic>>;
     if (meals.isEmpty) return const SizedBox.shrink();
 
@@ -191,12 +191,29 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
           ),
         ),
         const SizedBox(height: 12),
-        ...meals.map((meal) => _buildMealCard(context, meal)).toList(),
+        ...meals.take(3).map((meal) => _buildMealCard(context, meal)).toList(),
         const SizedBox(height: 8),
-        const Align(
-          alignment: Alignment.centerRight,
-          child: Text("See more →", style: TextStyle(fontFamily: 'Orbitron')),
-        ),
+        if (meals.length > 3)
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PriceSearchPage(
+                      userId: widget.userId,
+                      priceRange: section['budget'],
+                    ),
+                  ),
+                );
+              },
+              child: const Text(
+                "See more →",
+                style: TextStyle(fontFamily: 'Orbitron'),
+              ),
+            ),
+          ),
         const SizedBox(height: 12),
       ],
     );

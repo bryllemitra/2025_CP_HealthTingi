@@ -4,6 +4,7 @@ import '../pages/home.dart';
 import '../pages/budget_plan.dart';
 import '../pages/meal_scan.dart';
 import '../pages/meal_details.dart';
+import 'meal_search2.dart';
 
 class MealSearchPage extends StatefulWidget {
   final int userId;
@@ -165,6 +166,49 @@ class _MealSearchPageState extends State<MealSearchPage> {
     }
   }
 
+  // New method to get time-based sections based on current time
+  List<Map<String, String>> _getTimeBasedSections(String currentTime) {
+    switch (currentTime) {
+      case "Breakfast":
+        return [
+          {'title': 'Lunch', 'time': 'Lunch'},
+          {'title': 'Merienda', 'time': 'Merienda'},
+          {'title': 'Dinner', 'time': 'Dinner'},
+          {'title': 'Late Night', 'time': 'Late Night'},
+        ];
+      case "Lunch":
+        return [
+          {'title': 'Merienda', 'time': 'Merienda'},
+          {'title': 'Dinner', 'time': 'Dinner'},
+          {'title': 'Late Night', 'time': 'Late Night'},
+          {'title': 'Breakfast', 'time': 'Breakfast'},
+        ];
+      case "Merienda":
+        return [
+          {'title': 'Dinner', 'time': 'Dinner'},
+          {'title': 'Late Night', 'time': 'Late Night'},
+          {'title': 'Breakfast', 'time': 'Breakfast'},
+          {'title': 'Lunch', 'time': 'Lunch'},
+        ];
+      case "Dinner":
+        return [
+          {'title': 'Late Night', 'time': 'Late Night'},
+          {'title': 'Breakfast', 'time': 'Breakfast'},
+          {'title': 'Lunch', 'time': 'Lunch'},
+          {'title': 'Merienda', 'time': 'Merienda'},
+        ];
+      case "Late Night":
+        return [
+          {'title': 'Breakfast', 'time': 'Breakfast'},
+          {'title': 'Lunch', 'time': 'Lunch'},
+          {'title': 'Merienda', 'time': 'Merienda'},
+          {'title': 'Dinner', 'time': 'Dinner'},
+        ];
+      default:
+        return [];
+    }
+  }
+
   Widget _buildMealCard(Map<String, dynamic> meal) {
     final isFavorite = _favoriteMealIds.contains(meal['mealID']);
     
@@ -275,7 +319,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
     );
   }
 
-  Widget _buildSection(String title, List<Map<String, dynamic>> meals) {
+  Widget _buildSection(String title, List<Map<String, dynamic>> meals, String timeFilter) {
     if (meals.isEmpty) return const SizedBox.shrink();
     
     return Column(
@@ -294,9 +338,22 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   fontSize: 18
                 ),
               ),
-              const Text(
-                "Browse All",
-                style: TextStyle(fontSize: 12, color: Colors.black54),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MealSearch2Page(
+                        userId: widget.userId,
+                        timeFilter: timeFilter,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text(
+                  "Browse All",
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
               ),
             ],
           ),
@@ -359,6 +416,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
 
                   final allMeals = snapshot.data!;
                   final currentTime = _getCurrentMealTime();
+                  final timeBasedSections = _getTimeBasedSections(currentTime);
                   
                   // Filter by search query first
                   var filteredMeals = _filterMealsByName(allMeals, _searchQuery);
@@ -373,15 +431,27 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   final sortedCurrentMeals = _sortMeals(currentMeals);
                   final sortedOtherMeals = _sortMeals(otherMeals);
 
+                  // Build time-based sections
+                  final timeSections = timeBasedSections.map((section) {
+                    final timeMeals = _filterMealsByTime(filteredMeals, section['time']!);
+                    return _buildSection(
+                      section['title']!,
+                      _sortMeals(timeMeals),
+                      section['time']!
+                    );
+                  }).toList();
+
                   return ListView(
                     children: [
                       if (sortedCurrentMeals.isNotEmpty)
                         _buildSection(
                           _getMealTimeGreeting(currentTime), 
-                          sortedCurrentMeals
+                          sortedCurrentMeals,
+                          "Current"
                         ),
+                      ...timeSections,
                       if (sortedOtherMeals.isNotEmpty)
-                        _buildSection("Other Meal Options", sortedOtherMeals),
+                        _buildSection("Other Meal Options", sortedOtherMeals, "All"),
                       if (filteredMeals.isEmpty)
                         const Center(
                           child: Padding(
