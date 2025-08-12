@@ -7,6 +7,9 @@ import 'meal_details.dart';
 import '../searchIngredient/meal_search.dart';
 import '../searchIngredient/favorites.dart';
 import 'navigation.dart';
+import 'index.dart';
+import '../information/about_us.dart';
+import '../information/fAQs.dart';
 import '../database/db_helper.dart';
 
 class HomePage extends StatefulWidget {
@@ -40,8 +43,10 @@ class _HomePageState extends State<HomePage> {
     _pageController = PageController(initialPage: 0);
     _loadPopularRecipes();
     _loadAllMeals();
-    _loadUserFavorites();
-    _loadRecentlyViewedMeals();
+    if (widget.userId != 0) { // Only load favorites and history for registered users
+      _loadUserFavorites();
+      _loadRecentlyViewedMeals();
+    }
     _searchController.addListener(_onSearchChanged);
     _startCarouselTimer();
   }
@@ -114,6 +119,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _toggleFavorite(int mealId) async {
+    if (widget.userId == 0) return; // Skip for guests
+    
     try {
       final dbHelper = DatabaseHelper();
       final user = await dbHelper.getUserById(widget.userId);
@@ -189,7 +196,7 @@ class _HomePageState extends State<HomePage> {
               itemCount: searchResults.length,
               itemBuilder: (context, index) {
                 final meal = searchResults[index];
-                final isFavorite = _favoriteMealIds.contains(meal['mealID']);
+                final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
                 return ListTile(
                   leading: Image.asset(
                     meal['mealPicture'] ?? 'assets/default_meal.jpg',
@@ -201,13 +208,15 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                   title: Text(meal['mealName']),
-                  trailing: IconButton(
-                    icon: Icon(
-                      isFavorite ? Icons.star : Icons.star_border,
-                      color: isFavorite ? Colors.yellow : Colors.grey,
-                    ),
-                    onPressed: () => _toggleFavorite(meal['mealID']),
-                  ),
+                  trailing: widget.userId != 0 
+                      ? IconButton(
+                          icon: Icon(
+                            isFavorite ? Icons.star : Icons.star_border,
+                            color: isFavorite ? Colors.yellow : Colors.grey,
+                          ),
+                          onPressed: () => _toggleFavorite(meal['mealID']),
+                        )
+                      : null,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -268,7 +277,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildPopularRecipeCard(Map<String, dynamic> recipe) {
-    final isFavorite = _favoriteMealIds.contains(recipe['id']);
+    final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(recipe['id']);
     
     return GestureDetector(
       onTap: () {
@@ -305,18 +314,19 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                   child: _buildMealImage(recipe['image']),
                 ),
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: GestureDetector(
-                    onTap: () => _toggleFavorite(recipe['id']),
-                    child: Icon(
-                      isFavorite ? Icons.star : Icons.star_border,
-                      color: isFavorite ? Colors.yellow : Colors.white,
-                      size: 22,
+                if (widget.userId != 0) // Only show favorite button for registered users
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: GestureDetector(
+                      onTap: () => _toggleFavorite(recipe['id']),
+                      child: Icon(
+                        isFavorite ? Icons.star : Icons.star_border,
+                        color: isFavorite ? Colors.yellow : Colors.white,
+                        size: 22,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
             Padding(
@@ -465,7 +475,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSpecialsCard() {
-    if (recentlyViewedMeals.isEmpty) {
+    if (recentlyViewedMeals.isEmpty || widget.userId == 0) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -474,19 +484,21 @@ class _HomePageState extends State<HomePage> {
           color: const Color(0xFFFFFF66),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Today's Specials",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              widget.userId == 0 ? "Featured Recipes" : "Today's Specials",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 6),
-            Text("Discover new recipes based on your scans"),
-            SizedBox(height: 8),
+            const SizedBox(height: 6),
+            Text(widget.userId == 0 
+                ? "Discover delicious recipes to try" 
+                : "Discover new recipes based on your scans"),
+            const SizedBox(height: 8),
             Text(
               "See more recipes →",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -510,7 +522,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 150, // Reduced height for the new layout
+            height: 150,
             child: PageView.builder(
               controller: _pageController,
               itemCount: recentlyViewedMeals.length,
@@ -546,18 +558,17 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    child: Row( // Changed from Column to Row for horizontal layout
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Square image on the left
                         ClipRRect(
                           borderRadius: const BorderRadius.horizontal(
                             left: Radius.circular(8),
                           ),
                           child: Image.asset(
                             meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                            height: 150, // Square height
-                            width: 150,  // Square width
+                            height: 150,
+                            width: 150,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
@@ -570,7 +581,6 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                         ),
-                        // Text content on the right
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
@@ -582,7 +592,7 @@ class _HomePageState extends State<HomePage> {
                                   meal['mealName'],
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16, // Slightly larger font
+                                    fontSize: 16,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -600,7 +610,7 @@ class _HomePageState extends State<HomePage> {
                                   style: const TextStyle(
                                     fontSize: 12,
                                   ),
-                                  maxLines: 3, // Allow more lines for content
+                                  maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ],
@@ -636,11 +646,79 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildGuestDrawer() {
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 40),
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 16.0, bottom: 16),
+            child: Text(
+              'HealthTingi',
+              style: TextStyle(
+                fontFamily: 'Orbitron',
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+          ),
+          _drawerButton(context, Icons.info_outline, 'About Us'),
+          const SizedBox(height: 8),
+          _drawerButton(context, Icons.help_outline, 'FAQs'),
+          const SizedBox(height: 8),
+          _drawerButton(context, Icons.logout, 'Exit Guest Mode'),
+        ],
+      ),
+    );
+  }
+
+  Widget _drawerButton(BuildContext context, IconData icon, String label) {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFFFFF66),
+        foregroundColor: Colors.black,
+        minimumSize: const Size(double.infinity, 45),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+      onPressed: () {
+        Navigator.pop(context); // Close drawer first
+        switch (label) {
+          case 'About Us':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AboutUsPage()),
+            );
+            break;
+          case 'FAQs':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FAQSPage()),
+            );
+            break;
+          case 'Exit Guest Mode':
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const IndexPage()),
+              (Route<dynamic> route) => false,
+            );
+            break;
+        }
+      },
+      icon: Icon(icon, size: 20),
+      label: Text(label, style: const TextStyle(fontFamily: 'Orbitron')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F2DF),
-      drawer: NavigationDrawerWidget(userId: widget.userId),
+      drawer: widget.userId != 0 
+          ? NavigationDrawerWidget(userId: widget.userId)
+          : _buildGuestDrawer(),
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(
@@ -655,21 +733,24 @@ class _HomePageState extends State<HomePage> {
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.black),
-            onPressed: () => Scaffold.of(context).openDrawer(),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.star, color: Colors.black),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => FavoritesPage(userId: widget.userId),
-                ),
-              );
-            },
-          ),
+          if (widget.userId != 0) // Only show favorites button for registered users
+            IconButton(
+              icon: const Icon(Icons.star, color: Colors.black),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FavoritesPage(userId: widget.userId),
+                  ),
+                );
+              },
+            ),
           const SizedBox(width: 8),
           const Icon(Icons.settings, color: Colors.black),
           const SizedBox(width: 16),
@@ -708,7 +789,9 @@ class _HomePageState extends State<HomePage> {
                       decoration: const InputDecoration(
                         hintText: 'Search or Scan your ingredients',
                         border: InputBorder.none,
+                        hintStyle: TextStyle(color: Colors.black54),
                       ),
+                      style: const TextStyle(color: Colors.black),
                       onSubmitted: (value) => _performSearch(),
                       onTap: () {
                         if (_searchController.text.isNotEmpty) {

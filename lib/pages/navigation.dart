@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../information/profile.dart';
 import '../information/about_us.dart';
 import '../information/fAQs.dart';
-import 'index.dart'; // ✅ Import IndexPage here
+import 'index.dart';
 
 class NavigationDrawerWidget extends StatelessWidget {
   final int userId;
@@ -26,13 +26,22 @@ class NavigationDrawerWidget extends StatelessWidget {
               ),
             ),
           ),
-          _drawerButton(context, Icons.person, 'Profile'),
-          const SizedBox(height: 8),
+          if (userId != 0) // Only show Profile for registered users
+            Column(
+              children: [
+                _drawerButton(context, Icons.person, 'Profile'),
+                const SizedBox(height: 8),
+              ],
+            ),
           _drawerButton(context, Icons.info_outline, 'About Us'),
           const SizedBox(height: 8),
           _drawerButton(context, Icons.help_outline, 'FAQs'),
           const SizedBox(height: 8),
-          _drawerButton(context, Icons.logout, 'Logout'),
+          _drawerButton(
+            context, 
+            Icons.logout, 
+            userId == 0 ? 'Exit Guest Mode' : 'Logout'
+          ),
         ],
       ),
     );
@@ -54,7 +63,7 @@ class NavigationDrawerWidget extends StatelessWidget {
           case 'Profile':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ProfilePage(userId: userId,)),
+              MaterialPageRoute(builder: (context) => ProfilePage(userId: userId)),
             );
             break;
           case 'About Us':
@@ -70,7 +79,8 @@ class NavigationDrawerWidget extends StatelessWidget {
             );
             break;
           case 'Logout':
-            // ✅ Redirect to IndexPage and remove previous stack
+          case 'Exit Guest Mode':
+            // Redirect to IndexPage and remove previous stack
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => const IndexPage()),

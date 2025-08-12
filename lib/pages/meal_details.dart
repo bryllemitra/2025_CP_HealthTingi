@@ -36,7 +36,9 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
 
     try {
       _mealDataFuture = _loadMealData();
-      await _checkIfFavorite();
+      if (widget.userId != 0) { // Only check favorites for registered users
+        await _checkIfFavorite();
+      }
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to load data: ${e.toString()}';
@@ -76,9 +78,21 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       final dbHelper = DatabaseHelper();
       final meal = await dbHelper.getMealById(widget.mealId);
       final ingredients = await dbHelper.getMealIngredients(widget.mealId);
-      final user = await dbHelper.getUserById(widget.userId);
 
       if (meal == null) throw Exception('Meal not found');
+
+      // For guest users (userId = 0), skip user data and dietary restrictions
+      if (widget.userId == 0) {
+        return {
+          ...meal,
+          'ingredients': ingredients,
+          'hasRestriction': false,
+          'restriction': '',
+        };
+      }
+
+      // For registered users, load user data normally
+      final user = await dbHelper.getUserById(widget.userId);
       if (user == null) throw Exception('User not found');
 
       return {
@@ -96,7 +110,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
   }
 
   Future<void> _toggleFavorite() async {
-    if (_isLoading) return;
+    if (_isLoading || widget.userId == 0) return; // Skip for guests
 
     setState(() => _isLoading = true);
 
@@ -150,8 +164,10 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
   }
 
   Future<void> _trackMealView() async {
-    final dbHelper = DatabaseHelper();
-    await dbHelper.addToRecentlyViewed(widget.userId, widget.mealId);
+    if (widget.userId != 0) { // Only track views for registered users
+      final dbHelper = DatabaseHelper();
+      await dbHelper.addToRecentlyViewed(widget.userId, widget.mealId);
+    }
   }
 
   @override
@@ -175,19 +191,20 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: _isLoading 
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(
-                    _isFavorite ? Icons.star : Icons.star_border,
-                    color: _isFavorite ? Colors.yellow : Colors.black,
-                  ),
-            onPressed: _isLoading ? null : _toggleFavorite,
-          ),
+          if (widget.userId != 0) // Only show favorite button for registered users
+            IconButton(
+              icon: _isLoading 
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(
+                      _isFavorite ? Icons.star : Icons.star_border,
+                      color: _isFavorite ? Colors.yellow : Colors.black,
+                    ),
+              onPressed: _isLoading ? null : _toggleFavorite,
+            ),
         ],
       ),
       body: _errorMessage != null
@@ -247,7 +264,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                 }
 
                 final mealData = snapshot.data!;
-                final hasRestriction = mealData['hasRestriction'] ?? false;
+                final hasRestriction = widget.userId != 0 && (mealData['hasRestriction'] ?? false);
                 final restriction = mealData['restriction'] ?? '';
                 final ingredients = mealData['ingredients'] as List<Map<String, dynamic>>;
                 final price = mealData['price'] ?? 0.0;
@@ -258,7 +275,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Meal Image Card
+                      // Only show restriction warning for registered users with restrictions
                       if (hasRestriction)
                         Container(
                           padding: const EdgeInsets.all(12),
@@ -278,21 +295,18 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                     style: const TextStyle(
                                       fontFamily: 'Orbitron',
                                       fontSize: 12,
-                                      color: Colors.white,
-                                    ),
+                                      color: Colors.white),
                                     children: [
                                       const TextSpan(text: '⚠️ Warning: '),
                                       TextSpan(
-                                        text:
-                                            'If you have ',
+                                        text: 'If you have ',
                                       ),
                                       TextSpan(
                                         text: restriction.isNotEmpty ? restriction : 'dietary restrictions',
                                         style: const TextStyle(fontWeight: FontWeight.bold),
                                       ),
                                       const TextSpan(
-                                        text:
-                                            ', we recommend choosing a healthier meal option. You may also consider cooking this dish for family or friends instead.',
+                                        text: ', we recommend choosing a healthier meal option. You may also consider cooking this dish for family or friends instead.',
                                       ),
                                     ],
                                   ),
@@ -328,7 +342,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            // Add price display
                             Text(
                               'Price: Php ${price.toStringAsFixed(2)}',
                               style: const TextStyle(
@@ -337,7 +350,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            // Add categories display
                             if (categories.isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(top: 4),

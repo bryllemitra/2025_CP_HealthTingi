@@ -27,6 +27,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const IndexPage(),
+        '/guest': (context) => MealScanPage(userId: 0),
         '/home': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
           return HomePage(

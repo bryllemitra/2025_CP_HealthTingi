@@ -9,7 +9,7 @@
     <uses-feature android:name="android.hardware.camera" android:required="true" />
 
     <application
-        android:label="heath_tingi"
+        android:label="HealthTingi"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

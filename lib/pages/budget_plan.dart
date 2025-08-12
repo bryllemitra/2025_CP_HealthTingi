@@ -7,6 +7,9 @@ import '../searchIngredient/meal_search.dart';
 import 'navigation.dart';
 import 'meal_details.dart';
 import '../searchIngredient/price_search.dart';
+import '../information/about_us.dart';
+import '../information/fAQs.dart';
+import 'index.dart';
 
 class BudgetPlanPage extends StatefulWidget {
   final int userId;
@@ -219,6 +222,72 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
     );
   }
 
+  Widget _buildGuestDrawer(BuildContext context) {
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 40),
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 16.0, bottom: 16),
+            child: Text(
+              'HealthTingi',
+              style: TextStyle(
+                fontFamily: 'Orbitron',
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+          ),
+          _drawerButton(context, Icons.info_outline, 'About Us'),
+          const SizedBox(height: 8),
+          _drawerButton(context, Icons.help_outline, 'FAQs'),
+          const SizedBox(height: 8),
+          _drawerButton(context, Icons.logout, 'Exit Guest Mode'),
+        ],
+      ),
+    );
+  }
+
+  Widget _drawerButton(BuildContext context, IconData icon, String label) {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFFFFF66),
+        foregroundColor: Colors.black,
+        minimumSize: const Size(double.infinity, 45),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+      onPressed: () {
+        Navigator.pop(context); // Close drawer first
+        switch (label) {
+          case 'About Us':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AboutUsPage()),
+            );
+            break;
+          case 'FAQs':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FAQSPage()),
+            );
+            break;
+          case 'Exit Guest Mode':
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const IndexPage()),
+              (Route<dynamic> route) => false,
+            );
+            break;
+        }
+      },
+      icon: Icon(icon, size: 20),
+      label: Text(label, style: const TextStyle(fontFamily: 'Orbitron')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -241,19 +310,20 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
           ),
         ),
         actions: [
-      IconButton(
-        icon: const Icon(Icons.info_outline, color: Colors.black),
-        onPressed: () {
-          setState(() {
-            _showInfo = !_showInfo;
-          });
-        },
-      ),
-    ],
-
+          IconButton(
+            icon: const Icon(Icons.info_outline, color: Colors.black),
+            onPressed: () {
+              setState(() {
+                _showInfo = !_showInfo;
+              });
+            },
+          ),
+        ],
         elevation: 0,
       ),
-      drawer: NavigationDrawerWidget(userId: widget.userId,),
+      drawer: widget.userId != 0 
+          ? NavigationDrawerWidget(userId: widget.userId)
+          : _buildGuestDrawer(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -275,9 +345,11 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                     ),
                   ],
                 ),
-                child: const Text(
-                  'Enter your budget to get suggested meals that match or come close to it.',
-                  style: TextStyle(
+                child: Text(
+                  widget.userId == 0
+                      ? 'Enter your budget to see suggested meals. Register to save your preferences.'
+                      : 'Enter your budget to get suggested meals that match or come close to it.',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontFamily: 'Orbitron',
                     fontSize: 12,
@@ -378,7 +450,8 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => MealScanPage(userId: widget.userId)),
+                  builder: (context) => MealScanPage(userId: widget.userId),
+                ),
               );
               break;
             case 1:

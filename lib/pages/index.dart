@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'meal_scan.dart';
 
 class IndexPage extends StatelessWidget {
   const IndexPage({Key? key}) : super(key: key);
@@ -89,13 +90,20 @@ class IndexPage extends StatelessWidget {
               // Guest Option
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(context, '/guest');
+                  // Navigate directly to MealScanPage with userId = 0 (guest)
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MealScanPage(userId: 0),
+                    ),
+                  );
                 },
                 child: const Text(
                   'Use as a Guest',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.black54,
+                    decoration: TextDecoration.underline,
                   ),
                 ),
               ),

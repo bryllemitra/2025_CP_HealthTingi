@@ -27,7 +27,9 @@ class _MealSearchPageState extends State<MealSearchPage> {
     super.initState();
     _mealsFuture = _fetchMeals();
     _searchController.addListener(_onSearchChanged);
-    _loadUserFavorites();
+    if (widget.userId != 0) { // Only load favorites for registered users
+      _loadUserFavorites();
+    }
   }
 
   @override
@@ -58,6 +60,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
   }
 
   Future<void> _toggleFavorite(int mealId) async {
+    if (widget.userId == 0) return; // Skip for guests
+    
     try {
       final user = await _dbHelper.getUserById(widget.userId);
       if (user == null) return;
@@ -166,7 +170,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
     }
   }
 
-  // New method to get time-based sections based on current time
   List<Map<String, String>> _getTimeBasedSections(String currentTime) {
     switch (currentTime) {
       case "Breakfast":
@@ -210,7 +213,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
   }
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
-    final isFavorite = _favoriteMealIds.contains(meal['mealID']);
+    final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
     
     return Container(
       width: 155,
@@ -248,18 +251,19 @@ class _MealSearchPageState extends State<MealSearchPage> {
                         child: const Icon(Icons.fastfood),
                       ),
               ),
-              Positioned(
-                top: 6,
-                right: 6,
-                child: GestureDetector(
-                  onTap: () => _toggleFavorite(meal['mealID']),
-                  child: Icon(
-                    isFavorite ? Icons.star : Icons.star_border,
-                    color: isFavorite ? Colors.yellow : Colors.white,
-                    size: 22,
+              if (widget.userId != 0) // Only show favorite button for registered users
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(meal['mealID']),
+                    child: Icon(
+                      isFavorite ? Icons.star : Icons.star_border,
+                      color: isFavorite ? Colors.yellow : Colors.white,
+                      size: 22,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           Padding(

@@ -1,4 +1,4 @@
-name: heath_tingi
+name: heathtingi
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -51,6 +51,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+    
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -58,6 +59,13 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo.png" # your logo file
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -133,6 +141,7 @@ flutter:
     - assets/sinigang_na_hipon.jpg
     - assets/sinigang_na_isda.jpg
     - assets/fried_egg_malunggay.jpg
+    - assets/ginataang_kalabasa.jpg
 
     - assets/fonts/
     #- assets/model/best_float32.tflite

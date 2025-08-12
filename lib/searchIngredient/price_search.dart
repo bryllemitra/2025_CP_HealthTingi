@@ -28,7 +28,9 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
     super.initState();
     _mealsFuture = _fetchMeals();
     _searchController.addListener(_onSearchChanged);
-    _loadUserFavorites();
+    if (widget.userId != 0) { // Only load favorites for registered users
+      _loadUserFavorites();
+    }
   }
 
   @override
@@ -64,6 +66,8 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
   }
 
   Future<void> _toggleFavorite(int mealId) async {
+    if (widget.userId == 0) return; // Skip for guests
+    
     try {
       final user = await _dbHelper.getUserById(widget.userId);
       if (user == null) return;
@@ -158,7 +162,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
   }
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
-    final isFavorite = _favoriteMealIds.contains(meal['mealID']);
+    final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
     
     return Container(
       decoration: BoxDecoration(
@@ -195,18 +199,19 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                   },
                 ),
               ),
-              Positioned(
-                top: 6,
-                right: 6,
-                child: GestureDetector(
-                  onTap: () => _toggleFavorite(meal['mealID']),
-                  child: Icon(
-                    isFavorite ? Icons.star : Icons.star_border,
-                    color: isFavorite ? Colors.yellow : Colors.white,
-                    size: 22,
+              if (widget.userId != 0) // Only show favorite button for registered users
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(meal['mealID']),
+                    child: Icon(
+                      isFavorite ? Icons.star : Icons.star_border,
+                      color: isFavorite ? Colors.yellow : Colors.white,
+                      size: 22,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           Padding(
