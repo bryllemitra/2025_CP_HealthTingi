@@ -2329,6 +2329,11 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
       return allMeals.firstWhere((meal) => meal['mealID'] == id, orElse: () => {});
     }).where((meal) => meal.isNotEmpty).toList();
   }
+  
+  Future<List<Map<String, dynamic>>> getAllIngredients() async {
+    final db = await database;
+    return await db.query('ingredients');
+  }
 
   // ========== UTILITY METHODS ==========
   Future<void> verifyDatabaseSchema() async {

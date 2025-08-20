@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'ingredient_details.dart';
 import '../pages/meal_scan.dart';
 
 class ScannedIngredientPage extends StatelessWidget {
   final int userId;
+  final List<String>? detectedIngredients;
 
-  const ScannedIngredientPage({super.key, required this.userId});
+  const ScannedIngredientPage({
+    super.key, 
+    required this.userId,
+    this.detectedIngredients,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final ingredients = ['Chicken', 'Sayote', 'Petchay'];
+    final ingredients = detectedIngredients ?? ['Chicken', 'Sayote', 'Petchay'];
 
     return Scaffold(
       backgroundColor: const Color(0xFFEDEBD1),
@@ -85,24 +91,38 @@ class ScannedIngredientPage extends StatelessWidget {
             const Divider(thickness: 1),
             ...ingredients.map((ingredient) => Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Icon(Icons.close, size: 18),
-                        Text(
-                          ingredient,
-                          style: const TextStyle(
-                            fontFamily: 'Orbitron',
-                            fontSize: 14,
+                    InkWell(
+                      onTap: () {
+                        if (ingredient == "Sayote" || ingredient.toLowerCase().contains("sayote")) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => IngredientDetailsPage(
+                                userId: userId,
+                                ingredientName: ingredient,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Icon(Icons.close, size: 18),
+                          Text(
+                            ingredient,
+                            style: const TextStyle(
+                              fontFamily: 'Orbitron',
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.arrow_forward_ios, size: 14),
-                      ],
+                          const Icon(Icons.arrow_forward_ios, size: 14),
+                        ],
+                      ),
                     ),
                     const Divider(thickness: 1),
                   ],
                 )),
-            const SizedBox(height: 24),
             const Text(
               "Recipe Suggestion",
               style: TextStyle(

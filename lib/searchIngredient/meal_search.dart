@@ -97,10 +97,12 @@ class _MealSearchPageState extends State<MealSearchPage> {
     final phTime = _getPhilippineTime();
     final hour = phTime.hour;
 
+    // Dinner extends until 23:59, then switches to Breakfast at 00:00
+    if (hour >= 0 && hour < 5) return "Late Night";
     if (hour >= 5 && hour < 10) return "Breakfast";
     if (hour >= 10 && hour < 14) return "Lunch";
     if (hour >= 14 && hour < 17) return "Merienda";
-    if (hour >= 17 && hour < 21) return "Dinner";
+    if (hour >= 17) return "Dinner"; // Dinner from 17:00 to 23:59
     return "Late Night";
   }
 
@@ -126,9 +128,26 @@ class _MealSearchPageState extends State<MealSearchPage> {
         final toHour = int.parse(meal['availableTo']?.split(':')[0] ?? '24');
         
         if (time == "Current") {
+          // Special handling for dinner (17:00 to 23:59)
+          if (currentHour >= 17) {
+            return currentHour >= fromHour && (toHour > 23 || fromHour >= 17);
+          }
+          // Special handling for late night (00:00 to 04:59)
+          if (currentHour < 5) {
+            return (fromHour >= 0 && toHour <= 5) || (fromHour >= 17 && toHour > 23);
+          }
           return currentHour >= fromHour && currentHour < toHour;
         } else {
-          return (fromHour >= _getStartHour(time) && toHour <= _getEndHour(time));
+          // For specific time filters
+          if (time == "Dinner") {
+            // Dinner meals should be available from 17:00 onward
+            return fromHour >= 17;
+          } else if (time == "Late Night") {
+            // Late night meals should be available from 00:00 to 05:00
+            return (fromHour >= 0 && toHour <= 5) || (fromHour >= 17 && toHour > 23);
+          } else {
+            return (fromHour >= _getStartHour(time) && toHour <= _getEndHour(time));
+          }
         }
       } catch (e) {
         return false;
@@ -154,7 +173,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
       case "Lunch": return 10;
       case "Merienda": return 14;
       case "Dinner": return 17;
-      case "Late Night": return 21;
+      case "Late Night": return 0;
       default: return 0;
     }
   }
@@ -164,8 +183,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
       case "Breakfast": return 10;
       case "Lunch": return 14;
       case "Merienda": return 17;
-      case "Dinner": return 21;
-      case "Late Night": return 24;
+      case "Dinner": return 24; // Dinner extends until 23:59
+      case "Late Night": return 5; // Late night ends at 05:00
       default: return 24;
     }
   }
