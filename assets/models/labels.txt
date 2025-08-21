@@ -1,0 +1,105 @@
+Apple
+Apricot
+Avocado
+Banana
+Beans
+Beetroot
+Blackberry
+Blueberry
+Cabbage Red
+Cabbage White
+Cactus Fruit
+Caju Seed
+Cantaloupe
+Carambula
+Carrot
+Cauliflower
+Cherimoya
+Cherry
+Chestnut
+Clementine
+Cocos
+Corn
+Corn Husk
+Cucumber
+Dates
+Eggplant
+Fig
+Ginger Root
+Gooseberry
+Granadilla
+Grape Blue
+Grape Pink
+Grape White
+Grapefruit Pink
+Grapefruit White
+Guava
+Hazelnut
+Huckleberry
+Kaki
+Kiwi
+Kohlrabi
+Kumquats
+Lemon
+Lemon Meyer
+Limes
+Lychee
+Mandarine
+Mango
+Mango Red
+Mangostan
+Maracuja
+Melon Piel de Sapo
+Mulberry
+Nectarine
+Nut
+Nut Forest
+Nut Pecan
+Onion Red
+Onion Red Peeled
+Onion White
+Orange
+Papaya
+Passion Fruit
+Peach
+Pear
+Pepino
+Pepper Green
+Pepper Orange
+Pepper Red
+Pepper Yellow
+Physalis
+Physalis with Husk
+Pineapple
+Pineapple Mini
+Pistachio
+Pitahaya Red
+Plum
+Pomegranate
+Pomelo Sweetie
+Potato Red
+Potato Red Washed
+Potato Sweet
+Potato White
+Quince
+Rambutan
+Raspberry
+Redcurrant
+Salak
+Strawberry
+Strawberry Wedge
+Tamarillo
+Tangelo
+Tomato
+Tomato Cherry Maroon
+Tomato Cherry Orange
+Tomato Cherry Red
+Tomato Cherry Yellow
+Tomato Heart
+Tomato Maroon
+Tomato Yellow
+Tomato Not Ripen
+Walnut
+Watermelon
+Zucchini
+Zucchini Dark

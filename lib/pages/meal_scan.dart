@@ -1,12 +1,16 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
+import 'package:image/image.dart' as img;
 
 import 'home.dart';
 import 'budget_plan.dart';
 import '../searchIngredient/meal_search.dart';
 import 'navigation.dart';
 import '../mealScanner/success.dart';
+import 'dart:typed_data';
 
 class MealScanPage extends StatefulWidget {
   final int userId;
@@ -22,16 +26,69 @@ class _MealScanPageState extends State<MealScanPage> {
   late Future<void> _initializeControllerFuture;
   bool _isFlashOn = false;
   bool _showInfo = false;
+  List<dynamic> _recognitions = [];
+  bool _isModelLoading = false;
+  tfl.Interpreter? _interpreter;
+  tfl.IsolateInterpreter? _isolateInterpreter; // For async inference
+  List<String> _labels = [];
 
   @override
   void initState() {
     super.initState();
     _initializeCamera();
+    _loadModel();
+  }
+
+  Future<void> _loadModel() async {
+    setState(() => _isModelLoading = true);
+    try {
+      // Create interpreter from asset
+      _interpreter = await tfl.Interpreter.fromAsset('models/fruit_model.tflite');
+      
+      // Create isolate interpreter for async inference (prevents UI blocking)
+      _isolateInterpreter = await tfl.IsolateInterpreter.create(
+        address: _interpreter!.address,
+      );
+      
+      // Load labels from assets
+      final labelFile = await DefaultAssetBundle.of(context)
+          .loadString('assets/models/labels.txt');
+      _labels = labelFile.split('\n')
+          .map((label) => label.trim())
+          .where((label) => label.isNotEmpty)
+          .toList();
+
+      // Print model info for debugging
+      debugPrint('Model loaded successfully');
+      debugPrint('Input shape: ${_interpreter!.getInputTensor(0).shape}');
+      debugPrint('Input type: ${_interpreter!.getInputTensor(0).type}');
+      debugPrint('Output shape: ${_interpreter!.getOutputTensor(0).shape}');
+      debugPrint('Output type: ${_interpreter!.getOutputTensor(0).type}');
+      debugPrint('Number of labels: ${_labels.length}');
+
+      setState(() {
+        _recognitions = _labels
+            .map((label) => {'label': label, 'confidence': 0.0})
+            .toList();
+      });
+    } catch (e) {
+      debugPrint('Failed to load model: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load AI model: ${e.toString()}')),
+        );
+      }
+    }
+    setState(() => _isModelLoading = false);
   }
 
   Future<void> _initializeCamera() async {
     try {
       final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        throw Exception('No cameras available');
+      }
+      
       final camera = cameras.first;
 
       _controller = CameraController(
@@ -39,6 +96,7 @@ class _MealScanPageState extends State<MealScanPage> {
         ResolutionPreset.medium,
         enableAudio: false,
       );
+      
       _initializeControllerFuture = _controller!.initialize();
 
       if (mounted) {
@@ -48,7 +106,7 @@ class _MealScanPageState extends State<MealScanPage> {
       debugPrint('Camera initialization error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to initialize camera')),
+          SnackBar(content: Text('Failed to initialize camera: ${e.toString()}')),
         );
       }
     }
@@ -69,12 +127,6 @@ class _MealScanPageState extends State<MealScanPage> {
     }
   }
 
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
   Future<void> _captureImage() async {
     try {
       await _initializeControllerFuture;
@@ -82,21 +134,31 @@ class _MealScanPageState extends State<MealScanPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Image captured!')),
-      );
+      // Show loading indicator while processing
+      setState(() => _isModelLoading = true);
+      
+      await _runModelOnImage(File(image.path));
+      
+      setState(() => _isModelLoading = false);
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ScanSuccessPage(userId: widget.userId),
-        ),
-      );
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ScanSuccessPage(
+              userId: widget.userId,
+              recognitions: _recognitions,
+              imagePath: image.path,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       debugPrint('Error taking picture: $e');
+      setState(() => _isModelLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to capture image')),
+          SnackBar(content: Text('Failed to capture image: ${e.toString()}')),
         );
       }
     }
@@ -111,33 +173,178 @@ class _MealScanPageState extends State<MealScanPage> {
       );
 
       if (pickedFile != null && mounted) {
-        debugPrint('Gallery image path: ${pickedFile.path}');
+        setState(() => _isModelLoading = true);
+        
+        await _runModelOnImage(File(pickedFile.path));
+        
+        setState(() => _isModelLoading = false);
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ScanSuccessPage(userId: widget.userId),
-          ),
-        );
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No image selected')),
-        );
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ScanSuccessPage(
+                userId: widget.userId,
+                recognitions: _recognitions,
+                imagePath: pickedFile.path,
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       debugPrint('Gallery pick error: $e');
+      setState(() => _isModelLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to pick image')),
+          SnackBar(content: Text('Failed to pick image: ${e.toString()}')),
         );
       }
     }
   }
 
+  Future<void> _runModelOnImage(File imageFile) async {
+    if (_isolateInterpreter == null) {
+      debugPrint('Isolate interpreter not initialized');
+      return;
+    }
+
+    try {
+      final imageBytes = await imageFile.readAsBytes();
+      var image = img.decodeImage(imageBytes);
+      
+      if (image == null) {
+        throw Exception('Failed to decode image');
+      }
+
+      // Get input tensor info
+      final inputTensor = _interpreter!.getInputTensor(0);
+      final inputShape = inputTensor.shape;
+      final inputSize = inputShape[1]; // Assuming square input [1, size, size, 3]
+      
+      debugPrint('Processing image with input size: $inputSize');
+
+      // Preprocess image
+      final resizedImage = img.copyResize(image, width: inputSize, height: inputSize);
+      final input = _imageToByteListFloat32(resizedImage, inputSize, 127.5, 127.5);
+
+      // Prepare output tensor
+      final outputTensor = _interpreter!.getOutputTensor(0);
+      final outputShape = outputTensor.shape;
+      final output = List.filled(
+        outputShape.reduce((a, b) => a * b), 
+        0.0,
+      ).reshape(outputShape);
+
+      debugPrint('Running inference...');
+      
+      // Use async inference to prevent UI blocking
+      await _isolateInterpreter!.run(input, output);
+
+      debugPrint('Inference completed, processing results...');
+
+      // Process results
+      final results = _processOutput(output);
+      setState(() => _recognitions = results);
+      
+      debugPrint('Top result: ${results.isNotEmpty ? results.first : "No results"}');
+      
+    } catch (e) {
+      debugPrint('Error in _runModelOnImage: $e');
+      debugPrint('Stack trace: ${StackTrace.current}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Analysis failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Float32List _imageToByteListFloat32(
+      img.Image image, int inputSize, double mean, double std) {
+    final convertedBytes = Float32List(1 * inputSize * inputSize * 3);
+    final buffer = Float32List.view(convertedBytes.buffer);
+
+    int pixelIndex = 0;
+    for (var i = 0; i < inputSize; i++) {
+      for (var j = 0; j < inputSize; j++) {
+        final pixel = image.getPixel(j, i);
+        
+        // Extract RGB values (compatible with newer image package versions)
+        final red = pixel.r.toDouble();
+        final green = pixel.g.toDouble();
+        final blue = pixel.b.toDouble();
+        
+        // Normalize the pixel values (adjust these values based on your model's requirements)
+        buffer[pixelIndex++] = (red - mean) / std;
+        buffer[pixelIndex++] = (green - mean) / std;
+        buffer[pixelIndex++] = (blue - mean) / std;
+      }
+    }
+    return convertedBytes;
+  }
+
+  List<dynamic> _processOutput(List<dynamic> output) {
+    try {
+      final results = <Map<String, dynamic>>[];
+      
+      // Handle different output formats
+      List<dynamic> predictions;
+      if (output is List && output.isNotEmpty) {
+        if (output[0] is List) {
+          predictions = output[0] as List<dynamic>;
+        } else {
+          predictions = output;
+        }
+      } else {
+        throw Exception('Unexpected output format');
+      }
+      
+      debugPrint('Processing ${predictions.length} predictions with ${_labels.length} labels');
+      
+      for (int i = 0; i < predictions.length && i < _labels.length; i++) {
+        final confidence = (predictions[i] as num).toDouble();
+        results.add({
+          'label': _labels[i],
+          'confidence': confidence,
+        });
+      }
+      
+      // Sort by confidence in descending order
+      results.sort((a, b) => (b['confidence'] as double).compareTo(a['confidence'] as double));
+      
+      // Filter results with confidence > threshold (adjust as needed)
+      final filteredResults = results.where((result) => 
+          (result['confidence'] as double) > 0.1).toList();
+      
+      // Return top 5 results or all filtered results if less than 5
+      final finalResults = filteredResults.take(5).toList();
+      
+      debugPrint('Returning ${finalResults.length} filtered results');
+      return finalResults.isNotEmpty ? finalResults : results.take(5).toList();
+      
+    } catch (e) {
+      debugPrint('Error processing output: $e');
+      // Return default results on error
+      return _labels.take(5).map((label) => {
+        'label': label, 
+        'confidence': 0.0
+      }).toList();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    _interpreter?.close();
+    _isolateInterpreter?.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: NavigationDrawerWidget(userId: widget.userId,),
+      drawer: NavigationDrawerWidget(userId: widget.userId),
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -157,106 +364,129 @@ class _MealScanPageState extends State<MealScanPage> {
             icon: const Icon(Icons.info_outline, color: Colors.white),
             onPressed: () {
               setState(() {
-                _showInfo = !_showInfo; // 👈 toggle popout on/off
+                _showInfo = !_showInfo;
               });
             },
           ),
         ],
       ),
       body: Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  child: FutureBuilder<void>(
-                    future: _initializeControllerFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        if (_controller != null && _controller!.value.isInitialized) {
-                          return CameraPreview(_controller!);
-                        } else {
-                          return const Center(
-                            child: Text(
-                              'Camera not available',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          );
-                        }
+        children: [
+          Column(
+            children: [
+              Expanded(
+                child: FutureBuilder<void>(
+                  future: _initializeControllerFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (_controller != null && _controller!.value.isInitialized) {
+                        return CameraPreview(_controller!);
                       } else {
                         return const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          child: Text(
+                            'Camera not available',
+                            style: TextStyle(color: Colors.white),
                           ),
                         );
                       }
-                    },
+                    } else {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
+              if (_isModelLoading)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 16.0),
+                  child: Column(
+                    children: [
+                      LinearProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Analyzing image...',
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        onPressed: _pickImageFromGallery,
-                        icon: const Icon(Icons.photo_library, size: 32),
-                        color: Colors.white,
-                      ),
-                      GestureDetector(
-                        onTap: _captureImage,
-                        child: Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 4),
-                          ),
-                          child: const Icon(
-                            Icons.camera,
-                            size: 40,
-                            color: Colors.white,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      onPressed: _isModelLoading ? null : _pickImageFromGallery,
+                      icon: const Icon(Icons.photo_library, size: 32),
+                      color: _isModelLoading ? Colors.grey : Colors.white,
+                    ),
+                    GestureDetector(
+                      onTap: _isModelLoading ? null : _captureImage,
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _isModelLoading ? Colors.grey : Colors.white, 
+                            width: 4,
                           ),
                         ),
+                        child: Icon(
+                          Icons.camera,
+                          size: 40,
+                          color: _isModelLoading ? Colors.grey : Colors.white,
+                        ),
                       ),
-                      const SizedBox(width: 48), // Placeholder for balance
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            // 👇 This is the small popout info
-            if (_showInfo)
-              Positioned(
-                top: 10,
-                left: 10,
-                right: 10,
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFFDD),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Text(
-                    'Scan one or more ingredients in a photo. Automatically get names, nutrition facts, and meal suggestions.',
-                    style: TextStyle(
-                      fontFamily: 'Orbitron',
-                      fontSize: 14,
-                      color: Colors.black,
                     ),
+                    IconButton(
+                      onPressed: _isModelLoading ? null : _toggleFlash,
+                      icon: Icon(
+                        _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                        size: 32,
+                        color: _isModelLoading ? Colors.grey : Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (_showInfo)
+            Positioned(
+              top: 10,
+              left: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFFDD),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Text(
+                  'Scan one or more ingredients in a photo. Automatically get names, nutrition facts, and meal suggestions.\n\nTip: Make sure your ingredients are well-lit and clearly visible for best results.',
+                  style: TextStyle(
+                    fontFamily: 'Orbitron',
+                    fontSize: 14,
+                    color: Colors.black,
                   ),
                 ),
               ),
-          ],
-        ),
-
+            ),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xFFDDE2C6),
         selectedItemColor: Colors.black,
@@ -265,7 +495,7 @@ class _MealScanPageState extends State<MealScanPage> {
         onTap: (index) {
           switch (index) {
             case 0:
-              break; // Already on scan page
+              break;
             case 1:
               Navigator.pushReplacement(
                 context,
