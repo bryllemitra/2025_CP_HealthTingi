@@ -6,6 +6,7 @@ import 'pages/login.dart';
 import 'pages/register.dart';
 import 'pages/meal_scan.dart';
 import 'searchIngredient/categories.dart';
+//test
 
 void main() {
   runApp(const MyApp());
