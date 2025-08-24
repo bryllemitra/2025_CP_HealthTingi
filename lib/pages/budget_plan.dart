@@ -482,8 +482,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Recipes'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.currency_ruble), label: 'Budget'),
+          BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Budget'),
         ],
       ),
     );

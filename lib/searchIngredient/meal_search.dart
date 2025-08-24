@@ -98,12 +98,12 @@ class _MealSearchPageState extends State<MealSearchPage> {
     final hour = phTime.hour;
 
     // Dinner extends until 23:59, then switches to Breakfast at 00:00
-    if (hour >= 0 && hour < 5) return "Late Night";
+    if (hour >= 0 && hour < 5) return "Breakfast"; // Removed Late Night case
     if (hour >= 5 && hour < 10) return "Breakfast";
     if (hour >= 10 && hour < 14) return "Lunch";
     if (hour >= 14 && hour < 17) return "Merienda";
     if (hour >= 17) return "Dinner"; // Dinner from 17:00 to 23:59
-    return "Late Night";
+    return "Breakfast"; // Default to Breakfast
   }
 
   String _getMealTimeGreeting(String time) {
@@ -112,7 +112,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
       case "Lunch": return "Get Ready For Lunch!";
       case "Merienda": return "Merienda Time!";
       case "Dinner": return "Dinner is Served!";
-      case "Late Night": return "Late Night Snacks!";
       default: return "Meal Suggestions";
     }
   }
@@ -132,19 +131,13 @@ class _MealSearchPageState extends State<MealSearchPage> {
           if (currentHour >= 17) {
             return currentHour >= fromHour && (toHour > 23 || fromHour >= 17);
           }
-          // Special handling for late night (00:00 to 04:59)
-          if (currentHour < 5) {
-            return (fromHour >= 0 && toHour <= 5) || (fromHour >= 17 && toHour > 23);
-          }
+          // Removed Late Night special handling
           return currentHour >= fromHour && currentHour < toHour;
         } else {
           // For specific time filters
           if (time == "Dinner") {
             // Dinner meals should be available from 17:00 onward
             return fromHour >= 17;
-          } else if (time == "Late Night") {
-            // Late night meals should be available from 00:00 to 05:00
-            return (fromHour >= 0 && toHour <= 5) || (fromHour >= 17 && toHour > 23);
           } else {
             return (fromHour >= _getStartHour(time) && toHour <= _getEndHour(time));
           }
@@ -173,7 +166,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
       case "Lunch": return 10;
       case "Merienda": return 14;
       case "Dinner": return 17;
-      case "Late Night": return 0;
       default: return 0;
     }
   }
@@ -184,7 +176,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
       case "Lunch": return 14;
       case "Merienda": return 17;
       case "Dinner": return 24; // Dinner extends until 23:59
-      case "Late Night": return 5; // Late night ends at 05:00
       default: return 24;
     }
   }
@@ -196,35 +187,24 @@ class _MealSearchPageState extends State<MealSearchPage> {
           {'title': 'Lunch', 'time': 'Lunch'},
           {'title': 'Merienda', 'time': 'Merienda'},
           {'title': 'Dinner', 'time': 'Dinner'},
-          {'title': 'Late Night', 'time': 'Late Night'},
         ];
       case "Lunch":
         return [
           {'title': 'Merienda', 'time': 'Merienda'},
           {'title': 'Dinner', 'time': 'Dinner'},
-          {'title': 'Late Night', 'time': 'Late Night'},
           {'title': 'Breakfast', 'time': 'Breakfast'},
         ];
       case "Merienda":
         return [
           {'title': 'Dinner', 'time': 'Dinner'},
-          {'title': 'Late Night', 'time': 'Late Night'},
           {'title': 'Breakfast', 'time': 'Breakfast'},
           {'title': 'Lunch', 'time': 'Lunch'},
         ];
       case "Dinner":
         return [
-          {'title': 'Late Night', 'time': 'Late Night'},
           {'title': 'Breakfast', 'time': 'Breakfast'},
           {'title': 'Lunch', 'time': 'Lunch'},
           {'title': 'Merienda', 'time': 'Merienda'},
-        ];
-      case "Late Night":
-        return [
-          {'title': 'Breakfast', 'time': 'Breakfast'},
-          {'title': 'Lunch', 'time': 'Lunch'},
-          {'title': 'Merienda', 'time': 'Merienda'},
-          {'title': 'Dinner', 'time': 'Dinner'},
         ];
       default:
         return [];
@@ -534,8 +514,14 @@ class _MealSearchPageState extends State<MealSearchPage> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Recipes'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.currency_ruble), 
-            label: 'Budget'
+            icon: Text(
+              '₱',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            label: 'Budget',
           ),
         ],
       ),
