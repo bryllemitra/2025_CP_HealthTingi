@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:currency_code_to_currency_symbol/currency_code_to_currency_symbol.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'dart:async';
 import 'budget_plan.dart';
 import 'meal_scan.dart';
 import 'meal_details.dart';
-import '../searchIngredient/meal_search.dart';
-import '../searchIngredient/favorites.dart';
+import '../searchMeals/meal_search.dart';
+import '../searchMeals/favorites.dart';
 import 'navigation.dart';
 import 'index.dart';
 import '../information/about_us.dart';
@@ -33,14 +35,12 @@ class _HomePageState extends State<HomePage> {
   OverlayEntry? _overlayEntry;
   Set<int> _favoriteMealIds = {};
   int _currentPage = 0;
-  late PageController _pageController;
-  Timer? _carouselTimer;
   bool _showAllCategories = false;
+  List<String>? _cachedCategories; // Cache for categories
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: 0);
     _loadPopularRecipes();
     _loadAllMeals();
     if (widget.userId != 0) { // Only load favorites and history for registered users
@@ -48,13 +48,10 @@ class _HomePageState extends State<HomePage> {
       _loadRecentlyViewedMeals();
     }
     _searchController.addListener(_onSearchChanged);
-    _startCarouselTimer();
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
-    _carouselTimer?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     _removeOverlay();
@@ -98,23 +95,6 @@ class _HomePageState extends State<HomePage> {
     final meals = await dbHelper.getRecentlyViewedMeals(widget.userId);
     setState(() {
       recentlyViewedMeals = meals;
-    });
-  }
-
-  void _startCarouselTimer() {
-    _carouselTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (_pageController.hasClients && recentlyViewedMeals.isNotEmpty) {
-        if (_currentPage < recentlyViewedMeals.length - 1) {
-          _currentPage++;
-        } else {
-          _currentPage = 0;
-        }
-        _pageController.animateToPage(
-          _currentPage,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
     });
   }
 
@@ -260,6 +240,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _navigateToSearchPage() {
+    _removeOverlay();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MealSearchPage(userId: widget.userId),
+      ),
+    );
+  }
+
   Widget _buildMealImage(String imagePath) {
     return Image.asset(
       imagePath,
@@ -297,13 +287,6 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 4,
-              offset: Offset(2, 2),
-            )
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,7 +297,7 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                   child: _buildMealImage(recipe['image']),
                 ),
-                if (widget.userId != 0) // Only show favorite button for registered users
+                if (widget.userId != 0)
                   Positioned(
                     top: 6,
                     right: 6,
@@ -359,7 +342,6 @@ class _HomePageState extends State<HomePage> {
         );
         break;
       case 1:
-        // Already on home page
         break;
       case 2:
         Navigator.push(
@@ -381,6 +363,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCategoryButtons() {
+    // If we have cached categories, use them directly
+    if (_cachedCategories != null) {
+      return _buildCategoryGrid(_cachedCategories!);
+    }
+
+    // Otherwise, fetch from database
     return FutureBuilder<List<String>>(
       future: DatabaseHelper().getAllMealCategories(),
       builder: (context, snapshot) {
@@ -392,72 +380,87 @@ class _HomePageState extends State<HomePage> {
           return const Text('No categories found');
         }
         
-        final categories = snapshot.data!;
-        final displayedCategories = _showAllCategories ? categories : categories.take(6).toList();
-        
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Recipe Categories',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                if (!_showAllCategories && categories.length > 6)
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _showAllCategories = true;
-                      });
-                    },
-                    child: const Text(
-                      'Explore All',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: displayedCategories.map((category) => SizedBox(
-                width: 110,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    backgroundColor: Colors.white,
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/searchIngredient/categories',
-                      arguments: {
-                        'category': category,
-                        'userId': widget.userId,
-                      },
-                    );
-                  },
-                  child: Text(
-                    category.toUpperCase(),
-                    style: const TextStyle(fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              )).toList(),
-            ),
-          ],
-        );
+        // Cache the categories
+        _cachedCategories = snapshot.data!;
+        return _buildCategoryGrid(_cachedCategories!);
       },
+    );
+  }
+
+  Widget _buildCategoryGrid(List<String> categories) {
+    final displayedCategories = _showAllCategories ? categories : categories.take(6).toList();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Recipe Categories',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            if (categories.length > 6)
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showAllCategories = !_showAllCategories;
+                  });
+                },
+                child: Text(
+                  _showAllCategories ? 'See Less' : 'Explore All',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.black54,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 1.8,
+          ),
+          itemCount: displayedCategories.length,
+          itemBuilder: (context, index) {
+            final category = displayedCategories[index];
+            return ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.black,
+                backgroundColor: Colors.white,
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              ),
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/searchIngredient/categories',
+                  arguments: {
+                    'category': category,
+                    'userId': widget.userId,
+                  },
+                );
+              },
+              child: Text(
+                category.toUpperCase(),
+                style: const TextStyle(fontSize: 10),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -477,7 +480,6 @@ class _HomePageState extends State<HomePage> {
   Widget _buildSpecialsCard() {
     if (recentlyViewedMeals.isEmpty || widget.userId == 0) {
       return Container(
-        width: double.infinity,
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(top: 16, bottom: 24),
         decoration: BoxDecoration(
@@ -506,7 +508,6 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(top: 16, bottom: 24),
       decoration: BoxDecoration(
@@ -521,108 +522,101 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 150,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: recentlyViewedMeals.length,
-              onPageChanged: (index) {
+          CarouselSlider.builder(
+            itemCount: recentlyViewedMeals.length,
+            options: CarouselOptions(
+              autoPlay: false,
+              enlargeCenterPage: true,
+              viewportFraction: 0.9,
+              aspectRatio: 2.0,
+              initialPage: 0,
+              enableInfiniteScroll: true,
+              onPageChanged: (index, reason) {
                 setState(() {
                   _currentPage = index;
                 });
               },
-              itemBuilder: (context, index) {
-                final meal = recentlyViewedMeals[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MealDetailsPage(
-                          mealId: meal['mealID'],
-                          userId: widget.userId,
+            ),
+            itemBuilder: (context, index, realIndex) {
+              final meal = recentlyViewedMeals[index];
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MealDetailsPage(
+                        mealId: meal['mealID'],
+                        userId: widget.userId,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.horizontal(
+                          left: Radius.circular(8),
+                        ),
+                        child: Image.asset(
+                          meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                          height: 150,
+                          width: 150,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 150,
+                              width: 150,
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                            );
+                          },
                         ),
                       ),
-                    );
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 4,
-                          offset: Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.horizontal(
-                            left: Radius.circular(8),
-                          ),
-                          child: Image.asset(
-                            meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                            height: 150,
-                            width: 150,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                height: 150,
-                                width: 150,
-                                color: Colors.grey[200],
-                                child: const Icon(Icons.fastfood,
-                                    size: 40, color: Colors.grey),
-                              );
-                            },
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                meal['mealName'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                meal['content']?.toString().split('.').first ?? '',
+                                style: const TextStyle(fontSize: 12),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
                         ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  meal['mealName'],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'}',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  meal['content']?.toString().split('.').first ??
-                                      '',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                  ),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 8),
           Row(
@@ -684,7 +678,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       onPressed: () {
-        Navigator.pop(context); // Close drawer first
+        Navigator.pop(context);
         switch (label) {
           case 'About Us':
             Navigator.push(
@@ -739,7 +733,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         actions: [
-          if (widget.userId != 0) // Only show favorites button for registered users
+          if (widget.userId != 0)
             IconButton(
               icon: const Icon(Icons.star, color: Colors.black),
               onPressed: () {
@@ -762,19 +756,11 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 4,
-                    offset: Offset(2, 2)
-                  ),
-                ],
               ),
               child: Row(
                 children: [
@@ -793,11 +779,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       style: const TextStyle(color: Colors.black),
                       onSubmitted: (value) => _performSearch(),
-                      onTap: () {
-                        if (_searchController.text.isNotEmpty) {
-                          _showOverlay();
-                        }
-                      },
+                      onTap: _navigateToSearchPage,
                     ),
                   ),
                   IconButton(
@@ -816,13 +798,10 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 24),
             
-            // Recipe Categories
             _buildCategoryButtons(),
             
-            // Specials Card
             _buildSpecialsCard(),
             
-            // Popular Recipes
             const Text(
               'Popular Recipes',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
-import '../searchIngredient/favorites.dart';
+import '../searchMeals/favorites.dart';
 
 class ProfilePage extends StatefulWidget {
   final int userId;
@@ -26,7 +26,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    final user = await dbHelper.getUserById(1); // Replace with actual user ID
+    final user = await dbHelper.getUserById(widget.userId); // Use the actual user ID
     setState(() {
       userData = user ?? {};
       hasDietaryRestrictions = user?['hasDietaryRestriction'] == 1;
@@ -43,7 +43,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _handleFieldChange(String field, dynamic value) {
-    _editedValues[field] = value;
+    setState(() {
+      _editedValues[field] = value;
+    });
   }
 
   Future<void> _updateProfile() async {
@@ -62,7 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _editedValues['dietaryRestriction'] = null;
       }
 
-      await dbHelper.updateUser(1, _editedValues); // Replace with actual user ID
+      await dbHelper.updateUser(widget.userId, _editedValues); // Use the actual user ID
       await _loadUserData();
       _editedValues.clear();
       
@@ -95,7 +97,9 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           TextButton(
             onPressed: () {
-              _handleFieldChange(field, controller.text);
+              setState(() {
+                _handleFieldChange(field, controller.text);
+              });
               Navigator.pop(context);
             },
             child: const Text('Save'),
@@ -121,103 +125,148 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Dietary Restrictions'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: hasDietaryRestrictions,
-                        onChanged: (val) => setState(() => hasDietaryRestrictions = val!),
+          return Dialog(
+            insetPadding: const EdgeInsets.all(20),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.9,
+                maxHeight: MediaQuery.of(context).size.height * 0.8,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dietary Restrictions',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const Text('I have dietary restrictions'),
-                    ],
-                  ),
-                  if (hasDietaryRestrictions) ...[
-                    const SizedBox(height: 16),
-                    const Text('Select your restrictions:'),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8.0,
-                      children: allRestrictions.map((restriction) {
-                        return FilterChip(
-                          label: Text(restriction),
-                          selected: selectedDietaryRestrictions.contains(restriction),
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                selectedDietaryRestrictions.add(restriction);
-                              } else {
-                                selectedDietaryRestrictions.remove(restriction);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _otherRestrictionController,
-                            decoration: const InputDecoration(
-                              hintText: 'Other restriction',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
+                        Checkbox(
+                          value: hasDietaryRestrictions,
+                          onChanged: (val) => setState(() => hasDietaryRestrictions = val!),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.add),
-                          onPressed: () {
-                            if (_otherRestrictionController.text.trim().isNotEmpty) {
-                              setState(() {
-                                selectedDietaryRestrictions.add(_otherRestrictionController.text.trim());
-                                _otherRestrictionController.clear();
-                              });
-                            }
-                          },
+                        const Expanded(
+                          child: Text(
+                            'I have dietary restrictions',
+                            style: TextStyle(fontSize: 16),
+                          ),
                         ),
                       ],
                     ),
-                    if (selectedDietaryRestrictions.isNotEmpty) ...[
+                    if (hasDietaryRestrictions) ...[
                       const SizedBox(height: 16),
-                      const Text('Selected:'),
+                      const Text(
+                        'Select your restrictions:',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 8),
+                      // Use Wrap instead of GridView for better responsiveness
                       Wrap(
                         spacing: 8.0,
-                        children: selectedDietaryRestrictions.map((r) => Chip(
-                          label: Text(r),
-                          onDeleted: () {
-                            setState(() => selectedDietaryRestrictions.remove(r));
-                          },
-                        )).toList(),
+                        runSpacing: 8.0,
+                        children: allRestrictions.map((restriction) {
+                          return FilterChip(
+                            label: Text(restriction),
+                            selected: selectedDietaryRestrictions.contains(restriction),
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  selectedDietaryRestrictions.add(restriction);
+                                } else {
+                                  selectedDietaryRestrictions.remove(restriction);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
                       ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Other restrictions:',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _otherRestrictionController,
+                              decoration: const InputDecoration(
+                                hintText: 'Enter other restriction',
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: () {
+                              if (_otherRestrictionController.text.trim().isNotEmpty) {
+                                setState(() {
+                                  selectedDietaryRestrictions.add(_otherRestrictionController.text.trim());
+                                  _otherRestrictionController.clear();
+                                });
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      if (selectedDietaryRestrictions.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Selected restrictions:',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 8.0,
+                          children: selectedDietaryRestrictions.map((r) => Chip(
+                            label: Text(r),
+                            onDeleted: () {
+                              setState(() => selectedDietaryRestrictions.remove(r));
+                            },
+                          )).toList(),
+                        ),
+                      ],
                     ],
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _handleFieldChange('hasDietaryRestriction', hasDietaryRestrictions ? 1 : 0);
+                              if (hasDietaryRestrictions) {
+                                _handleFieldChange('dietaryRestriction', selectedDietaryRestrictions.join(', '));
+                              } else {
+                                _handleFieldChange('dietaryRestriction', null);
+                              }
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Save'),
+                        ),
+                      ],
+                    ),
                   ],
-                ],
+                ),
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  _handleFieldChange('hasDietaryRestriction', hasDietaryRestrictions ? 1 : 0);
-                  if (hasDietaryRestrictions) {
-                    _handleFieldChange('dietaryRestriction', selectedDietaryRestrictions.join(', '));
-                  } else {
-                    _handleFieldChange('dietaryRestriction', null);
-                  }
-                  Navigator.pop(context);
-                },
-                child: const Text('Save'),
-              ),
-            ],
           );
         },
       ),

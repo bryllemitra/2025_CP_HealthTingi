@@ -513,16 +513,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Recipes'),
-          BottomNavigationBarItem(
-            icon: Text(
-              '₱',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            label: 'Budget',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Recipes'),
         ],
       ),
     );

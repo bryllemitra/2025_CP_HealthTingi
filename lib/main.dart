@@ -5,7 +5,7 @@ import 'pages/index.dart';
 import 'pages/login.dart';
 import 'pages/register.dart';
 import 'pages/meal_scan.dart';
-import 'searchIngredient/categories.dart';
+import 'searchMeals/categories.dart';
 //test
 
 void main() {

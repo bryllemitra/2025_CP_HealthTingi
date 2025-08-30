@@ -7,7 +7,7 @@ import 'package:image/image.dart' as img;
 
 import 'home.dart';
 import 'budget_plan.dart';
-import '../searchIngredient/meal_search.dart';
+import '../searchMeals/meal_search.dart';
 import 'navigation.dart';
 import '../mealScanner/success.dart';
 import 'dart:typed_data';
