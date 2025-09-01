@@ -1,10 +1,12 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:flutter/services.dart';
+import 'dart:convert';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _currentVersion = 7; 
+  static const int _currentVersion = 8; 
 
   factory DatabaseHelper() => _instance;
 
@@ -61,7 +63,15 @@ class DatabaseHelper {
     await _insertIngredients(db);
     await _insertMeals(db);
     }
+    if (oldVersion < 8) {
+      // Clear old data and reload from JSON
+      await db.delete('meal_ingredients');
+      await db.delete('meals');
+      await db.delete('ingredients');
+      await _insertInitialData(db);
+    }
   }
+
 
   Future<void> _updateExistingRecordsWithPictures(Database db) async {
     // Update ingredients with picture paths
@@ -160,6 +170,10 @@ class DatabaseHelper {
         category TEXT
       )
     ''');
+
+    await db.execute('''
+      CREATE INDEX idx_ingredient_name ON ingredients(ingredientName)
+    ''');
   }
 
   Future<void> _createMealsTable(Database db) async {
@@ -197,9 +211,25 @@ class DatabaseHelper {
 
   Future<void> _insertInitialData(Database db) async {
     // Insert ingredients
-    await _insertIngredients(db);
+    await _insertIngredientsFromJson(db);
     // Insert meals and their relationships
     await _insertMeals(db);
+  }
+
+  Future<void> _insertIngredientsFromJson(Database db) async {
+    try {
+      final String dataString = await rootBundle.loadString('assets/data/ingredients.json');
+      final Map<String, dynamic> data = jsonDecode(dataString);
+      
+      for (var ingredient in data['ingredients']) {
+        await db.insert('ingredients', ingredient);
+      }
+      print('Ingredients loaded successfully from JSON');
+    } catch (e) {
+      print('Error loading ingredients from JSON: $e');
+      // Fallback to hardcoded ingredients if JSON fails
+      await _insertIngredients(db);
+    }
   }
 
   Future<void> _insertIngredients(Database db) async {
@@ -838,34 +868,34 @@ Add malunggay or pechay, and simmer for another 1–2 minutes.
 Adjust seasoning to taste.
 ''',
       'hasDietaryRestrictions': 'hypertension, chicken allergy',
-      'availableFrom': '16:00',
-      'availableTo': '19:00'
+      'availableFrom': '17:00',
+      'availableTo': '21:00'
     });
 
     // Insert Tinolang Manok ingredients
     await db.insert('meal_ingredients', {
       'mealID': tinolangId,
-      'ingredientID': 1, // Chicken
+      'ingredientID': 37, // Chicken
       'quantity': '1/4 kg'
     });
     await db.insert('meal_ingredients', {
       'mealID': tinolangId,
-      'ingredientID': 2, // Sayote
+      'ingredientID': 128, // Sayote
       'quantity': '1 small'
     });
     await db.insert('meal_ingredients', {
       'mealID': tinolangId,
-      'ingredientID': 4, // Ginger
+      'ingredientID': 153, // Ginger
       'quantity': '1 small thumb'
     });
     await db.insert('meal_ingredients', {
       'mealID': tinolangId,
-      'ingredientID': 5, // Onion
+      'ingredientID': 149, // Onion
       'quantity': '1 small'
     });
     await db.insert('meal_ingredients', {
       'mealID': tinolangId,
-      'ingredientID': 6, // Garlic
+      'ingredientID': 152, // Garlic
       'quantity': '2 cloves'
     });
     await db.insert('meal_ingredients', {
@@ -924,27 +954,27 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     // Insert Ginisang Sayote ingredients
     await db.insert('meal_ingredients', {
       'mealID': ginisangId,
-      'ingredientID': 2, // Sayote
+      'ingredientID': 128, // Sayote
       'quantity': '1 small'
     });
     await db.insert('meal_ingredients', {
       'mealID': ginisangId,
-      'ingredientID': 8, // Bagoong
+      'ingredientID': 23, // Bagoong
       'quantity': '1/4 tsp'
     });
     await db.insert('meal_ingredients', {
       'mealID': ginisangId,
-      'ingredientID': 5, // Onion
+      'ingredientID': 149, // Onion
       'quantity': '1 small'
     });
     await db.insert('meal_ingredients', {
       'mealID': ginisangId,
-      'ingredientID': 6, // Garlic
+      'ingredientID': 152, // Garlic
       'quantity': '4 cloves'
     });
     await db.insert('meal_ingredients', {
       'mealID': ginisangId,
-      'ingredientID': 9, // Tomato
+      'ingredientID': 129, // Tomato
       'quantity': '1 small'
     });
     await db.insert('meal_ingredients', {
@@ -982,12 +1012,12 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
 
   await db.insert('meal_ingredients', {
     'mealID': adobongManokId,
-    'ingredientID': 11, // Chicken thigh
+    'ingredientID': 43, // Chicken thigh
     'quantity': '2 pieces (≈300g)'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongManokId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '3 cloves'
   });
   await db.insert('meal_ingredients', {
@@ -1083,27 +1113,27 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
   });
   await db.insert('meal_ingredients', {
     'mealID': binignitId,
-    'ingredientID': 18, // Sweet potato
+    'ingredientID': 144, // Sweet potato
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': binignitId,
-    'ingredientID': 19, // Taro (gabi)
+    'ingredientID': 148, // Taro (gabi)
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': binignitId,
-    'ingredientID': 20, // Purple yam (ube)
+    'ingredientID': 147, // Purple yam (ube)
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': binignitId,
-    'ingredientID': 21, // Saba banana
+    'ingredientID': 154, // Saba banana
     'quantity': '2 pieces'
   });
   await db.insert('meal_ingredients', {
     'mealID': binignitId,
-    'ingredientID': 22, // Jackfruit
+    'ingredientID': 175, // Jackfruit
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
@@ -1207,7 +1237,7 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'servings': 2,
     'cookingTime': '25 minutes',
     'mealPicture': 'assets/chopsuey.jpg',
-    'category': 'Main Dish, Vegetables',
+    'category': 'Main Dish, Vegetable',
     'content': 'Stir-fried mixed vegetables with chicken/shrimp in savory sauce.',
     'instructions': '''
 1. Sauté onion & garlic in oil until fragrant.
@@ -1720,22 +1750,22 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
 
   await db.insert('meal_ingredients', {
     'mealID': tortangSayoteId,
-    'ingredientID': 2, // Sayote
+    'ingredientID': 128, // Sayote
     'quantity': '2 medium'
   });
   await db.insert('meal_ingredients', {
     'mealID': tortangSayoteId,
-    'ingredientID': 38, // Eggs
+    'ingredientID': 177, // Eggs
     'quantity': '3'
   });
   await db.insert('meal_ingredients', {
     'mealID': tortangSayoteId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '2 cloves'
   });
   await db.insert('meal_ingredients', {
     'mealID': tortangSayoteId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '1 small'
   });
   await db.insert('meal_ingredients', {
@@ -2203,6 +2233,67 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
   });
   }
 
+   // ========== NEW METHOD: Load meals from JSON ==========
+  Future<void> loadMealsFromJson() async {
+    final db = await database;
+    try {
+      final String dataString = await rootBundle.loadString('assets/data/meals.json');
+      final Map<String, dynamic> data = jsonDecode(dataString);
+      
+      // First, get all ingredients to map names to IDs
+      final List<Map<String, dynamic>> allIngredients = await db.query('ingredients');
+      final Map<String, int> ingredientNameToId = {};
+      for (var ingredient in allIngredients) {
+        ingredientNameToId[ingredient['ingredientName']] = ingredient['ingredientID'];
+      }
+      
+      // Clear existing meals and relationships
+      await db.delete('meal_ingredients');
+      await db.delete('meals');
+      
+      for (var mealData in data['meals']) {
+        // Extract ingredients to insert separately
+        final List<Map<String, dynamic>> mealIngredients = 
+            List<Map<String, dynamic>>.from(mealData['ingredients']);
+        mealData.remove('ingredients');
+        
+        // Insert meal
+        final mealId = await db.insert('meals', mealData);
+        
+        // Insert meal ingredients
+        for (var ingredient in mealIngredients) {
+          final String ingredientName = ingredient['ingredientName'];
+          final int? ingredientId = ingredientNameToId[ingredientName];
+          
+          if (ingredientId != null) {
+            await db.insert('meal_ingredients', {
+              'mealID': mealId,
+              'ingredientID': ingredientId,
+              'quantity': ingredient['quantity']
+            });
+          } else {
+            print('Ingredient not found: $ingredientName');
+          }
+        }
+      }
+      print('Meals loaded successfully from JSON');
+    } catch (e) {
+      print('Error loading meals from JSON: $e');
+      // Fallback to hardcoded meals if JSON fails
+      await _insertMeals(db);
+    }
+  }
+
+  // ========== UTILITY METHOD: Reset database with JSON data ==========
+  Future<void> resetDatabaseWithJsonData() async {
+    final db = await database;
+    await db.delete('meal_ingredients');
+    await db.delete('meals');
+    await db.delete('ingredients');
+    await _insertIngredientsFromJson(db);
+    await loadMealsFromJson();
+  }
+
   // ========== MEAL OPERATIONS ==========
   Future<List<Map<String, dynamic>>> getAllMeals() async {
     final db = await database;
@@ -2275,17 +2366,31 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     );
   }
 
-  Future<List<String>> getAllMealCategories() async {
+    Future<List<String>> getAllMealCategories() async {
     final db = await database;
-    final meals = await db.query('meals');
+    
+    final List<Map<String, dynamic>> meals = await db.query('meals', 
+      columns: ['category']);
     
     Set<String> uniqueCategories = {};
+    
     for (var meal in meals) {
-      final categories = (meal['category'] as String?)?.split(', ') ?? [];
-      uniqueCategories.addAll(categories);
+      final categoryString = meal['category'] as String?;
+      if (categoryString != null && categoryString.isNotEmpty) {
+        // Split by comma, trim, and convert to lowercase for consistency
+        final categories = categoryString.split(',')
+          .map((cat) => cat.trim().toLowerCase())
+          .toList();
+        uniqueCategories.addAll(categories);
+      }
     }
     
-    return uniqueCategories.toList()..sort();
+    // Convert back to title case for display
+    return uniqueCategories.map((cat) => 
+      cat.split(' ').map((word) => 
+        word[0].toUpperCase() + word.substring(1)
+      ).join(' ')
+    ).toList()..sort();
   }
 
   // Add to database/db_helper.dart
@@ -2329,7 +2434,7 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
       return allMeals.firstWhere((meal) => meal['mealID'] == id, orElse: () => {});
     }).where((meal) => meal.isNotEmpty).toList();
   }
-  
+
   Future<List<Map<String, dynamic>>> getAllIngredients() async {
     final db = await database;
     return await db.query('ingredients');
@@ -2354,4 +2459,15 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
       throw Exception('Database recreated due to schema issues');
     }
   }
+
+  Future<Map<String, dynamic>?> getIngredientByName(String name) async {
+    final db = await database;
+    final results = await db.query(
+      'ingredients',
+      where: 'ingredientName = ?',
+      whereArgs: [name],
+    );
+    return results.isNotEmpty ? results.first : null;
+  }
+
 }

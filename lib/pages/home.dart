@@ -13,6 +13,7 @@ import 'index.dart';
 import '../information/about_us.dart';
 import '../information/fAQs.dart';
 import '../database/db_helper.dart';
+import '../ingredientScanner/ingredient_details.dart';
 
 class HomePage extends StatefulWidget {
   final String title;
@@ -28,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 1; // Home is selected by default
   List<Map<String, dynamic>> popularRecipes = [];
   List<Map<String, dynamic>> allMeals = [];
+  List<Map<String, dynamic>> allIngredients = []; // ADD THIS
   List<Map<String, dynamic>> searchResults = [];
   List<Map<String, dynamic>> recentlyViewedMeals = [];
   final TextEditingController _searchController = TextEditingController();
@@ -43,6 +45,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadPopularRecipes();
     _loadAllMeals();
+    _loadAllIngredients(); // ADD THIS
     if (widget.userId != 0) { // Only load favorites and history for registered users
       _loadUserFavorites();
       _loadRecentlyViewedMeals();
@@ -56,6 +59,15 @@ class _HomePageState extends State<HomePage> {
     _searchFocusNode.dispose();
     _removeOverlay();
     super.dispose();
+  }
+
+  // ADD THIS METHOD
+  Future<void> _loadAllIngredients() async {
+    final dbHelper = DatabaseHelper();
+    final ingredients = await dbHelper.getAllIngredients();
+    setState(() {
+      allIngredients = ingredients;
+    });
   }
 
   Future<void> _loadUserFavorites() async {
@@ -266,6 +278,24 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ADD THIS METHOD
+  Widget _buildIngredientImage(String imagePath) {
+    return Image.asset(
+      imagePath,
+      height: 80,
+      width: 80,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          height: 80,
+          width: 80,
+          color: Colors.grey[200],
+          child: const Icon(Icons.fastfood, size: 30, color: Colors.grey),
+        );
+      },
+    );
+  }
+
   Widget _buildPopularRecipeCard(Map<String, dynamic> recipe) {
     final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(recipe['id']);
     
@@ -327,6 +357,109 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  // ADD THIS METHOD
+  Widget _buildIngredientCard(Map<String, dynamic> ingredient) {
+  final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown Ingredient';
+  
+  // FIX: Add 'ingredients/' subfolder to the path
+  final String imagePath;
+  if (ingredient['ingredientPicture'] != null) {
+    final originalPath = ingredient['ingredientPicture'].toString();
+    // Check if the path already contains 'ingredients/' to avoid duplication
+    if (originalPath.contains('ingredients/')) {
+      imagePath = originalPath;
+    } else {
+      // Extract just the filename and add it to the ingredients folder
+      final fileName = originalPath.replaceFirst('assets/', '');
+      imagePath = 'assets/ingredients/$fileName';
+    }
+  } else {
+    imagePath = 'assets/ingredients/default_ingredient.jpg';
+  }
+  
+  final price = ingredient['price'] is double 
+      ? (ingredient['price'] as double).toStringAsFixed(2)
+      : ingredient['price']?.toString() ?? '0.00';
+  
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => IngredientDetailsPage(
+            userId: widget.userId,
+            ingredientName: ingredientName,
+          ),
+        ),
+      );
+    },
+    child: Container(
+      width: 120,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Ingredient Image
+          Container(
+            height: 80,
+            width: 80,
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey[100],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: _buildIngredientImage(imagePath),
+            ),
+          ),
+          
+          // Ingredient Name
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              ingredientName,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 12
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          
+          // Price
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Text(
+              '₱$price',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
+}
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
@@ -477,7 +610,45 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ADD THIS METHOD
+  Widget _buildIngredientsSection() {
+    if (allIngredients.isEmpty) {
+      return const SizedBox.shrink(); // Don't show if no ingredients
+    }
+    
+    // Get a subset of ingredients to display (e.g., first 10)
+    final displayedIngredients = allIngredients.take(10).toList();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        const Text(
+          'Check Your Ingredients',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 140,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: displayedIngredients.length,
+            itemBuilder: (context, index) {
+              return _buildIngredientCard(displayedIngredients[index]);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSpecialsCard() {
+
+    // Completely hide for guest users
+    if (widget.userId == 0) {
+      return const SizedBox.shrink();
+    }
+
     if (recentlyViewedMeals.isEmpty || widget.userId == 0) {
       return Container(
         padding: const EdgeInsets.all(16),
@@ -561,24 +732,23 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ClipRRect(
-                        borderRadius: const BorderRadius.horizontal(
-                          left: Radius.circular(8),
-                        ),
-                        child: Image.asset(
-                          meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                          height: 150,
-                          width: 150,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: 150,
-                              width: 150,
-                              color: Colors.grey[200],
-                              child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
-                            );
-                          },
+                        borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                        child: SizedBox(
+                          width: 150, // fixed width
+                          height: double.infinity, // fill vertical space of the card
+                          child: Image.asset(
+                            meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                            fit: BoxFit.cover, // fills area without white gaps
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                              );
+                            },
+                          ),
                         ),
                       ),
+
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
@@ -746,7 +916,6 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           const SizedBox(width: 8),
-          const Icon(Icons.settings, color: Colors.black),
           const SizedBox(width: 16),
         ],
         elevation: 0,
@@ -808,6 +977,9 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 12),
             _buildPopularRecipes(),
+
+            // ADD THIS SECTION
+            _buildIngredientsSection(),
           ],
         ),
       ),

@@ -5,6 +5,7 @@ import '../pages/budget_plan.dart';
 import '../pages/meal_scan.dart';
 import '../pages/meal_details.dart';
 import 'meal_search2.dart';
+import '../ingredientScanner/ingredient_details.dart'; // ADD THIS IMPORT
 
 class MealSearchPage extends StatefulWidget {
   final int userId;
@@ -17,6 +18,7 @@ class MealSearchPage extends StatefulWidget {
 
 class _MealSearchPageState extends State<MealSearchPage> {
   late Future<List<Map<String, dynamic>>> _mealsFuture;
+  late Future<List<Map<String, dynamic>>> _ingredientsFuture; // ADD THIS
   final DatabaseHelper _dbHelper = DatabaseHelper();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -26,6 +28,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
   void initState() {
     super.initState();
     _mealsFuture = _fetchMeals();
+    _ingredientsFuture = _fetchIngredients(); // ADD THIS
     _searchController.addListener(_onSearchChanged);
     if (widget.userId != 0) { // Only load favorites for registered users
       _loadUserFavorites();
@@ -36,6 +39,12 @@ class _MealSearchPageState extends State<MealSearchPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  // ADD THIS METHOD
+  Future<List<Map<String, dynamic>>> _fetchIngredients() async {
+    final ingredients = await _dbHelper.getAllIngredients();
+    return ingredients;
   }
 
   Future<void> _loadUserFavorites() async {
@@ -97,13 +106,11 @@ class _MealSearchPageState extends State<MealSearchPage> {
     final phTime = _getPhilippineTime();
     final hour = phTime.hour;
 
-    // Dinner extends until 23:59, then switches to Breakfast at 00:00
-    if (hour >= 0 && hour < 5) return "Breakfast"; // Removed Late Night case
     if (hour >= 5 && hour < 10) return "Breakfast";
     if (hour >= 10 && hour < 14) return "Lunch";
     if (hour >= 14 && hour < 17) return "Merienda";
-    if (hour >= 17) return "Dinner"; // Dinner from 17:00 to 23:59
-    return "Breakfast"; // Default to Breakfast
+    if (hour >= 17 && hour < 22) return "Dinner";
+    return "Late Night";
   }
 
   String _getMealTimeGreeting(String time) {
@@ -112,6 +119,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
       case "Lunch": return "Get Ready For Lunch!";
       case "Merienda": return "Merienda Time!";
       case "Dinner": return "Dinner is Served!";
+      case "Late Night": return "Late Night Snacks!";
       default: return "Meal Suggestions";
     }
   }
@@ -127,20 +135,9 @@ class _MealSearchPageState extends State<MealSearchPage> {
         final toHour = int.parse(meal['availableTo']?.split(':')[0] ?? '24');
         
         if (time == "Current") {
-          // Special handling for dinner (17:00 to 23:59)
-          if (currentHour >= 17) {
-            return currentHour >= fromHour && (toHour > 23 || fromHour >= 17);
-          }
-          // Removed Late Night special handling
           return currentHour >= fromHour && currentHour < toHour;
         } else {
-          // For specific time filters
-          if (time == "Dinner") {
-            // Dinner meals should be available from 17:00 onward
-            return fromHour >= 17;
-          } else {
-            return (fromHour >= _getStartHour(time) && toHour <= _getEndHour(time));
-          }
+          return (fromHour >= _getStartHour(time) && toHour <= _getEndHour(time));
         }
       } catch (e) {
         return false;
@@ -155,6 +152,14 @@ class _MealSearchPageState extends State<MealSearchPage> {
     }).toList();
   }
 
+  // ADD THIS METHOD
+  List<Map<String, dynamic>> _filterIngredientsByName(List<Map<String, dynamic>> ingredients, String query) {
+    if (query.isEmpty) return [];
+    return ingredients.where((ingredient) {
+      return ingredient['ingredientName'].toString().toLowerCase().contains(query);
+    }).toList();
+  }
+
   List<Map<String, dynamic>> _sortMeals(List<Map<String, dynamic>> meals) {
     meals.sort((a, b) => a['mealName'].compareTo(b['mealName']));
     return meals;
@@ -166,6 +171,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
       case "Lunch": return 10;
       case "Merienda": return 14;
       case "Dinner": return 17;
+      case "Late Night": return 21;
       default: return 0;
     }
   }
@@ -175,7 +181,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
       case "Breakfast": return 10;
       case "Lunch": return 14;
       case "Merienda": return 17;
-      case "Dinner": return 24; // Dinner extends until 23:59
+      case "Dinner": return 21;
+      case "Late Night": return 24;
       default: return 24;
     }
   }
@@ -187,24 +194,35 @@ class _MealSearchPageState extends State<MealSearchPage> {
           {'title': 'Lunch', 'time': 'Lunch'},
           {'title': 'Merienda', 'time': 'Merienda'},
           {'title': 'Dinner', 'time': 'Dinner'},
+          {'title': 'Late Night', 'time': 'Late Night'},
         ];
       case "Lunch":
         return [
           {'title': 'Merienda', 'time': 'Merienda'},
           {'title': 'Dinner', 'time': 'Dinner'},
+          {'title': 'Late Night', 'time': 'Late Night'},
           {'title': 'Breakfast', 'time': 'Breakfast'},
         ];
       case "Merienda":
         return [
           {'title': 'Dinner', 'time': 'Dinner'},
+          {'title': 'Late Night', 'time': 'Late Night'},
           {'title': 'Breakfast', 'time': 'Breakfast'},
           {'title': 'Lunch', 'time': 'Lunch'},
         ];
       case "Dinner":
         return [
+          {'title': 'Late Night', 'time': 'Late Night'},
           {'title': 'Breakfast', 'time': 'Breakfast'},
           {'title': 'Lunch', 'time': 'Lunch'},
           {'title': 'Merienda', 'time': 'Merienda'},
+        ];
+      case "Late Night":
+        return [
+          {'title': 'Breakfast', 'time': 'Breakfast'},
+          {'title': 'Lunch', 'time': 'Lunch'},
+          {'title': 'Merienda', 'time': 'Merienda'},
+          {'title': 'Dinner', 'time': 'Dinner'},
         ];
       default:
         return [];
@@ -231,24 +249,18 @@ class _MealSearchPageState extends State<MealSearchPage> {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: meal['mealPicture'] != null
-                    ? Image.asset(
-                        meal['mealPicture'],
-                        height: 100,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(
-                              height: 100,
-                              color: Colors.grey[200],
-                              child: const Icon(Icons.fastfood),
-                            ),
-                      )
-                    : Container(
-                        height: 100,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.fastfood),
-                      ),
+                child: SizedBox(
+                  height: 100, // give the image area more breathing room
+                  width: double.infinity,
+                  child: Image.asset(
+                    meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                    fit: BoxFit.cover, // fills without gaps
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                    ),
+                  ),
+                ),
               ),
               if (widget.userId != 0) // Only show favorite button for registered users
                 Positioned(
@@ -265,6 +277,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 ),
             ],
           ),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Column(
@@ -315,6 +328,113 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   child: const Text("VIEW INSTRUCTIONS"),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ADD THIS METHOD
+  Widget _buildIngredientCard(Map<String, dynamic> ingredient) {
+    final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown Ingredient';
+    final imagePath = ingredient['ingredientPicture']?.toString() ?? 'assets/default_ingredient.jpg';
+    final price = ingredient['price'] is double 
+        ? (ingredient['price'] as double).toStringAsFixed(2)
+        : ingredient['price']?.toString() ?? '0.00';
+    
+    return Container(
+      width: 120,
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(2, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Ingredient Image
+          Container(
+            height: 80,
+            width: 80,
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey[100],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.fastfood, size: 30, color: Colors.grey),
+                  );
+                },
+              ),
+            ),
+          ),
+          
+          // Ingredient Name
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              ingredientName,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 12
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          
+          // Price
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Text(
+              '₱$price',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          
+          // View Details Button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.yellowAccent,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                minimumSize: const Size.fromHeight(28),
+                textStyle: const TextStyle(fontSize: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                elevation: 0,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => IngredientDetailsPage(
+                      userId: widget.userId,
+                      ingredientName: ingredientName,
+                    ),
+                  ),
+                );
+              },
+              child: const Text("VIEW DETAILS"),
             ),
           ),
         ],
@@ -373,6 +493,36 @@ class _MealSearchPageState extends State<MealSearchPage> {
     );
   }
 
+  // ADD THIS METHOD
+  Widget _buildIngredientsSection(List<Map<String, dynamic>> ingredients) {
+    if (ingredients.isEmpty) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(thickness: 0.4),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
+          child: Text(
+            "Ingredients",
+            style: TextStyle(
+              fontWeight: FontWeight.bold, 
+              fontSize: 18
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 180,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: ingredients.map(_buildIngredientCard).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -398,7 +548,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 child: TextField(
                   controller: _searchController,
                   decoration: const InputDecoration(
-                    hintText: 'Search meals...',
+                    hintText: 'Search meals or ingredients...', // UPDATED TEXT
                     suffixIcon: Icon(Icons.search),
                     border: InputBorder.none,
                   ),
@@ -408,61 +558,83 @@ class _MealSearchPageState extends State<MealSearchPage> {
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _mealsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                builder: (context, mealsSnapshot) {
+                  if (mealsSnapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No meals available'));
+                  } else if (mealsSnapshot.hasError) {
+                    return Center(child: Text('Error: ${mealsSnapshot.error}'));
                   }
 
-                  final allMeals = snapshot.data!;
-                  final currentTime = _getCurrentMealTime();
-                  final timeBasedSections = _getTimeBasedSections(currentTime);
-                  
-                  // Filter by search query first
-                  var filteredMeals = _filterMealsByName(allMeals, _searchQuery);
-                  
-                  // Then filter by time
-                  final currentMeals = _filterMealsByTime(filteredMeals, "Current");
-                  final otherMeals = filteredMeals
-                      .where((meal) => !currentMeals.contains(meal))
-                      .toList();
+                  return FutureBuilder<List<Map<String, dynamic>>>(
+                    future: _ingredientsFuture,
+                    builder: (context, ingredientsSnapshot) {
+                      if (ingredientsSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (ingredientsSnapshot.hasError) {
+                        return Center(child: Text('Error: ${ingredientsSnapshot.error}'));
+                      }
 
-                  // Sort alphabetically
-                  final sortedCurrentMeals = _sortMeals(currentMeals);
-                  final sortedOtherMeals = _sortMeals(otherMeals);
+                      final allMeals = mealsSnapshot.data ?? [];
+                      final allIngredients = ingredientsSnapshot.data ?? [];
+                      
+                      // Filter by search query
+                      var filteredMeals = _filterMealsByName(allMeals, _searchQuery);
+                      var filteredIngredients = _filterIngredientsByName(allIngredients, _searchQuery);
+                      
+                      // Then filter by time
+                      final currentTime = _getCurrentMealTime();
+                      final timeBasedSections = _getTimeBasedSections(currentTime);
+                      
+                      final currentMeals = _filterMealsByTime(filteredMeals, "Current");
+                      final otherMeals = filteredMeals
+                          .where((meal) => !currentMeals.contains(meal))
+                          .toList();
 
-                  // Build time-based sections
-                  final timeSections = timeBasedSections.map((section) {
-                    final timeMeals = _filterMealsByTime(filteredMeals, section['time']!);
-                    return _buildSection(
-                      section['title']!,
-                      _sortMeals(timeMeals),
-                      section['time']!
-                    );
-                  }).toList();
+                      // Sort alphabetically
+                      final sortedCurrentMeals = _sortMeals(currentMeals);
+                      final sortedOtherMeals = _sortMeals(otherMeals);
 
-                  return ListView(
-                    children: [
-                      if (sortedCurrentMeals.isNotEmpty)
-                        _buildSection(
-                          _getMealTimeGreeting(currentTime), 
-                          sortedCurrentMeals,
-                          "Current"
-                        ),
-                      ...timeSections,
-                      if (sortedOtherMeals.isNotEmpty)
-                        _buildSection("Other Meal Options", sortedOtherMeals, "All"),
-                      if (filteredMeals.isEmpty)
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Text("No meals found matching your search"),
-                          ),
-                        ),
-                    ],
+                      // Build time-based sections
+                      final timeSections = timeBasedSections.map((section) {
+                        final timeMeals = _filterMealsByTime(filteredMeals, section['time']!);
+                        return _buildSection(
+                          section['title']!,
+                          _sortMeals(timeMeals),
+                          section['time']!
+                        );
+                      }).toList();
+
+                      return ListView(
+                        children: [
+                          // Show ingredients section when searching
+                          if (_searchQuery.isNotEmpty && filteredIngredients.isNotEmpty)
+                            _buildIngredientsSection(filteredIngredients),
+                          
+                          if (sortedCurrentMeals.isNotEmpty)
+                            _buildSection(
+                              _getMealTimeGreeting(currentTime), 
+                              sortedCurrentMeals,
+                              "Current"
+                            ),
+                          ...timeSections,
+                          if (sortedOtherMeals.isNotEmpty)
+                            _buildSection("Other Meal Options", sortedOtherMeals, "All"),
+                          
+                          // Show message if no results found
+                          if (filteredMeals.isEmpty && filteredIngredients.isEmpty && _searchQuery.isNotEmpty)
+                            const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Text("No meals or ingredients found matching your search"),
+                              ),
+                            ),
+                          
+                          // Show ingredients section when not searching (at the end)
+                          if (_searchQuery.isEmpty && allIngredients.isNotEmpty)
+                            _buildIngredientsSection(allIngredients.take(10).toList()),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
@@ -513,7 +685,10 @@ class _MealSearchPageState extends State<MealSearchPage> {
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Recipes'),
-          BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Recipes'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.currency_ruble), 
+            label: 'Budget'
+          ),
         ],
       ),
     );

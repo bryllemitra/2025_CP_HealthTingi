@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'scanned_ingredient.dart';
 import '../database/db_helper.dart';
 import '../pages/meal_details.dart';
+import 'scanned_ingredient.dart';
 
 class IngredientDetailsPage extends StatefulWidget {
   final int userId;
@@ -81,16 +81,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _getAllIngredients() async {
-    try {
-      final db = await _dbHelper.database;
-      return await db.query('ingredients');
-    } catch (e) {
-      print('Error getting all ingredients: $e');
-      return [];
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,12 +91,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ScannedIngredientPage(userId: widget.userId),
-              ),
-            );
+            Navigator.pop(context);
           },
         ),
         title: Text(
@@ -135,7 +120,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                 builder: (context, snapshot) {
                   final ingredient = snapshot.data;
                   final imagePath = ingredient?['ingredientPicture']?.toString() ?? 
-                                  'assets/${widget.ingredientName.toLowerCase()}.jpg';
+                                  'assets/default_ingredient.jpg';
                   
                   return Column(
                     children: [
@@ -262,38 +247,16 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
 
   String _getCostEstimate(Map<String, dynamic>? ingredient) {
     if (ingredient != null && ingredient['price'] != null) {
-      return '₱${ingredient['price']} (per unit)';
+      return 'Php ${ingredient['price']} (per unit)';
     }
-    
-    // Fallback to hardcoded values if database doesn't have the ingredient
-    switch (widget.ingredientName.toLowerCase()) {
-      case 'sayote':
-        return '₱10–₱15 (per medium-sized piece)';
-      case 'chicken':
-        return '₱150–₱200 (per kilo)';
-      case 'petchay':
-        return '₱20–₱30 (per bundle)';
-      default:
-        return 'Price varies';
-    }
+    return 'Price information not available';
   }
 
   String _getCalories(Map<String, dynamic>? ingredient) {
     if (ingredient != null && ingredient['calories'] != null) {
       return '${ingredient['calories']} kcal per 100g';
     }
-    
-    // Fallback to hardcoded values
-    switch (widget.ingredientName.toLowerCase()) {
-      case 'sayote':
-        return '19 kcal per 100g';
-      case 'chicken':
-        return '239 kcal per 100g (breast)';
-      case 'petchay':
-        return '13 kcal per 100g';
-      default:
-        return 'Calories vary';
-    }
+    return 'Calorie information not available';
   }
 
   List<Widget> _getNutritionalInfo(Map<String, dynamic>? ingredient) {
@@ -303,31 +266,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
         Text("• $nutritionalValue"),
       ];
     }
-    
-    // Fallback to hardcoded values
-    switch (widget.ingredientName.toLowerCase()) {
-      case 'sayote':
-        return [
-          const Text("• Rich in Vitamin C – boosts immune system"),
-          const Text("• Contains Folate (Vitamin B9)"),
-          const Text("• Low in Calories – good for weight management"),
-          const Text("• High in Fiber – supports digestion"),
-        ];
-      case 'chicken':
-        return [
-          const Text("• High in Protein – supports muscle growth"),
-          const Text("• Rich in B Vitamins – supports energy production"),
-          const Text("• Contains Selenium – antioxidant properties"),
-        ];
-      case 'petchay':
-        return [
-          const Text("• Rich in Vitamin A – supports eye health"),
-          const Text("• Good source of Vitamin C – immune support"),
-          const Text("• Contains Calcium – supports bone health"),
-        ];
-      default:
-        return [const Text("Nutritional information not available")];
-    }
+    return [const Text("Nutritional information not available")];
   }
 
   Widget _buildMealCard(Map<String, dynamic> meal, BuildContext context) {
@@ -354,7 +293,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
         ),
         title: Text(mealName),
         subtitle: Text(
-          '₱${meal['price']?.toStringAsFixed(2) ?? '0.00'} • ${meal['calories']?.toString() ?? '0'} kcal'
+          'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'} • ${meal['calories']?.toString() ?? '0'} kcal'
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
@@ -372,13 +311,5 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
         },
       ),
     );
-  }
-}
-
-// Add this method to your DatabaseHelper class if it doesn't exist
-extension DatabaseHelperExtensions on DatabaseHelper {
-  Future<List<Map<String, dynamic>>> getAllIngredients() async {
-    final db = await database;
-    return await db.query('ingredients');
   }
 }

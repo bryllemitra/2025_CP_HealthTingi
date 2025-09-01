@@ -9,7 +9,7 @@ import 'home.dart';
 import 'budget_plan.dart';
 import '../searchMeals/meal_search.dart';
 import 'navigation.dart';
-import '../mealScanner/success.dart';
+import '../ingredientScanner/success.dart';
 import 'dart:typed_data';
 
 class MealScanPage extends StatefulWidget {

@@ -86,20 +86,34 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         return {
           ...meal,
           'ingredients': ingredients,
-          'hasRestriction': false,
-          'restriction': '',
+          'hasSpecificRestriction': false,
+          'userRestriction': '',
+          'mealRestrictions': meal['hasDietaryRestrictions'] ?? '',
         };
       }
 
-      // For registered users, load user data normally
+      // For registered users, load user data and check specific restrictions
       final user = await dbHelper.getUserById(widget.userId);
       if (user == null) throw Exception('User not found');
+
+      final userRestriction = user['dietaryRestriction']?.toString().toLowerCase().trim() ?? '';
+      final mealRestrictionsString = meal['hasDietaryRestrictions']?.toString().toLowerCase() ?? '';
+      final mealRestrictions = mealRestrictionsString.split(',').map((r) => r.trim()).toList();
+      
+      // Check if user has a restriction AND if the meal has restrictions that match
+      final userHasRestriction = (user['hasDietaryRestriction'] ?? 0) == 1;
+      final hasSpecificRestriction = userHasRestriction && 
+          userRestriction.isNotEmpty &&
+          mealRestrictions.any((mealRestriction) => 
+              mealRestriction.contains(userRestriction) || 
+              userRestriction.contains(mealRestriction));
 
       return {
         ...meal,
         'ingredients': ingredients,
-        'hasRestriction': (user['hasDietaryRestriction'] ?? 0) == 1,
-        'restriction': user['dietaryRestriction'] ?? '',
+        'hasSpecificRestriction': hasSpecificRestriction,
+        'userRestriction': userRestriction,
+        'mealRestrictions': mealRestrictionsString,
       };
     } catch (e) {
       if (mounted) {
@@ -264,8 +278,9 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                 }
 
                 final mealData = snapshot.data!;
-                final hasRestriction = widget.userId != 0 && (mealData['hasRestriction'] ?? false);
-                final restriction = mealData['restriction'] ?? '';
+                final hasSpecificRestriction = mealData['hasSpecificRestriction'] ?? false;
+                final userRestriction = mealData['userRestriction'] ?? '';
+                final mealRestrictions = mealData['mealRestrictions'] ?? '';
                 final ingredients = mealData['ingredients'] as List<Map<String, dynamic>>;
                 final price = mealData['price'] ?? 0.0;
                 final categories = (mealData['category'] as String?)?.split(', ') ?? [];
@@ -275,13 +290,13 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Only show restriction warning for registered users with restrictions
-                      if (hasRestriction)
+                      // Show restriction warning only if there's a specific match
+                      if (hasSpecificRestriction)
                         Container(
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            color: Colors.red[400],
+                            color: Colors.orange[700],
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -297,16 +312,16 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                       fontSize: 12,
                                       color: Colors.white),
                                     children: [
-                                      const TextSpan(text: '⚠️ Warning: '),
+                                      const TextSpan(text: '⚠️ Dietary Alert: '),
                                       TextSpan(
-                                        text: 'If you have ',
+                                        text: 'This meal contains ingredients that conflict with your ',
                                       ),
                                       TextSpan(
-                                        text: restriction.isNotEmpty ? restriction : 'dietary restrictions',
+                                        text: userRestriction.isNotEmpty ? userRestriction : 'dietary restriction',
                                         style: const TextStyle(fontWeight: FontWeight.bold),
                                       ),
-                                      const TextSpan(
-                                        text: ', we recommend choosing a healthier meal option. You may also consider cooking this dish for family or friends instead.',
+                                      TextSpan(
+                                        text: '. Meal restrictions: $mealRestrictions. Consider choosing an alternative option.',
                                       ),
                                     ],
                                   ),
@@ -379,36 +394,47 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                       const SizedBox(height: 16),
 
                       // Ingredients and Cost
-                      const Text(
-                        'Ingredients and Cost',
-                        style: TextStyle(
-                          fontFamily: 'Orbitron',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: Colors.black26),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: ingredients.map((ingredient) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Text(
-                                '${ingredient['quantity'] ?? ''} ${ingredient['ingredientName']}.........Php ${ingredient['price']}',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
+const Text(
+  'Ingredients and Cost',
+  style: TextStyle(
+    fontFamily: 'Orbitron',
+    fontWeight: FontWeight.bold,
+    fontSize: 14,
+  ),
+),
+const SizedBox(height: 6),
+Container(
+  width: double.infinity,
+  padding: const EdgeInsets.all(10),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    border: Border.all(color: Colors.black26),
+    borderRadius: BorderRadius.circular(8),
+  ),
+  child: ingredients.isEmpty
+      ? const Center(
+          child: Text(
+            'No ingredients listed',
+            style: TextStyle(fontStyle: FontStyle.italic),
+          ),
+        )
+      : Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: ingredients.map((ingredient) {
+            final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown';
+            final quantity = ingredient['quantity']?.toString() ?? '';
+            final price = ingredient['price']?.toString() ?? 'N/A';
+            
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                '$quantity $ingredientName.........Php $price',
+                style: const TextStyle(fontSize: 12),
+              ),
+            );
+          }).toList(),
+        ),
+),
                       const SizedBox(height: 10),
                       Center(
                         child: ElevatedButton(

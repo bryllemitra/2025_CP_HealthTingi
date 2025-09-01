@@ -31,7 +31,7 @@ dependencies:
   timezone: ^0.9.1
   flutter:
     sdk: flutter
-  camera: ^0.10.5+2
+  camera: ^0.10.5+2 # check for latest version
   path_provider: ^2.1.2
   sqflite: ^2.3.0
   path: ^1.8.0
@@ -43,6 +43,7 @@ dependencies:
   tflite_flutter: 0.11.0
   currency_code_to_currency_symbol: ^0.0.4
   carousel_slider: ^5.1.1
+
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -60,7 +61,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
-  flutter_launcher_icons: ^0.14.1
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.1
 
 flutter_icons:
   android: true
@@ -116,6 +118,8 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
   assets:
+    - assets/ingredients/
+    - assets/ingredients/sayote.jpg
     - assets/tinolang_manok.jpg
     - assets/escabeche.jpg
     - assets/green.jpg
@@ -127,10 +131,7 @@ flutter:
     - assets/ginisang_kalabasa.jpg
     - assets/ginisang_sayote.jpg
     - assets/ginisang_upo.jpg
-    - assets/kamatis.jpg
     - assets/laing.jpg
-    - assets/malunggay.jpg
-    - assets/sayote.jpg
     - assets/adobong_manok.jpg
     - assets/biko.jpg
     - assets/binignit.jpg
@@ -149,14 +150,15 @@ flutter:
     - assets/sinigang_na_isda.jpg
     - assets/fried_egg_malunggay.jpg
     - assets/ginataang_kalabasa.jpg
+    - assets/logo_op.png
 
     - assets/fonts/
+    #- assets/models/best_float32.tflite
     - assets/models/fruit_model.tflite
     - assets/models/model.tflite
     - assets/models/model2.tflite
     - assets/models/model3.tflite
     - assets/models/labels.txt
-
 
   fonts:
     - family: Orbitron
