@@ -234,6 +234,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
     
     return Container(
       width: 155,
+      height: 220, // ADD FIXED HEIGHT TO PREVENT OVERFLOW
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -250,11 +251,11 @@ class _MealSearchPageState extends State<MealSearchPage> {
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                 child: SizedBox(
-                  height: 100, // give the image area more breathing room
+                  height: 100,
                   width: double.infinity,
                   child: Image.asset(
                     meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                    fit: BoxFit.cover, // fills without gaps
+                    fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
                       color: Colors.grey[200],
                       child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
@@ -262,7 +263,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   ),
                 ),
               ),
-              if (widget.userId != 0) // Only show favorite button for registered users
+              if (widget.userId != 0)
                 Positioned(
                   top: 6,
                   right: 6,
@@ -278,56 +279,66 @@ class _MealSearchPageState extends State<MealSearchPage> {
             ],
           ),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  meal['mealName'],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold, 
-                    fontSize: 14
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    const Icon(Icons.access_time, size: 12),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Est. ${meal['cookingTime']}",
-                      style: const TextStyle(fontSize: 10),
+          Expanded( // WRAP CONTENT IN EXPANDED TO FIT REMAINING SPACE
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible( // ALLOW TEXT TO TAKE NEEDED SPACE
+                    child: Text(
+                      meal['mealName'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold, 
+                        fontSize: 14
+                      ),
+                      maxLines: 2, // LIMIT TO 2 LINES
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellowAccent,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    minimumSize: const Size.fromHeight(30),
-                    textStyle: const TextStyle(fontSize: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    elevation: 0,
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MealDetailsPage(
-                          mealId: meal['mealID'],
-                          userId: widget.userId,
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 12),
+                      const SizedBox(width: 4),
+                      Flexible( // PREVENT TIME TEXT OVERFLOW
+                        child: Text(
+                          "Est. ${meal['cookingTime']}",
+                          style: const TextStyle(fontSize: 10),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    );
-                  },
-                  child: const Text("VIEW INSTRUCTIONS"),
-                ),
-              ],
+                    ],
+                  ),
+                  const Spacer(), // PUSH BUTTON TO BOTTOM
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.yellowAccent,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      minimumSize: const Size.fromHeight(30),
+                      textStyle: const TextStyle(fontSize: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MealDetailsPage(
+                            mealId: meal['mealID'],
+                            userId: widget.userId,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("VIEW INSTRUCTIONS"),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -345,6 +356,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
     
     return Container(
       width: 120,
+      height: 160, // ADD FIXED HEIGHT TO PREVENT OVERFLOW
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -358,8 +370,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
         children: [
           // Ingredient Image
           Container(
-            height: 80,
-            width: 80,
+            height: 60, // REDUCED HEIGHT TO FIT BETTER
+            width: 60,
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
@@ -373,7 +385,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     color: Colors.grey[200],
-                    child: const Icon(Icons.fastfood, size: 30, color: Colors.grey),
+                    child: const Icon(Icons.fastfood, size: 25, color: Colors.grey),
                   );
                 },
               ),
@@ -381,27 +393,29 @@ class _MealSearchPageState extends State<MealSearchPage> {
           ),
           
           // Ingredient Name
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              ingredientName,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold, 
-                fontSize: 12
+          Flexible( // ALLOW TEXT TO ADAPT
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                ingredientName,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold, 
+                  fontSize: 11 // SLIGHTLY SMALLER FONT
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
           
           // Price
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // REDUCED PADDING
             child: Text(
               '₱$price',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10, // SMALLER FONT
                 color: Colors.grey[700],
                 fontWeight: FontWeight.w500,
               ),
@@ -410,14 +424,14 @@ class _MealSearchPageState extends State<MealSearchPage> {
           
           // View Details Button
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // REDUCED PADDING
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.yellowAccent,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                minimumSize: const Size.fromHeight(28),
-                textStyle: const TextStyle(fontSize: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // REDUCED PADDING
+                minimumSize: const Size.fromHeight(24), // SMALLER BUTTON
+                textStyle: const TextStyle(fontSize: 9), // SMALLER TEXT
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -482,7 +496,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
           ),
         ),
         SizedBox(
-          height: 240,
+          height: 260, // INCREASED HEIGHT TO ACCOMMODATE FIXED CARD HEIGHT
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -512,7 +526,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
           ),
         ),
         SizedBox(
-          height: 180,
+          height: 190, // INCREASED HEIGHT TO ACCOMMODATE FIXED CARD HEIGHT
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),

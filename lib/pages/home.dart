@@ -629,7 +629,7 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 140,
+          height: 165,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: displayedIngredients.length,
@@ -762,6 +762,9 @@ class _HomePageState extends State<HomePage> {
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: true,
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -770,6 +773,8 @@ class _HomePageState extends State<HomePage> {
                                   fontSize: 14,
                                   color: Colors.black54,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
