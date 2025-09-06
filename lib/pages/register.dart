@@ -51,11 +51,8 @@ class _RegisterPageState extends State<RegisterPage> {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
-  bool _validatePasswordStrength(String password) {
-    return password.length >= 8 &&
-        RegExp(r'[A-Z]').hasMatch(password) &&
-        RegExp(r'[a-z]').hasMatch(password) &&
-        RegExp(r'[0-9]').hasMatch(password);
+  bool _validatePasswordLength(String password) {
+    return password.length >= 6 && password.length <= 30;
   }
 
   Future<void> _addCustomRestriction() async {
@@ -125,11 +122,11 @@ class _RegisterPageState extends State<RegisterPage> {
         return;
       }
 
-      if (!_validatePasswordStrength(passwordController.text)) {
+      if (!_validatePasswordLength(passwordController.text)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Password must be at least 8 characters long and contain uppercase, lowercase, and numbers.'),
-            duration: Duration(seconds: 5),
+            content: Text('Password must be between 6 and 30 characters long.'),
+            duration: Duration(seconds: 3),
           ),
         );
         return;
@@ -165,7 +162,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
         final user = {
           'firstName': _sanitizeInput(firstNameController.text),
-          'middleName': _sanitizeInput(middleNameController.text),
+          'middleName': middleNameController.text.trim().isEmpty 
+              ? null 
+              : _sanitizeInput(middleNameController.text),
           'lastName': _sanitizeInput(lastNameController.text),
           'emailAddress': _sanitizeInput(emailController.text),
           'username': _sanitizeInput(usernameController.text),
@@ -214,21 +213,29 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildTextField(TextEditingController controller, String label,
-      {bool isObscure = false, TextInputType? keyboardType, String? Function(String?)? validator}) {
+      {bool isObscure = false, 
+       TextInputType? keyboardType, 
+       String? Function(String?)? validator,
+       bool isOptional = false}) {
     return TextFormField(
       controller: controller,
       obscureText: isObscure,
       keyboardType: keyboardType,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: isOptional ? '$label (Optional)' : label,
         border: const OutlineInputBorder(),
+        //helperText: isOptional ? 'You can leave this field blank' : null,
+        helperStyle: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 12,
+        ),
       ),
-      validator: validator ?? (value) {
+      validator: validator ?? (isOptional ? null : (value) {
         if (value == null || value.isEmpty) {
           return '$label is required';
         }
         return null;
-      },
+      }),
     );
   }
 
@@ -262,7 +269,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     _buildTextField(firstNameController, 'First Name'),
                     const SizedBox(height: 8),
-                    _buildTextField(middleNameController, 'Middle Name'),
+                    _buildTextField(
+                      middleNameController, 
+                      'Middle Name', 
+                      isOptional: true,
+                    ),
                     const SizedBox(height: 8),
                     _buildTextField(lastNameController, 'Last Name'),
                     const SizedBox(height: 8),
@@ -303,8 +314,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         if (value == null || value.isEmpty) {
                           return 'Password is required';
                         }
-                        if (!_validatePasswordStrength(value)) {
-                          return 'Must be 8+ chars with uppercase, lowercase & number';
+                        if (!_validatePasswordLength(value)) {
+                          return 'Password must be between 6 and 30 characters';
                         }
                         return null;
                       },

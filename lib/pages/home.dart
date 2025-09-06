@@ -771,13 +771,6 @@ class _HomePageState extends State<HomePage> {
                                   color: Colors.black54,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                meal['content']?.toString().split('.').first ?? '',
-                                style: const TextStyle(fontSize: 12),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
                             ],
                           ),
                         ),
