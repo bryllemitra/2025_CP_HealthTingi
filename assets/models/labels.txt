@@ -1,105 +1,84 @@
 Apple
-Apricot
 Avocado
 Banana
-Beans
-Beetroot
-Blackberry
-Blueberry
-Cabbage Red
-Cabbage White
-Cactus Fruit
-Caju Seed
-Cantaloupe
-Carambula
-Carrot
-Cauliflower
-Cherimoya
-Cherry
-Chestnut
-Clementine
-Cocos
-Corn
-Corn Husk
-Cucumber
-Dates
-Eggplant
-Fig
-Ginger Root
-Gooseberry
-Granadilla
-Grape Blue
-Grape Pink
-Grape White
-Grapefruit Pink
-Grapefruit White
+Calamansi
+Chico
+Coconut
+DragonFruit
+Durian
 Guava
-Hazelnut
-Huckleberry
-Kaki
-Kiwi
-Kohlrabi
-Kumquats
+Guyabano
+Honeydew
+Jackfruit
+Lanzones
 Lemon
-Lemon Meyer
-Limes
-Lychee
-Mandarine
 Mango
-Mango Red
-Mangostan
-Maracuja
-Melon Piel de Sapo
-Mulberry
-Nectarine
-Nut
-Nut Forest
-Nut Pecan
-Onion Red
-Onion Red Peeled
-Onion White
+Marang
 Orange
 Papaya
-Passion Fruit
-Peach
-Pear
-Pepino
-Pepper Green
-Pepper Orange
-Pepper Red
-Pepper Yellow
-Physalis
-Physalis with Husk
+Pomelo
 Pineapple
-Pineapple Mini
-Pistachio
-Pitahaya Red
-Plum
-Pomegranate
-Pomelo Sweetie
-Potato Red
-Potato Red Washed
-Potato Sweet
-Potato White
-Quince
 Rambutan
-Raspberry
-Redcurrant
-Salak
+Santol
 Strawberry
-Strawberry Wedge
-Tamarillo
-Tangelo
-Tomato
-Tomato Cherry Maroon
-Tomato Cherry Orange
-Tomato Cherry Red
-Tomato Cherry Yellow
-Tomato Heart
-Tomato Maroon
-Tomato Yellow
-Tomato Not Ripen
-Walnut
 Watermelon
+Alugbati
+Ampalaya
+Asparagus
+Atsal
+BaguioBeans
+Sigarilyas
+Beetroot
+Broccoli
+Cabbage
+Kamote
+Carrot
+Cauliflower
+Celery
+Cucumber
+Ginger
+Kalabasa
+Kangkong
+Malunggay
+MelonCantaloupe
+Mustasa
+Okra
+Mushroom
+Patola
+Pechay
+Potato
+Radish
+Onion
+Sitsaro
+SpringOnion
+Sitaw
+Soybeans
+Eggplant
+Tomato
+Ube
+Upo
+WhiteOnion
 Zucchini
-Zucchini Dark
+Egg
+Beef
+Pork
+Chicken
+Fish
+Crab
+Shrimp
+Squid
+Octopus
+Garlic
+Corn
+Mangosteen
+Singkamas
+Lettuce
+Pugo
+Grapes
+Sili
+Gabi
+Seaweed
+Sayote
+GroundBeef
+GroundChicken
+Seashell

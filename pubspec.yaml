@@ -118,6 +118,7 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
   assets:
+    - assets/data/ingredients.json
     - assets/ingredients/
     - assets/ingredients/sayote.jpg
     - assets/tinolang_manok.jpg
@@ -159,6 +160,7 @@ flutter:
     - assets/models/model2.tflite
     - assets/models/model3.tflite
     - assets/models/labels.txt
+    - assets/models/healthtingi_current.tflite
 
   fonts:
     - family: Orbitron

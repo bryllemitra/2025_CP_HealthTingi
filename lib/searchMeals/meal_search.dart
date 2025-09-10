@@ -5,7 +5,7 @@ import '../pages/budget_plan.dart';
 import '../pages/meal_scan.dart';
 import '../pages/meal_details.dart';
 import 'meal_search2.dart';
-import '../ingredientScanner/ingredient_details.dart'; // ADD THIS IMPORT
+import '../ingredientScanner/ingredient_details.dart';
 
 class MealSearchPage extends StatefulWidget {
   final int userId;
@@ -230,121 +230,143 @@ class _MealSearchPageState extends State<MealSearchPage> {
   }
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
-    final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
-    
-    return Container(
-      width: 155,
-      height: 220, // ADD FIXED HEIGHT TO PREVENT OVERFLOW
-      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(2, 2)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: SizedBox(
-                  height: 100,
-                  width: double.infinity,
-                  child: Image.asset(
-                    meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
-                    ),
+  final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
+  final price = meal['price'] is double 
+      ? (meal['price'] as double).toStringAsFixed(2)
+      : meal['price']?.toString() ?? '0.00';
+  
+  return Container(
+    width: 155,
+    height: 240, // INCREASED HEIGHT TO ACCOMMODATE PRICE
+    margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: const [
+        BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(2, 2)),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Stack(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              child: SizedBox(
+                height: 100,
+                width: double.infinity,
+                child: Image.asset(
+                  meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
                   ),
                 ),
-              ),
-              if (widget.userId != 0)
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: GestureDetector(
-                    onTap: () => _toggleFavorite(meal['mealID']),
-                    child: Icon(
-                      isFavorite ? Icons.star : Icons.star_border,
-                      color: isFavorite ? Colors.yellow : Colors.white,
-                      size: 22,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          Expanded( // WRAP CONTENT IN EXPANDED TO FIT REMAINING SPACE
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Flexible( // ALLOW TEXT TO TAKE NEEDED SPACE
-                    child: Text(
-                      meal['mealName'],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold, 
-                        fontSize: 14
-                      ),
-                      maxLines: 2, // LIMIT TO 2 LINES
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, size: 12),
-                      const SizedBox(width: 4),
-                      Flexible( // PREVENT TIME TEXT OVERFLOW
-                        child: Text(
-                          "Est. ${meal['cookingTime']}",
-                          style: const TextStyle(fontSize: 10),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(), // PUSH BUTTON TO BOTTOM
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellowAccent,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      minimumSize: const Size.fromHeight(30),
-                      textStyle: const TextStyle(fontSize: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MealDetailsPage(
-                            mealId: meal['mealID'],
-                            userId: widget.userId,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text("VIEW INSTRUCTIONS"),
-                  ),
-                ],
               ),
             ),
+            if (widget.userId != 0)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: GestureDetector(
+                  onTap: () => _toggleFavorite(meal['mealID']),
+                  child: Icon(
+                    isFavorite ? Icons.star : Icons.star_border,
+                    color: isFavorite ? Colors.yellow : Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
+          ],
+        ),
+
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Flexible(
+                  child: Text(
+                    meal['mealName'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold, 
+                      fontSize: 14
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time, size: 12),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        "Est. ${meal['cookingTime']}",
+                        style: const TextStyle(fontSize: 10),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    //const Icon(Icons.attach_money, size: 12),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        "Php $price",
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          //color: Colors.green[700],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.yellowAccent,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    minimumSize: const Size.fromHeight(30),
+                    textStyle: const TextStyle(fontSize: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MealDetailsPage(
+                          mealId: meal['mealID'],
+                          userId: widget.userId,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text("VIEW INSTRUCTIONS"),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   // ADD THIS METHOD
   Widget _buildIngredientCard(Map<String, dynamic> ingredient) {
@@ -356,7 +378,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
     
     return Container(
       width: 120,
-      height: 160, // ADD FIXED HEIGHT TO PREVENT OVERFLOW
+      height: 165, // ADD FIXED HEIGHT TO PREVENT OVERFLOW
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -413,7 +435,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // REDUCED PADDING
             child: Text(
-              '₱$price',
+              'Php $price',
               style: TextStyle(
                 fontSize: 10, // SMALLER FONT
                 color: Colors.grey[700],

@@ -43,7 +43,7 @@ class _MealScanPageState extends State<MealScanPage> {
     setState(() => _isModelLoading = true);
     try {
       // Create interpreter from asset
-      _interpreter = await tfl.Interpreter.fromAsset('models/fruit_model.tflite');
+      _interpreter = await tfl.Interpreter.fromAsset('assets/models/healthtingi_current.tflite');
       
       // Create isolate interpreter for async inference (prevents UI blocking)
       _isolateInterpreter = await tfl.IsolateInterpreter.create(
@@ -79,7 +79,21 @@ class _MealScanPageState extends State<MealScanPage> {
         );
       }
     }
-    setState(() => _isModelLoading = false);
+    setState(() => _isModelLoading = false); 
+
+      // In _loadModel() after creating interpreter:
+    debugPrint('Model input details:');
+    for (int i = 0; i < _interpreter!.getInputTensors().length; i++) {
+      final tensor = _interpreter!.getInputTensor(i);
+      debugPrint('Input $i: shape=${tensor.shape}, type=${tensor.type}');
+    }
+
+    debugPrint('Model output details:');
+    for (int i = 0; i < _interpreter!.getOutputTensors().length; i++) {
+      final tensor = _interpreter!.getOutputTensor(i);
+      debugPrint('Output $i: shape=${tensor.shape}, type=${tensor.type}');
+    }
+
   }
 
   Future<void> _initializeCamera() async {
@@ -270,15 +284,17 @@ class _MealScanPageState extends State<MealScanPage> {
       for (var j = 0; j < inputSize; j++) {
         final pixel = image.getPixel(j, i);
         
-        // Extract RGB values (compatible with newer image package versions)
-        final red = pixel.r.toDouble();
-        final green = pixel.g.toDouble();
-        final blue = pixel.b.toDouble();
+        // Extract RGB values and normalize to [0, 1] or [-1, 1] depending on your model
+        // Most models expect values in the range [0, 1] or normalized with ImageNet stats
+        final red = pixel.r / 255.0;
+        final green = pixel.g / 255.0;
+        final blue = pixel.b / 255.0;
         
-        // Normalize the pixel values (adjust these values based on your model's requirements)
-        buffer[pixelIndex++] = (red - mean) / std;
-        buffer[pixelIndex++] = (green - mean) / std;
-        buffer[pixelIndex++] = (blue - mean) / std;
+        // Normalize with ImageNet mean and std (common for many models)
+        // Adjust these values based on your model's requirements
+        buffer[pixelIndex++] = (red - 0.485) / 0.229;   // ImageNet normalization
+        buffer[pixelIndex++] = (green - 0.456) / 0.224;
+        buffer[pixelIndex++] = (blue - 0.406) / 0.225;
       }
     }
     return convertedBytes;
@@ -542,10 +558,7 @@ class _MealScanPageState extends State<MealScanPage> {
             icon: Icon(Icons.menu_book_outlined),
             label: 'Recipes',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.currency_ruble),
-            label: 'Budget',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.currency_ruble), label: 'Budget'),
         ],
       ),
     );

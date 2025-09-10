@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:currency_code_to_currency_symbol/currency_code_to_currency_symbol.dart';
+//import 'package:currency_code_to_currency_symbol/currency_code_to_currency_symbol.dart';
 import '../database/db_helper.dart';
 import 'home.dart';
 import 'meal_scan.dart';
