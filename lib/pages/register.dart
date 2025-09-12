@@ -19,6 +19,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool agreeToTerms = false;
   bool _isLoading = false;
   final TextEditingController _otherRestrictionController = TextEditingController();
+  DateTime? _selectedBirthday;
+  bool _isUnderage = false; // Add this flag to track underage status
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController middleNameController = TextEditingController();
@@ -53,6 +55,58 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _validatePasswordLength(String password) {
     return password.length >= 6 && password.length <= 30;
+  }
+
+  int _calculateAge(DateTime birthDate) {
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month || 
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age;
+  }
+
+  Future<void> _showAgeRestrictionDialog() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Age Restriction'),
+        content: const Text('You must be at least 18 years old to register.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _selectBirthday(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    
+    if (picked != null) {
+      // Check age immediately after selection
+      final age = _calculateAge(picked);
+      final isUnderage = age < 18;
+      
+      setState(() {
+        _selectedBirthday = picked;
+        _isUnderage = isUnderage;
+      });
+      
+      // Show dialog if underage
+      if (isUnderage) {
+        await _showAgeRestrictionDialog();
+      }
+    }
   }
 
   Future<void> _addCustomRestriction() async {
@@ -101,6 +155,21 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
+      // Validate birthday
+      if (_selectedBirthday == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select your birthday.')),
+        );
+        return;
+      }
+
+      // Check age restriction (again, in case user somehow bypassed the initial check)
+      final age = _calculateAge(_selectedBirthday!);
+      if (age < 18) {
+        await _showAgeRestrictionDialog();
+        return;
+      }
+
       if (!agreeToTerms) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('You must agree to the terms and conditions.')),
@@ -174,7 +243,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ? selectedDietaryRestrictions.join(', ') 
               : null,
           'favorites': null,
-          'age': null,
+          'age': age, // Store the calculated age
           'gender': null,
           'street': null,
           'barangay': null,
@@ -224,7 +293,6 @@ class _RegisterPageState extends State<RegisterPage> {
       decoration: InputDecoration(
         labelText: isOptional ? '$label (Optional)' : label,
         border: const OutlineInputBorder(),
-        //helperText: isOptional ? 'You can leave this field blank' : null,
         helperStyle: TextStyle(
           color: Colors.grey[600],
           fontSize: 12,
@@ -236,6 +304,35 @@ class _RegisterPageState extends State<RegisterPage> {
         }
         return null;
       }),
+    );
+  }
+
+  Widget _buildBirthdayField() {
+    return InkWell(
+      onTap: () => _selectBirthday(context),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: 'Birthday *',
+          border: const OutlineInputBorder(),
+          errorText: _isUnderage ? 'Must be 18 years or older' : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _selectedBirthday != null
+                  ? '${_selectedBirthday!.year}-${_selectedBirthday!.month.toString().padLeft(2, '0')}-${_selectedBirthday!.day.toString().padLeft(2, '0')}'
+                  : 'Select your birthday',
+              style: TextStyle(
+                color: _selectedBirthday != null 
+                  ? (_isUnderage ? Colors.red : Colors.black) 
+                  : Colors.grey,
+              ),
+            ),
+            const Icon(Icons.calendar_today),
+          ],
+        ),
+      ),
     );
   }
 
@@ -277,6 +374,21 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 8),
                     _buildTextField(lastNameController, 'Last Name'),
                     const SizedBox(height: 8),
+                    
+                    // Birthday field
+                    _buildBirthdayField(),
+                    if (_selectedBirthday != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Age: ${_calculateAge(_selectedBirthday!)} years old',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _isUnderage ? Colors.red : Colors.grey,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+
                     _buildTextField(
                       emailController, 
                       'Email Address', 
@@ -339,12 +451,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         Checkbox(
                           value: hasDietaryRestrictions,
-                          onChanged: (val) => setState(() => hasDietaryRestrictions = val!),
+                          onChanged: _isUnderage ? null : (val) => setState(() => hasDietaryRestrictions = val!),
                         ),
                         const Text('Yes'),
                         Checkbox(
                           value: !hasDietaryRestrictions,
-                          onChanged: (val) => setState(() => hasDietaryRestrictions = !val!),
+                          onChanged: _isUnderage ? null : (val) => setState(() => hasDietaryRestrictions = !val!),
                         ),
                         const Text('No'),
                       ],
@@ -368,7 +480,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           return FilterChip(
                             label: Text(restriction),
                             selected: selectedDietaryRestrictions.contains(restriction),
-                            onSelected: (selected) {
+                            onSelected: _isUnderage ? null : (selected) {
                               setState(() {
                                 if (selected) {
                                   selectedDietaryRestrictions.add(restriction);
@@ -386,13 +498,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         children: [
                           ActionChip(
                             label: const Text('Other...'),
-                            onPressed: _showCustomRestrictionDialog,
+                            onPressed: _isUnderage ? null : _showCustomRestrictionDialog,
                             avatar: const Icon(Icons.add),
                           ),
                           if (selectedDietaryRestrictions.isNotEmpty)
                             ActionChip(
                               label: const Text('Clear All'),
-                              onPressed: () {
+                              onPressed: _isUnderage ? null : () {
                                 setState(() {
                                   selectedDietaryRestrictions.clear();
                                 });
@@ -410,7 +522,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           children: selectedDietaryRestrictions.map((restriction) {
                             return Chip(
                               label: Text(restriction),
-                              onDeleted: () {
+                              onDeleted: _isUnderage ? null : () {
                                 setState(() {
                                   selectedDietaryRestrictions.remove(restriction);
                                 });
@@ -432,11 +544,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         Checkbox(
                           value: agreeToTerms,
-                          onChanged: (val) => setState(() => agreeToTerms = val!),
+                          onChanged: _isUnderage ? null : (val) => setState(() => agreeToTerms = val!),
                         ),
                         Flexible(
                           child: GestureDetector(
-                            onTap: () {
+                            onTap: _isUnderage ? null : () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => const TermsAndConditionsPage()),
@@ -463,9 +575,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     const SizedBox(height: 12),
                     ElevatedButton(
-                      onPressed: _isLoading ? null : _submitForm,
+                      onPressed: _isLoading || _isUnderage ? null : _submitForm,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.yellow[300],
+                        backgroundColor: _isUnderage ? Colors.grey : Colors.yellow[300],
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         textStyle: const TextStyle(
                           fontWeight: FontWeight.bold,
@@ -474,7 +586,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator()
-                          : const Text('REGISTER'),
+                          : Text(_isUnderage ? 'UNDERAGE - CANNOT REGISTER' : 'REGISTER'),
                     ),
 
                     const SizedBox(height: 16),

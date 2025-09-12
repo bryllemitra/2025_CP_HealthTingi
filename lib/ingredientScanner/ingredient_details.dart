@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import '../pages/meal_details.dart';
-import 'scanned_ingredient.dart';
+// import 'scanned_ingredient.dart';
 
 class IngredientDetailsPage extends StatefulWidget {
   final int userId;

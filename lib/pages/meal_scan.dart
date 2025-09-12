@@ -220,6 +220,11 @@ class _MealScanPageState extends State<MealScanPage> {
   Future<void> _runModelOnImage(File imageFile) async {
     if (_isolateInterpreter == null) {
       debugPrint('Isolate interpreter not initialized');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AI model not ready. Please try again.')),
+        );
+      }
       return;
     }
 
@@ -233,27 +238,47 @@ class _MealScanPageState extends State<MealScanPage> {
 
       // Get input tensor info
       final inputTensor = _interpreter!.getInputTensor(0);
-      final inputShape = inputTensor.shape;
+      final inputShape = inputTensor.shape; // This should be [1, 224, 224, 3]
       final inputSize = inputShape[1]; // Assuming square input [1, size, size, 3]
       
       debugPrint('Processing image with input size: $inputSize');
+      debugPrint('Model input shape: $inputShape');
 
       // Preprocess image
       final resizedImage = img.copyResize(image, width: inputSize, height: inputSize);
-      final input = _imageToByteListFloat32(resizedImage, inputSize, 127.5, 127.5);
+      final inputBuffer = _imageToByteListFloat32(resizedImage, inputSize, 127.5, 127.5);
 
-      // Prepare output tensor
-      final outputTensor = _interpreter!.getOutputTensor(0);
-      final outputShape = outputTensor.shape;
+      // ****************** CRITICAL FIX ******************
+      // Reshape the 1D buffer to match the model's 4D input shape [1, 224, 224, 3]
+      final input = inputBuffer.reshape(inputShape); 
+      // **************************************************
+
+      // Prepare output tensor - get its shape first
+      final outputShape = _interpreter!.getOutputTensor(0).shape;
+      debugPrint('Model output shape: $outputShape');
       final output = List.filled(
         outputShape.reduce((a, b) => a * b), 
         0.0,
-      ).reshape(outputShape);
+      ).reshape(outputShape); // Reshape the output list as well
 
       debugPrint('Running inference...');
       
+      // ****************** ENHANCED ERROR HANDLING ******************
       // Use async inference to prevent UI blocking
-      await _isolateInterpreter!.run(input, output);
+      // Now 'input' has the correct shape [1, 224, 224, 3]
+      try {
+        await _isolateInterpreter!.run(input, output);
+      } catch (e) {
+        // This catches errors specifically during the inference execution
+        debugPrint('Inference execution failed: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('AI processing error: ${e.toString()}')),
+          );
+        }
+        return; // Exit the function early since inference failed
+      }
+      // *************************************************************
 
       debugPrint('Inference completed, processing results...');
 
@@ -264,11 +289,12 @@ class _MealScanPageState extends State<MealScanPage> {
       debugPrint('Top result: ${results.isNotEmpty ? results.first : "No results"}');
       
     } catch (e) {
+      // This catches errors from image loading, decoding, preprocessing, etc.
       debugPrint('Error in _runModelOnImage: $e');
       debugPrint('Stack trace: ${StackTrace.current}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Analysis failed: ${e.toString()}')),
+          SnackBar(content: Text('Image processing failed: ${e.toString()}')),
         );
       }
     }
