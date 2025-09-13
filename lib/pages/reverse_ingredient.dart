@@ -19,10 +19,19 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
   ];
 
   Set<String> crossedOutIngredients = {};
+  List<String> recentlyRemovedIngredients = [];
+  Map<String, bool> alternativeIngredients = {};
+  bool showAlternatives = false;
 
-  final Map<String, bool> alternativeIngredients = {
-    'Oyster Sauce': false,
-    'Patis (Fish Sauce)': false,
+  // Define main/important ingredients and their alternatives
+  final Map<String, List<String>> ingredientAlternatives = {
+    'Sayote': ['Zucchini', 'Cucumber', 'Chayote squash'],
+    'Bagoong': ['Oyster Sauce', 'Patis (Fish Sauce)', 'Shrimp Paste'],
+    'Small Onion': ['Red Onion', 'Shallots', 'Leeks'],
+    'Garlic': ['Garlic Powder', 'Shallots', 'Onion Powder'],
+    'Tomato': ['Tomato Sauce', 'Tomato Paste', 'Red Bell Pepper'],
+    'Oil': ['Butter', 'Ghee', 'Coconut Oil'],
+    'Soy Sauce': ['Tamari', 'Coconut Aminos', 'Worcestershire Sauce'],
   };
 
   final List<Map<String, String>> similarMeals = const [
@@ -30,6 +39,55 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     {'name': 'Ginisang Kalabasa', 'image': 'assets/ginisang_kalabasa.jpg'},
     {'name': 'Tortang Sayote', 'image': 'assets/tortang_sayote.jpg'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize alternative ingredients as not selected
+    alternativeIngredients = {
+      for (var altList in ingredientAlternatives.values)
+        for (var alt in altList) alt: false
+    };
+  }
+
+  void _removeIngredient(String ingredient) {
+    setState(() {
+      crossedOutIngredients.add(ingredient);
+      recentlyRemovedIngredients.add(ingredient);
+      
+      // Show alternatives if a main ingredient is removed
+      if (ingredientAlternatives.containsKey(ingredient)) {
+        showAlternatives = true;
+      }
+    });
+
+    // Auto-hide the undo snackbar after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted && recentlyRemovedIngredients.contains(ingredient)) {
+        setState(() {
+          recentlyRemovedIngredients.remove(ingredient);
+        });
+      }
+    });
+  }
+
+  void _undoRemoveIngredient(String ingredient) {
+    setState(() {
+      crossedOutIngredients.remove(ingredient);
+      recentlyRemovedIngredients.remove(ingredient);
+      
+      // Check if we should hide alternatives
+      if (!crossedOutIngredients.any((ing) => ingredientAlternatives.containsKey(ing))) {
+        showAlternatives = false;
+      }
+    });
+  }
+
+  void _toggleAlternativeIngredient(String alternative, bool isSelected) {
+    setState(() {
+      alternativeIngredients[alternative] = isSelected;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,65 +131,110 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
               child: Column(
                 children: allIngredients.map((ingredient) {
                   final isCrossed = crossedOutIngredients.contains(ingredient);
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (isCrossed) {
-                          crossedOutIngredients.remove(ingredient);
-                        } else {
-                          crossedOutIngredients.add(ingredient);
-                        }
-                      });
-                    },
-                    child: Row(
-                      children: [
-                        const Icon(Icons.close, size: 16),
-                        const SizedBox(width: 8),
-                        Text(
-                          ingredient,
-                          style: TextStyle(
-                            fontFamily: 'Orbitron',
-                            decoration: isCrossed
-                                ? TextDecoration.lineThrough
-                                : TextDecoration.none,
-                          ),
-                        )
-                      ],
+                  return ListTile(
+                    leading: IconButton(
+                      icon: const Icon(Icons.close, size: 20, color: Colors.red),
+                      onPressed: () => _removeIngredient(ingredient),
                     ),
+                    title: Text(
+                      ingredient,
+                      style: TextStyle(
+                        fontFamily: 'Orbitron',
+                        decoration: isCrossed
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                        color: isCrossed ? Colors.grey : Colors.black,
+                      ),
+                    ),
+                    trailing: isCrossed
+                        ? IconButton(
+                            icon: const Icon(Icons.undo, size: 20, color: Colors.blue),
+                            onPressed: () => _undoRemoveIngredient(ingredient),
+                          )
+                        : null,
                   );
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text('Alternative Ingredients',
-                style: TextStyle(
-                    fontFamily: 'Orbitron',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold)),
-            const Text('Prices and taste may vary',
-                style: TextStyle(fontSize: 12, fontFamily: 'Orbitron')),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black),
-                color: Colors.white,
+            
+            // Show undo snackbar for recently removed ingredients
+            if (recentlyRemovedIngredients.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Removed: ${recentlyRemovedIngredients.join(', ')}',
+                        style: const TextStyle(
+                          fontFamily: 'Orbitron',
+                          fontSize: 12,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        final lastRemoved = recentlyRemovedIngredients.last;
+                        _undoRemoveIngredient(lastRemoved);
+                      },
+                      child: const Text(
+                        'UNDO',
+                        style: TextStyle(
+                          fontFamily: 'Orbitron',
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                children: alternativeIngredients.keys.map((alt) {
-                  return CheckboxListTile(
-                    title: Text(alt, style: const TextStyle(fontFamily: 'Orbitron')),
-                    value: alternativeIngredients[alt],
-                    onChanged: (val) {
-                      setState(() {
-                        alternativeIngredients[alt] = val ?? false;
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-            ),
+            
             const SizedBox(height: 16),
+            
+            // Alternative Ingredients Section (only shown when main ingredients are removed)
+            if (showAlternatives) ...[
+              const Text('Alternative Ingredients',
+                  style: TextStyle(
+                      fontFamily: 'Orbitron',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold)),
+              const Text('Prices and taste may vary',
+                  style: TextStyle(fontSize: 12, fontFamily: 'Orbitron')),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  color: Colors.white,
+                ),
+                child: Column(
+                  children: crossedOutIngredients
+                      .where((ingredient) => ingredientAlternatives.containsKey(ingredient))
+                      .expand((ingredient) => ingredientAlternatives[ingredient]!)
+                      .map((alternative) {
+                    return CheckboxListTile(
+                      title: Text(alternative, style: const TextStyle(fontFamily: 'Orbitron')),
+                      value: alternativeIngredients[alternative] ?? false,
+                      onChanged: (val) {
+                        _toggleAlternativeIngredient(alternative, val ?? false);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            
             const Text('Meals with Similar Ingredients',
                 style: TextStyle(
                     fontFamily: 'Orbitron',
@@ -164,6 +267,12 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                           width: 60,
                           height: 50,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            width: 60,
+                            height: 50,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.fastfood, size: 24),
+                          ),
                         ),
                       ),
                       title: Text(

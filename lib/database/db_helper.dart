@@ -6,7 +6,7 @@ import 'dart:convert';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _currentVersion = 8; 
+  static const int _currentVersion = 9; 
 
   factory DatabaseHelper() => _instance;
 
@@ -147,6 +147,7 @@ class DatabaseHelper {
         dietaryRestriction TEXT,
         favorites TEXT,
         recentlyViewed TEXT,
+        birthday TEXT,
         age INTEGER,
         gender TEXT,
         street TEXT,

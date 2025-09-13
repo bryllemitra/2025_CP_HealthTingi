@@ -20,7 +20,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   final TextEditingController _otherRestrictionController = TextEditingController();
   DateTime? _selectedBirthday;
-  bool _isUnderage = false; // Add this flag to track underage status
+  bool _isUnderage = false;
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController middleNameController = TextEditingController();
@@ -93,7 +93,6 @@ class _RegisterPageState extends State<RegisterPage> {
     );
     
     if (picked != null) {
-      // Check age immediately after selection
       final age = _calculateAge(picked);
       final isUnderage = age < 18;
       
@@ -102,7 +101,6 @@ class _RegisterPageState extends State<RegisterPage> {
         _isUnderage = isUnderage;
       });
       
-      // Show dialog if underage
       if (isUnderage) {
         await _showAgeRestrictionDialog();
       }
@@ -117,7 +115,6 @@ class _RegisterPageState extends State<RegisterPage> {
       _otherRestrictionController.clear();
     });
 
-    // Hide the keyboard
     FocusManager.instance.primaryFocus?.unfocus();
   }
 
@@ -155,7 +152,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      // Validate birthday
       if (_selectedBirthday == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please select your birthday.')),
@@ -163,7 +159,6 @@ class _RegisterPageState extends State<RegisterPage> {
         return;
       }
 
-      // Check age restriction (again, in case user somehow bypassed the initial check)
       final age = _calculateAge(_selectedBirthday!);
       if (age < 18) {
         await _showAgeRestrictionDialog();
@@ -243,7 +238,8 @@ class _RegisterPageState extends State<RegisterPage> {
               ? selectedDietaryRestrictions.join(', ') 
               : null,
           'favorites': null,
-          'age': age, // Store the calculated age
+          'birthday': _selectedBirthday!.toIso8601String().split('T')[0], // Save birthday
+          'age': age, // Keep age for convenience
           'gender': null,
           'street': null,
           'barangay': null,
@@ -375,7 +371,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     _buildTextField(lastNameController, 'Last Name'),
                     const SizedBox(height: 8),
                     
-                    // Birthday field
                     _buildBirthdayField(),
                     if (_selectedBirthday != null) ...[
                       const SizedBox(height: 4),

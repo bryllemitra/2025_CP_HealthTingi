@@ -2096,6 +2096,186 @@
       "nutritionalValue": "Contains piperine, which enhances nutrient absorption and has antioxidant and anti-inflammatory properties. A good source of manganese and vitamin K.",
       "ingredientPicture": "assets/ingredients/ground_black_pepper.jpg",
       "category": "Spice"
+    },
+     {
+      "ingredientID": 234,
+      "ingredientName": "Bay Leaf (Laurel)",
+      "price": "5-10/pack (5-10 leaves)",
+      "calories": 313,
+      "nutritionalValue": "Not consumed in quantity; used for aromatic flavor. Contains vitamins A, B6, and C, manganese, iron, and calcium in trace amounts. The compound eugenol provides anti-inflammatory properties.",
+      "ingredientPicture": "assets/ingredients/bay_leaf_laurel.jpg",
+      "category": "Spice"
+    },
+    {
+      "ingredientID": 235,
+      "ingredientName": "Whole Peppercorns",
+      "price": "20-30/50g pack",
+      "calories": 251,
+      "nutritionalValue": "Rich in the bioactive compound piperine, which enhances nutrient absorption and has anti-inflammatory properties. A good source of manganese, vitamin K, iron, and fiber.",
+      "ingredientPicture": "assets/ingredients/whole_peppercorns.jpg",
+      "category": "Spice"
+    },
+    {
+      "ingredientID": 236,
+      "ingredientName": "Cane Vinegar (Suka)",
+      "price": "25-35/350ml bottle",
+      "calories": 18,
+      "nutritionalValue": "Very low in calories. Contains acetic acid, which may help lower blood sugar levels and improve insulin sensitivity. Provides minimal nutrients but is a probiotic food when unpasteurized.",
+      "ingredientPicture": "assets/ingredients/cane_vinegar_suka.jpg",
+      "category": "Condiment"
+    },
+    {
+      "ingredientID": 237,
+      "ingredientName": "Cooking Oil (Vegetable)",
+      "price": "60-80/500ml",
+      "calories": 884,
+      "nutritionalValue": "Pure fat and a concentrated source of energy. Typically high in unsaturated fats. Provides vitamin E, an antioxidant. Used for frying and sautéing; not a significant source of other nutrients.",
+      "ingredientPicture": "assets/ingredients/cooking_oil_vegetable.jpg",
+      "category": "Pantry, Oil"
+    },
+    {
+      "ingredientID": 238,
+      "ingredientName": "Malunggay (Moringa) Leaves",
+      "price": "10-15/bundle",
+      "calories": 64,
+      "nutritionalValue": "Extremely nutrient-dense. An excellent source of vitamins A, C, and E. Rich in calcium, potassium, and protein. Contains powerful antioxidants and anti-inflammatory compounds.",
+      "ingredientPicture": "assets/ingredients/malunggay_moringa_leaves.jpg",
+      "category": "Vegetable, Leafy Green"
+    },
+    {
+      "ingredientID": 239,
+      "ingredientName": "Soy Sauce (Toyo)",
+      "price": "25-35/350ml bottle",
+      "calories": 53,
+      "nutritionalValue": "High in sodium. Provides a small amount of protein and carbohydrates. Contains antioxidants from the fermented soybeans, but its primary nutritional consideration is its high salt content.",
+      "ingredientPicture": "assets/ingredients/soy_sauce_toyo.jpg",
+      "category": "Condiment"
+    },
+    {
+      "ingredientID": 240,
+      "ingredientName": "Bagoong (Shrimp Paste)",
+      "price": "70-90/kg",
+      "calories": 70,
+      "nutritionalValue": "Fermented shrimp or krill. Very high in sodium and cholesterol. Provides some protein, calcium, and iron, but typically used in small amounts as a seasoning.",
+      "ingredientPicture": "assets/ingredients/bagoong_shrimp_paste.jpg",
+      "category": "Condiment"
+    },
+    {
+      "ingredientID": 241,
+      "ingredientName": "Brown Sugar",
+      "price": "60-70/kg",
+      "calories": 380,
+      "nutritionalValue": "A source of quick energy (sucrose). Contains slightly more minerals (calcium, potassium, iron) than white sugar due to the presence of molasses, but still should be consumed in moderation.",
+      "ingredientPicture": "assets/ingredients/brown_sugar.jpg",
+      "category": "Pantry, Sweetener"
+    },
+    {
+      "ingredientID": 242,
+      "ingredientName": "Glutinous Rice (Malagkit)",
+      "price": "55-65/kg",
+      "calories": 370,
+      "nutritionalValue": "A starchy carbohydrate. Higher in amylopectin, making it sticky when cooked. Provides energy, some protein, and small amounts of iron and B vitamins. Low in fiber.",
+      "ingredientPicture": "assets/ingredients/glutinous_rice_malagkit.jpg",
+      "category": "Carbohydrate, Grain"
+    },
+    {
+      "ingredientID": 243,
+      "ingredientName": "Coconut Milk (Gata)",
+      "price": "30-40/250ml pack",
+      "calories": 230,
+      "nutritionalValue": "High in calories and saturated fat (medium-chain triglycerides). Provides manganese, copper, phosphorus, magnesium, and iron. Adds richness and flavor to dishes.",
+      "ingredientPicture": "assets/ingredients/coconut_milk_gata.jpg",
+      "category": "Pantry, Canned/Packaged"
+    },
+    {
+      "ingredientID": 244,
+      "ingredientName": "Coconut Cream (Kakang Gata)",
+      "price": "35-45/250ml pack",
+      "calories": 445,
+      "nutritionalValue": "The thicker, richer first extraction of coconut. Very high in calories and saturated fat. Concentrated source of the minerals found in coconut milk. Used to add creaminess and flavor.",
+      "ingredientPicture": "assets/ingredients/coconut_cream_kakang_gata.jpg",
+      "category": "Pantry, Canned/Packaged"
+    },
+    {
+      "ingredientID": 245,
+      "ingredientName": "Tamarind (Sampalok) - Paste",
+      "price": "20-30/pack",
+      "calories": 239,
+      "nutritionalValue": "A good source of B vitamins and potassium. Contains tartaric acid, which gives it its sour flavor and acts as an antioxidant. Often used in small quantities for flavoring.",
+      "ingredientPicture": "assets/ingredients/tamarind_sampalok_paste.jpg",
+      "category": "Condiment, Fruit"
+    },
+    {
+      "ingredientID": 246,
+      "ingredientName": "Fish Sauce (Patis)",
+      "price": "40-50/350ml bottle",
+      "calories": 6,
+      "nutritionalValue": "Very high in sodium. Provides umami flavor from fermented fish. Contains some protein and minerals like iodine and selenium, but its high salt content is the primary consideration.",
+      "ingredientPicture": "assets/ingredients/fish_sauce_patis.jpg",
+      "category": "Condiment"
+    },
+    {
+      "ingredientID": 247,
+      "ingredientName": "Oyster Sauce",
+      "price": "45-55/150g bottle",
+      "calories": 51,
+      "nutritionalValue": "A thick, savory sauce. High in sodium and sugar. Provides a small amount of protein and minerals from oyster extracts, but used primarily for its umami flavor.",
+      "ingredientPicture": "assets/ingredients/oyster_sauce.jpg",
+      "category": "Condiment, Sauce"
+    },
+    {
+      "ingredientID": 248,
+      "ingredientName": "Cornstarch",
+      "price": "25-35/200g pack",
+      "calories": 381,
+      "nutritionalValue": "Almost pure starch (carbohydrate). Used as a thickening agent. Provides energy but is devoid of protein, fat, fiber, vitamins, or minerals.",
+      "ingredientPicture": "assets/ingredients/cornstarch.jpg",
+      "category": "Thickener, Pantry"
+    },
+    {
+      "ingredientID": 249,
+      "ingredientName": "Chicken Broth/Stock",
+      "price": "40-50/10g cube or 60-70/500ml",
+      "calories": 5,
+      "nutritionalValue": "Low in calories. Flavor comes from dissolved minerals, collagen, and fat from bones and meat. Very high in sodium. Provides some protein and minerals.",
+      "ingredientPicture": "assets/ingredients/chicken_broth_stock.jpg",
+      "category": "Pantry, Broth"
+    },
+    {
+      "ingredientID": 250,
+      "ingredientName": "Thai Chili (Siling Labuyo)",
+      "price": "280-300/kg",
+      "calories": 40,
+      "nutritionalValue": "Very high in capsaicin, which boosts metabolism and has pain-relieving properties. An excellent source of vitamins A and C, and antioxidants.",
+      "ingredientPicture": "assets/ingredients/thai_chili_siling_labuyo.jpg",
+      "category": "Vegetable, Spice"
+    },
+    {
+      "ingredientID": 251,
+      "ingredientName": "All-Purpose Flour",
+      "price": "45-55/kg",
+      "calories": 364,
+      "nutritionalValue": "A refined carbohydrate. Provides energy, some protein (gluten), and is often enriched with B vitamins like folate and iron. Low in fiber and other nutrients.",
+      "ingredientPicture": "assets/ingredients/all_purpose_flour.jpg",
+      "category": "Pantry, Baking"
+    },
+    {
+      "ingredientID": 252,
+      "ingredientName": "White Sugar",
+      "price": "55-65/kg",
+      "calories": 387,
+      "nutritionalValue": "Pure sucrose. Provides empty calories (energy with no essential nutrients). Consumed in moderation as it can affect blood sugar levels and contribute to weight gain.",
+      "ingredientPicture": "assets/ingredients/white_sugar.jpg",
+      "category": "Pantry, Sweetener"
+    },
+    {
+      "ingredientID": 253,
+      "ingredientName": "Evaporated Milk",
+      "price": "30-40/370ml can",
+      "calories": 134,
+      "nutritionalValue": "Concentrated milk with about 60% of the water removed. A good source of protein, calcium, vitamin D, and vitamin A. Higher in calories and fat than fresh milk.",
+      "ingredientPicture": "assets/ingredients/evaporated_milk.jpg",
+      "category": "Pantry, Dairy"
     }
   ]
 }

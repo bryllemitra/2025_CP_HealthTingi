@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'ingredient_details.dart';
 import '../pages/meal_scan.dart';
+import '../database/db_helper.dart';
 
-class ScannedIngredientPage extends StatelessWidget {
+class ScannedIngredientPage extends StatefulWidget {
   final int userId;
   final List<String>? detectedIngredients;
 
@@ -13,9 +14,38 @@ class ScannedIngredientPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final ingredients = detectedIngredients ?? ['Chicken', 'Sayote', 'Petchay'];
+  State<ScannedIngredientPage> createState() => _ScannedIngredientPageState();
+}
 
+class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
+  final DatabaseHelper _dbHelper = DatabaseHelper();
+  late List<String> ingredients;
+  Map<String, Map<String, dynamic>> _ingredientDetails = {};
+
+  @override
+  void initState() {
+    super.initState();
+    ingredients = widget.detectedIngredients ?? ['Chicken', 'Sayote', 'Petchay'];
+    _loadIngredientDetails();
+  }
+
+  Future<void> _loadIngredientDetails() async {
+    for (var ingredientName in ingredients) {
+      try {
+        final detail = await _dbHelper.getIngredientByName(ingredientName);
+        if (detail != null) {
+          setState(() {
+            _ingredientDetails[ingredientName] = detail;
+          });
+        }
+      } catch (e) {
+        print('Error loading details for $ingredientName: $e');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEDEBD1),
       appBar: AppBar(
@@ -27,13 +57,13 @@ class ScannedIngredientPage extends StatelessWidget {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => MealScanPage(userId: userId),
+                builder: (context) => MealScanPage(userId: widget.userId),
               ),
             );
           },
         ),
         title: const Text(
-          "Ingredient/s",
+          "Scanned Ingredients",
           style: TextStyle(
             fontFamily: 'Orbitron',
             color: Colors.black,
@@ -48,7 +78,7 @@ class ScannedIngredientPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Can't scan it? Search your ingredient here.",
+              "Can't find an ingredient? Search here:",
               style: TextStyle(
                 fontFamily: 'Orbitron',
                 fontSize: 12,
@@ -70,7 +100,7 @@ class ScannedIngredientPage extends StatelessWidget {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        "Add ingredients",
+                        "Search ingredients...",
                         style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                     ),
@@ -81,57 +111,84 @@ class ScannedIngredientPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             const Text(
-              "Detected",
+              "Detected Ingredients",
               style: TextStyle(
                 fontFamily: 'Orbitron',
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 16,
               ),
             ),
             const Divider(thickness: 1),
-            ...ingredients.map((ingredient) => Column(
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        if (ingredient == "Sayote" || ingredient.toLowerCase().contains("sayote")) {
+            Expanded(
+              child: ListView.builder(
+                itemCount: ingredients.length,
+                itemBuilder: (context, index) {
+                  final ingredient = ingredients[index];
+                  final detail = _ingredientDetails[ingredient];
+                  
+                  return Column(
+                    children: [
+                      ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.grey[200],
+                          child: detail?['ingredientPicture'] != null
+                              ? Image.asset(
+                                  detail!['ingredientPicture'],
+                                  width: 30,
+                                  height: 30,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.fastfood, size: 20),
+                                )
+                              : const Icon(Icons.fastfood, size: 20),
+                        ),
+                        title: Text(
+                          ingredient,
+                          style: const TextStyle(
+                            fontFamily: 'Orbitron',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: detail != null
+                            ? Text(
+                                '${detail['calories'] ?? 'N/A'} kcal',
+                                style: const TextStyle(fontSize: 12),
+                              )
+                            : const Text(
+                                'Loading details...',
+                                style: TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => IngredientDetailsPage(
-                                userId: userId,
+                                userId: widget.userId,
                                 ingredientName: ingredient,
                               ),
                             ),
                           );
-                        }
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Icon(Icons.close, size: 18),
-                          Text(
-                            ingredient,
-                            style: const TextStyle(
-                              fontFamily: 'Orbitron',
-                              fontSize: 14,
-                            ),
-                          ),
-                          const Icon(Icons.arrow_forward_ios, size: 14),
-                        ],
+                        },
                       ),
-                    ),
-                    const Divider(thickness: 1),
-                  ],
-                )),
+                      const Divider(thickness: 1, height: 1),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
             const Text(
-              "Recipe Suggestion",
+              "Recipe Suggestions",
               style: TextStyle(
                 fontFamily: 'Orbitron',
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 16,
               ),
             ),
             const SizedBox(height: 10),
+            // Recipe suggestion card remains the same
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -165,7 +222,7 @@ class ScannedIngredientPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          "A classic Filipino comfort dish — a light, gingery chicken soup that's both nourishing and flavorful.",
+                          "A classic Filipino comfort dish with chicken, sayote, and malunggay.",
                           style: TextStyle(fontSize: 12),
                         ),
                         const SizedBox(height: 8),
@@ -177,7 +234,7 @@ class ScannedIngredientPage extends StatelessWidget {
                                 horizontal: 10, vertical: 2),
                           ),
                           onPressed: () {
-                            // TODO: Navigate to recipe detail with userId
+                            // TODO: Navigate to recipe detail
                           },
                           child: const Text(
                             'View Recipe →',
@@ -198,6 +255,13 @@ class ScannedIngredientPage extends StatelessWidget {
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Container(
+                            width: 100,
+                            height: 100,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.restaurant, size: 40),
+                          ),
                     ),
                   ),
                 ],

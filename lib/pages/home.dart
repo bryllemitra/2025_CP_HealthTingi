@@ -26,10 +26,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 1; // Home is selected by default
+  int _selectedIndex = 1;
   List<Map<String, dynamic>> popularRecipes = [];
   List<Map<String, dynamic>> allMeals = [];
-  List<Map<String, dynamic>> allIngredients = []; // ADD THIS
+  List<Map<String, dynamic>> allIngredients = [];
   List<Map<String, dynamic>> searchResults = [];
   List<Map<String, dynamic>> recentlyViewedMeals = [];
   final TextEditingController _searchController = TextEditingController();
@@ -38,15 +38,15 @@ class _HomePageState extends State<HomePage> {
   Set<int> _favoriteMealIds = {};
   int _currentPage = 0;
   bool _showAllCategories = false;
-  List<String>? _cachedCategories; // Cache for categories
+  List<String>? _cachedCategories;
 
   @override
   void initState() {
     super.initState();
     _loadPopularRecipes();
     _loadAllMeals();
-    _loadAllIngredients(); // ADD THIS
-    if (widget.userId != 0) { // Only load favorites and history for registered users
+    _loadAllIngredients();
+    if (widget.userId != 0) {
       _loadUserFavorites();
       _loadRecentlyViewedMeals();
     }
@@ -61,7 +61,6 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  // ADD THIS METHOD
   Future<void> _loadAllIngredients() async {
     final dbHelper = DatabaseHelper();
     final ingredients = await dbHelper.getAllIngredients();
@@ -111,7 +110,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _toggleFavorite(int mealId) async {
-    if (widget.userId == 0) return; // Skip for guests
+    if (widget.userId == 0) return;
     
     try {
       final dbHelper = DatabaseHelper();
@@ -278,7 +277,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ADD THIS METHOD
   Widget _buildIngredientImage(String imagePath) {
     return Image.asset(
       imagePath,
@@ -358,19 +356,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ADD THIS METHOD
   Widget _buildIngredientCard(Map<String, dynamic> ingredient) {
   final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown Ingredient';
   
-  // FIX: Add 'ingredients/' subfolder to the path
   final String imagePath;
   if (ingredient['ingredientPicture'] != null) {
     final originalPath = ingredient['ingredientPicture'].toString();
-    // Check if the path already contains 'ingredients/' to avoid duplication
     if (originalPath.contains('ingredients/')) {
       imagePath = originalPath;
     } else {
-      // Extract just the filename and add it to the ingredients folder
       final fileName = originalPath.replaceFirst('assets/', '');
       imagePath = 'assets/ingredients/$fileName';
     }
@@ -445,7 +439,7 @@ class _HomePageState extends State<HomePage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Text(
-              '₱$price',
+              'Php $price',
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.grey[700],
@@ -496,12 +490,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCategoryButtons() {
-    // If we have cached categories, use them directly
     if (_cachedCategories != null) {
       return _buildCategoryGrid(_cachedCategories!);
     }
 
-    // Otherwise, fetch from database
     return FutureBuilder<List<String>>(
       future: DatabaseHelper().getAllMealCategories(),
       builder: (context, snapshot) {
@@ -513,7 +505,6 @@ class _HomePageState extends State<HomePage> {
           return const Text('No categories found');
         }
         
-        // Cache the categories
         _cachedCategories = snapshot.data!;
         return _buildCategoryGrid(_cachedCategories!);
       },
@@ -610,13 +601,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ADD THIS METHOD
   Widget _buildIngredientsSection() {
     if (allIngredients.isEmpty) {
-      return const SizedBox.shrink(); // Don't show if no ingredients
+      return const SizedBox.shrink();
     }
     
-    // Get a subset of ingredients to display (e.g., first 10)
     final displayedIngredients = allIngredients.take(10).toList();
     
     return Column(
@@ -643,8 +632,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSpecialsCard() {
-
-    // Completely hide for guest users
     if (widget.userId == 0) {
       return const SizedBox.shrink();
     }
@@ -696,7 +683,8 @@ class _HomePageState extends State<HomePage> {
           CarouselSlider.builder(
             itemCount: recentlyViewedMeals.length,
             options: CarouselOptions(
-              autoPlay: false,
+              autoPlay: true, // Enable auto-play
+              autoPlayInterval: const Duration(seconds: 5), // Move every 5 seconds
               enlargeCenterPage: true,
               viewportFraction: 0.9,
               aspectRatio: 2.0,
@@ -734,11 +722,11 @@ class _HomePageState extends State<HomePage> {
                       ClipRRect(
                         borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
                         child: SizedBox(
-                          width: 150, // fixed width
-                          height: double.infinity, // fill vertical space of the card
+                          width: 150,
+                          height: double.infinity,
                           child: Image.asset(
                             meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                            fit: BoxFit.cover, // fills area without white gaps
+                            fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 color: Colors.grey[200],
@@ -748,7 +736,6 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                       ),
-
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
@@ -975,8 +962,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 12),
             _buildPopularRecipes(),
-
-            // ADD THIS SECTION
+            
             _buildIngredientsSection(),
           ],
         ),

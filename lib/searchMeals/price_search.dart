@@ -228,7 +228,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '₱${(meal['price'] as num).toStringAsFixed(2)}',
+                  'Php ${(meal['price'] as num).toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 10,
                     color: Colors.black54,
@@ -347,7 +347,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                     itemCount: filteredMeals.length,
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      mainAxisExtent: 240,
+                      mainAxisExtent: 260,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 12,
                     ),

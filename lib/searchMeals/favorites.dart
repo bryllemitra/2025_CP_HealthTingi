@@ -174,7 +174,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                               itemCount: filteredRecipes.length,
                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                mainAxisExtent: 240,
+                                mainAxisExtent: 260,
                                 mainAxisSpacing: 16,
                                 crossAxisSpacing: 12,
                               ),

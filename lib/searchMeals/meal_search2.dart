@@ -228,6 +228,7 @@ class _MealSearch2PageState extends State<MealSearch2Page> {
           const Spacer(),
           Container(
             width: double.infinity,
+            height: 240,
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(

@@ -109,6 +109,25 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<void> _showBirthdayPickerDialog() async {
+    final DateTime initialDate = userData['birthday'] != null 
+        ? DateTime.parse(userData['birthday']) 
+        : DateTime.now().subtract(const Duration(days: 365 * 20)); // Default to 20 years ago
+    
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    
+    if (pickedDate != null) {
+      setState(() {
+        _handleFieldChange('birthday', pickedDate.toIso8601String().split('T')[0]);
+      });
+    }
+  }
+
   Future<void> _showDietaryRestrictionsDialog() async {
     final List<String> allRestrictions = [
       'Vegan',
@@ -375,6 +394,59 @@ class _ProfilePageState extends State<ProfilePage> {
               value: _editedValues['emailAddress'] ?? userData['emailAddress']?.toString() ?? '',
               field: 'emailAddress',
             ),
+            // Birthday field - added before age
+            GestureDetector(
+              onTap: _showBirthdayPickerDialog,
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      offset: Offset(2, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Birthday',
+                              style: TextStyle(
+                                fontFamily: 'Orbitron',
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              )),
+                          const SizedBox(height: 2),
+                          Text(
+                            _editedValues['birthday'] ?? userData['birthday']?.toString() ?? 'Not set',
+                            style: const TextStyle(
+                              fontFamily: 'Orbitron',
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.calendar_today, size: 20),
+                  ],
+                ),
+              ),
+            ),
+            /*
+            _editableInfoTile(
+              context,
+              title: 'Age',
+              value: _editedValues['age'] ?? userData['age']?.toString() ?? '',
+              field: 'age',
+            ),
+            */
             _editableInfoTile(
               context,
               title: 'Age',

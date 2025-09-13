@@ -237,7 +237,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
   
   return Container(
     width: 155,
-    height: 240, // INCREASED HEIGHT TO ACCOMMODATE PRICE
+    height: 240,
     margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
     decoration: BoxDecoration(
       color: Colors.white,

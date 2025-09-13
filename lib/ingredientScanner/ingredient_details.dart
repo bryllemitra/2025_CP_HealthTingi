@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import '../pages/meal_details.dart';
-// import 'scanned_ingredient.dart';
+//import 'scanned_ingredient.dart';
 
 class IngredientDetailsPage extends StatefulWidget {
   final int userId;
@@ -188,7 +188,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
             ),
             
             const SizedBox(height: 16),
-            
+            /*
             // Related Meals Section
             Align(
               alignment: Alignment.centerLeft,
@@ -239,6 +239,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                 );
               },
             ),
+            */
           ],
         ),
       ),

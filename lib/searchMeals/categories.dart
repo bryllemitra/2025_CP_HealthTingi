@@ -118,7 +118,7 @@ class _CategoryPageState extends State<CategoryPage> {
                       padding: const EdgeInsets.all(12),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        mainAxisExtent: 240,
+                        mainAxisExtent: 260,
                         mainAxisSpacing: 16,
                         crossAxisSpacing: 12,
                       ),
