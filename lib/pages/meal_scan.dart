@@ -4,7 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 import 'package:image/image.dart' as img;
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home.dart';
 import 'budget_plan.dart';
 import '../searchMeals/meal_search.dart';
@@ -31,12 +31,14 @@ class _MealScanPageState extends State<MealScanPage> {
   tfl.Interpreter? _interpreter;
   tfl.IsolateInterpreter? _isolateInterpreter; // For async inference
   List<String> _labels = [];
+  bool _showOverlayTutorial = true;
 
   @override
   void initState() {
     super.initState();
     _initializeCamera();
     _loadModel();
+    _checkTutorialStatus();
   }
 
   Future<void> _loadModel() async {
@@ -375,6 +377,18 @@ class _MealScanPageState extends State<MealScanPage> {
     }
   }
 
+  Future<void> _checkTutorialStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Check if the user has already dismissed the scanner tutorial
+    final bool hasSeenScannerTutorial = prefs.getBool('hasSeenScannerTutorial_${widget.userId}') ?? false;
+    
+    if (mounted) {
+      setState(() {
+        _showOverlayTutorial = !hasSeenScannerTutorial;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _controller?.dispose();
@@ -527,6 +541,67 @@ class _MealScanPageState extends State<MealScanPage> {
                 ),
               ),
             ),
+          if (_showOverlayTutorial)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () async {
+                // Save preference that user has seen the tutorial
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('hasSeenScannerTutorial_${widget.userId}', true);
+                if (mounted) {
+                  setState(() => _showOverlayTutorial = false);
+                }
+              },
+              child: Container(
+                color: Colors.black54, // Semi-transparent background
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Example: Highlight the capture button
+                    const Expanded(flex: 2, child: SizedBox()),
+                    const Text(
+                      "Tap here to scan an ingredient!",
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 20),
+                    // Simple highlight instead of CustomPaint for now
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                      ),
+                    ),
+                    const Spacer(),
+                    // Hint for the gallery button
+                    Padding(
+                      padding: const EdgeInsets.only(left: 30.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                          const SizedBox(width: 10),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              "Or pick a photo from your gallery here",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 120), // Adjust based on your button position
+                  ],
+                ),
+              ),
+            ),
+          ),  
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'register.dart';
 import 'meal_scan.dart';
+import 'onboarding_screen.dart'; 
 import '../database/db_helper.dart';
 
 class LoginPage extends StatefulWidget {
@@ -34,6 +36,34 @@ class _LoginPageState extends State<LoginPage> {
       .replaceAll(';', '');
   }
 
+  // NEW METHOD: Handles navigation after successful login
+  Future<void> _navigateAfterLogin(int userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    // Check if the user has already seen the onboarding
+    final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding_$userId') ?? false;
+
+    if (hasSeenOnboarding) {
+      // User has seen it before, go straight to the scanner
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MealScanPage(userId: userId),
+        ),
+      );
+    } else {
+      // User is new, show onboarding first and set the flag
+      await prefs.setBool('hasSeenOnboarding_$userId', true);
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OnboardingScreen(userId: userId), // Go to Onboarding
+        ),
+      );
+    }
+  }
+
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -50,6 +80,7 @@ class _LoginPageState extends State<LoginPage> {
         }
 
         if (user == null || user['password'] != hashedPassword) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Invalid credentials - please try again'),
@@ -65,21 +96,22 @@ class _LoginPageState extends State<LoginPage> {
         // Explicitly convert the ID to int if it's not already
         final userId = user['id'] is int ? user['id'] : int.parse(user['id'].toString());
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MealScanPage(userId: userId),
-          ),
-        );
+        // REPLACED the direct navigation with our new method
+        await _navigateAfterLogin(userId);
+
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login error: ${e.toString()}'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login error: ${e.toString()}'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       } finally {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }

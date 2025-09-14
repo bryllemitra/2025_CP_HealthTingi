@@ -43,6 +43,7 @@ dependencies:
   tflite_flutter: 0.11.0
   currency_code_to_currency_symbol: ^0.0.4
   carousel_slider: ^5.1.1
+  shared_preferences: ^2.2.2
 
 
 
