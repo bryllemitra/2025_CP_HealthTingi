@@ -71,7 +71,7 @@ flutter_icons:
   image_path: "assets/logo_op.png" # your logo file
 
 flutter_native_splash:
-  color: "#FFFF66"                
+  color: "#FFF1F1DC"                
   image: assets/logo_op.png          
   android: true
   ios: true

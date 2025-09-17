@@ -1,6 +1,6 @@
 // onboarding_screen.dart
 import 'package:flutter/material.dart';
-import 'meal_scan.dart'; // Import your scanner page
+import 'meal_scan.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final int userId;
@@ -17,7 +17,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // List of onboarding pages
   final List<Widget> _onboardingPages = [
     const OnboardingPage(
-      image: Icons.camera_alt_rounded, // Or use an actual image asset
+      image: Icons.camera_alt_rounded,
       title: 'Scan Your Ingredients',
       description: 'Point your camera at any ingredient to identify it instantly. Perfect for figuring out what\'s in your fridge!',
     ),
@@ -27,7 +27,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       description: 'Discover detailed nutrition information and get personalized recipe suggestions based on what you scan.',
     ),
     const OnboardingPage(
-      image: Icons.perm_camera_mic, // Or a shield icon
+      image: Icons.camera,
       title: 'We Need Camera Access',
       description: 'To scan your ingredients, we need permission to use your camera. We only use it for scanning and never store your photos.',
     ),
@@ -40,7 +40,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeIn,
       );
     } else {
-      // On the last page, navigate to the MealScanPage
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => MealScanPage(userId: widget.userId),
@@ -52,7 +51,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Match your app's theme
+      backgroundColor: const Color(0xFFF1F1DC),
       body: SafeArea(
         child: Column(
           children: [
@@ -66,7 +65,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (context, index) => _onboardingPages[index],
               ),
             ),
-            // Progress Dots
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List<Widget>.generate(
@@ -78,8 +76,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _currentPage == index
-                        ? Colors.green // Your accent color
-                        : Colors.grey,
+                        ? const Color(0xFFFFFF66) // Your accent color
+                        : Colors.black,
                   ),
                 ),
               ),
@@ -91,8 +89,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: ElevatedButton(
                 onPressed: _onNext,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green, // Your accent color
-                  foregroundColor: Colors.white,
+                  backgroundColor: const Color(0xFFFFFF66),
+                  foregroundColor: Colors.black,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -102,7 +100,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _currentPage == _onboardingPages.length - 1
                       ? 'Get Started'
                       : 'Next',
-                  style: const TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
                 ),
               ),
             ),
@@ -113,7 +111,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-// Widget for each individual onboarding page
 class OnboardingPage extends StatelessWidget {
   final IconData image;
   final String title;
@@ -133,12 +130,12 @@ class OnboardingPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(image, size: 100, color: Colors.green),
+          Icon(image, size: 100, color: const Color(0xFFFFFF66)),
           const SizedBox(height: 32),
           Text(
             title,
             style: const TextStyle(
-                color: Colors.white,
+                color: Colors.black,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Orbitron'),
@@ -147,7 +144,7 @@ class OnboardingPage extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             description,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
+            style: const TextStyle(color: Colors.black, fontSize: 16),
             textAlign: TextAlign.center,
           ),
         ],
