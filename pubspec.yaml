@@ -162,7 +162,9 @@ flutter:
     - assets/models/model3.tflite
     - assets/models/labels.txt
     - assets/models/healthtingi_current.tflite
-
+    - assets/models/ingredient_scanner.tflite
+    - assets/models/class_info.txt
+    - assets/models/class_info.json
   fonts:
     - family: Orbitron
       fonts:
