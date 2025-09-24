@@ -546,7 +546,7 @@
       "price": "340-350/kg",
       "calories": "786 (marrow)",
       "nutritionalValue": "The bone marrow is rich in fat, calories, and collagen. It contains conjugated linoleic acid (CLA) and provides some vitamin B12 and adiponectin.",
-      "ingredientPicture": "assets/ingredients/beef_bulalo_bone_marrow.jpg",
+      "ingredientPicture": "assets/ingredients/beef_bone_marrow.jpg",
       "category": "Protein, Animal"
     },
     {
@@ -654,7 +654,7 @@
       "price": "25/tie",
       "calories": 30,
       "nutritionalValue": "Used medicinally and in cooking. Like the fruit, they contain compounds like charantin and polypeptide-p that may help lower blood sugar levels. Also provide vitamin A and C.",
-      "ingredientPicture": "assets/ingredients/dahon_ng_ampalaya_bitter_melon_leaves.jpg",
+      "ingredientPicture": "assets/ingredients/ampalaya_leaves.jpg",
       "category": "Vegetable, Leafy Green"
     },
     {
@@ -1311,7 +1311,7 @@
       "price": "40-50/kg",
       "calories": 107,
       "nutritionalValue": "A starchy root vegetable. Easily digestible, making it good for weaning babies and those with digestive issues. Provides some potassium and iron.",
-      "ingredientPicture": "assets/ingredients/arrow_roots_tumon.jpg",
+      "ingredientPicture": "assets/ingredients/arrow_roots.jpg",
       "category": "Vegetable, Starch"
     },
     {
@@ -1527,7 +1527,7 @@
       "price": "N/A",
       "calories": 57,
       "nutritionalValue": "A tropical fruit. A good source of fiber, vitamin A, and various antioxidants. Also provides riboflavin and minerals like phosphorus and potassium.",
-      "ingredientPicture": "assets/ingredients/lanzones_lansium.jpg",
+      "ingredientPicture": "assets/ingredients/lanzones.jpg",
       "category": "Fruit"
     },
     {
@@ -1653,7 +1653,7 @@
       "price": "200-250/kg",
       "calories": 130,
       "nutritionalValue": "A lean fish. An excellent source of high-quality protein, selenium, and vitamin B12. Also contains some omega-3 fatty acids.",
-      "ingredientPicture": "assets/ingredients/barilete_yellow_fin_tuna.jpg",
+      "ingredientPicture": "assets/ingredients/yellowfin_tuna.jpg",
       "category": "Seafood"
     },
     {
@@ -2103,7 +2103,7 @@
       "price": "5-10/pack (5-10 leaves)",
       "calories": 313,
       "nutritionalValue": "Not consumed in quantity; used for aromatic flavor. Contains vitamins A, B6, and C, manganese, iron, and calcium in trace amounts. The compound eugenol provides anti-inflammatory properties.",
-      "ingredientPicture": "assets/ingredients/bay_leaf_laurel.jpg",
+      "ingredientPicture": "assets/ingredients/bay_leaf.jpg",
       "category": "Spice"
     },
     {

@@ -8,6 +8,7 @@ import 'meal_scan.dart';
 import 'meal_details.dart';
 import '../searchMeals/meal_search.dart';
 import '../searchMeals/favorites.dart';
+import '../searchMeals/history.dart'; // Added import for history page
 import 'navigation.dart';
 import 'index.dart';
 import '../information/about_us.dart';
@@ -357,103 +358,97 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildIngredientCard(Map<String, dynamic> ingredient) {
-  final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown Ingredient';
-  
-  final String imagePath;
-  if (ingredient['ingredientPicture'] != null) {
-    final originalPath = ingredient['ingredientPicture'].toString();
-    if (originalPath.contains('ingredients/')) {
-      imagePath = originalPath;
+    final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown Ingredient';
+    
+    final String imagePath;
+    if (ingredient['ingredientPicture'] != null) {
+      final originalPath = ingredient['ingredientPicture'].toString();
+      if (originalPath.contains('ingredients/')) {
+        imagePath = originalPath;
+      } else {
+        final fileName = originalPath.replaceFirst('assets/', '');
+        imagePath = 'assets/ingredients/$fileName';
+      }
     } else {
-      final fileName = originalPath.replaceFirst('assets/', '');
-      imagePath = 'assets/ingredients/$fileName';
+      imagePath = 'assets/ingredients/default_ingredient.jpg';
     }
-  } else {
-    imagePath = 'assets/ingredients/default_ingredient.jpg';
-  }
-  
-  final price = ingredient['price'] is double 
-      ? (ingredient['price'] as double).toStringAsFixed(2)
-      : ingredient['price']?.toString() ?? '0.00';
-  
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => IngredientDetailsPage(
-            userId: widget.userId,
-            ingredientName: ingredientName,
+    
+    final price = ingredient['price'] is double 
+        ? (ingredient['price'] as double).toStringAsFixed(2)
+        : ingredient['price']?.toString() ?? '0.00';
+    
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => IngredientDetailsPage(
+              userId: widget.userId,
+              ingredientName: ingredientName,
+            ),
           ),
+        );
+      },
+      child: Container(
+        width: 120,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-      );
-    },
-    child: Container(
-      width: 120,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Ingredient Image
-          Container(
-            height: 80,
-            width: 80,
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[100],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: _buildIngredientImage(imagePath),
-            ),
-          ),
-          
-          // Ingredient Name
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              ingredientName,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold, 
-                fontSize: 12
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              height: 80,
+              width: 80,
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[100],
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          
-          // Price
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Text(
-              'Php $price',
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey[700],
-                fontWeight: FontWeight.w500,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: _buildIngredientImage(imagePath),
               ),
             ),
-          ),
-          
-          const SizedBox(height: 8),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                ingredientName,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold, 
+                  fontSize: 12
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Text(
+                'Php $price',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
@@ -683,8 +678,8 @@ class _HomePageState extends State<HomePage> {
           CarouselSlider.builder(
             itemCount: recentlyViewedMeals.length,
             options: CarouselOptions(
-              autoPlay: true, // Enable auto-play
-              autoPlayInterval: const Duration(seconds: 5), // Move every 5 seconds
+              autoPlay: true,
+              autoPlayInterval: const Duration(seconds: 5),
               enlargeCenterPage: true,
               viewportFraction: 0.9,
               aspectRatio: 2.0,
@@ -896,6 +891,18 @@ class _HomePageState extends State<HomePage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => FavoritesPage(userId: widget.userId),
+                  ),
+                );
+              },
+            ),
+          if (widget.userId != 0)
+            IconButton(
+              icon: const Icon(Icons.history, color: Colors.black),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HistoryPage(userId: widget.userId),
                   ),
                 );
               },

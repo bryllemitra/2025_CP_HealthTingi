@@ -121,7 +121,6 @@ flutter:
   assets:
     - assets/data/ingredients.json
     - assets/ingredients/
-    - assets/ingredients/sayote.jpg
     - assets/tinolang_manok.jpg
     - assets/escabeche.jpg
     - assets/green.jpg
