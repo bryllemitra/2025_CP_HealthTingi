@@ -642,7 +642,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.02),
             Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Checkbox(
@@ -727,26 +727,28 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: const Text('Next'),
                 )
               else
-                ElevatedButton(
-                  onPressed: (_isUnderage || _isLoading || !agreeToTerms) ? null : _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isUnderage ? Colors.grey : Colors.yellow[300],
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                Flexible(
+                  child: ElevatedButton(
+                    onPressed: (_isUnderage || _isLoading || !agreeToTerms) ? null : _submitForm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isUnderage ? Colors.grey : Colors.yellow[300],
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                            ),
+                          )
+                        : const Text('REGISTER'),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                          ),
-                        )
-                      : const Text('REGISTER'),
                 ),
             ],
           ),

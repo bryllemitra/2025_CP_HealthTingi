@@ -84,12 +84,12 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5DC),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F5DC),
+        backgroundColor: Colors.black.withOpacity(0.3),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -97,151 +97,193 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
         title: Text(
           widget.ingredientName,
           style: const TextStyle(
-            color: Colors.black, 
+            color: Colors.white, 
             fontWeight: FontWeight.bold
           ),
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Ingredient Image and Name
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(12),
+      body: Stack(
+        children: [
+          // Background gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFF5F5DC), Color(0xFFECECD9)],
               ),
-              padding: const EdgeInsets.all(10),
-              child: FutureBuilder<Map<String, dynamic>?>(
-                future: _ingredientFuture,
-                builder: (context, snapshot) {
-                  final ingredient = snapshot.data;
-                  final imagePath = ingredient?['ingredientPicture']?.toString() ?? 
-                                  'assets/default_ingredient.jpg';
-                  
-                  return Column(
-                    children: [
-                      Image.asset(
+            ),
+          ),
+          FutureBuilder<Map<String, dynamic>?>(
+            future: _ingredientFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+              final ingredient = snapshot.data;
+              final imagePath = ingredient?['ingredientPicture']?.toString() ?? 
+                              'assets/default_ingredient.jpg';
+              
+              return SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Header image
+                    SizedBox(
+                      height: 250,
+                      width: double.infinity,
+                      child: Image.asset(
                         imagePath,
-                        height: 120,
-                        errorBuilder: (context, error, stackTrace) => 
-                          const Icon(Icons.fastfood, size: 100),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.ingredientName,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.fastfood, size: 100, color: Colors.grey),
                         ),
                       ),
-                    ],
-                  );
-                },
-              ),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Ingredient Information
-            FutureBuilder<Map<String, dynamic>?>(
-              future: _ingredientFuture,
-              builder: (context, snapshot) {
-                final ingredient = snapshot.data;
-                
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.yellow[100],
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Estimated Cost: ${_getCostEstimate(ingredient)}",
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text("Calories: ${_getCalories(ingredient)}"),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Nutritional value:",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      ..._getNutritionalInfo(ingredient),
-                    ],
-                  ),
-                );
-              },
-            ),
-            
-            const SizedBox(height: 16),
-            /*
-            // Related Meals Section
-            Align(
-              alignment: Alignment.centerLeft,
-              child: RichText(
-                text: TextSpan(
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
-                  children: [
-                    const TextSpan(
-                      text: "Meals with ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    TextSpan(
-                      text: widget.ingredientName,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFECECD9),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Name centered
+                          Center(
+                            child: Text(
+                              widget.ingredientName,
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Orbitron',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          
+                          // Info card
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            color: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Details',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Orbitron',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.monetization_on, color: Colors.green),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          "Estimated Cost: ${_getCostEstimate(ingredient)}",
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.local_fire_department, color: Colors.orange),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          "Calories: ${_getCalories(ingredient)}",
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    "Nutritional Value:",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Orbitron',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ..._getNutritionalInfo(ingredient),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          
+                          // Related Meals
+                          const Text(
+                            'Related Meals',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Orbitron',
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          FutureBuilder<List<Map<String, dynamic>>>(
+                            future: _relatedMealsFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+                              
+                              if (snapshot.hasError) {
+                                return const Text('Error loading related meals');
+                              }
+                              
+                              final relatedMeals = snapshot.data ?? [];
+                              
+                              if (relatedMeals.isEmpty) {
+                                return const Card(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: Text(
+                                      'No meals found containing this ingredient',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ),
+                                );
+                              }
+                              
+                              return SizedBox(
+                                height: 200,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: relatedMeals.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildMealCard(relatedMeals[index], context);
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            
-            const SizedBox(height: 8),
-            
-            // Related Meals List
-            FutureBuilder<List<Map<String, dynamic>>>(
-              future: _relatedMealsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                
-                if (snapshot.hasError) {
-                  return const Text('Error loading related meals');
-                }
-                
-                final relatedMeals = snapshot.data ?? [];
-                
-                if (relatedMeals.isEmpty) {
-                  return const Text(
-                    'No meals found containing this ingredient',
-                    style: TextStyle(color: Colors.grey),
-                  );
-                }
-                
-                return Column(
-                  children: relatedMeals.map((meal) => 
-                    _buildMealCard(meal, context)
-                  ).toList(),
-                );
-              },
-            ),
-            */
-          ],
-        ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -262,12 +304,19 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
 
   List<Widget> _getNutritionalInfo(Map<String, dynamic>? ingredient) {
     if (ingredient != null && ingredient['nutritionalValue'] != null) {
-      final nutritionalValue = ingredient['nutritionalValue'].toString();
-      return [
-        Text("• $nutritionalValue"),
-      ];
+      final nutritionalValue = ingredient['nutritionalValue'].toString().split(';');
+      return nutritionalValue.map((value) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle, size: 16, color: Colors.green),
+            const SizedBox(width: 8),
+            Expanded(child: Text(value.trim(), style: const TextStyle(fontSize: 14))),
+          ],
+        ),
+      )).toList();
     }
-    return [const Text("Nutritional information not available")];
+    return [const Text("Nutritional information not available", style: TextStyle(color: Colors.grey))];
   }
 
   Widget _buildMealCard(Map<String, dynamic> meal, BuildContext context) {
@@ -275,41 +324,78 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
     final imagePath = meal['mealPicture']?.toString() ?? 'assets/default_meal.jpg';
     final mealId = meal['mealID'] as int?;
 
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset(
-            imagePath,
-            width: 50,
-            height: 50,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => 
-              const Icon(Icons.fastfood, size: 50),
-          ),
+    return GestureDetector(
+      onTap: () {
+        if (mealId != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MealDetailsPage(
+                mealId: mealId,
+                userId: widget.userId,
+              ),
+            ),
+          );
+        }
+      },
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        title: Text(mealName),
-        subtitle: Text(
-          'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'} • ${meal['calories']?.toString() ?? '0'} kcal'
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () {
-          if (mealId != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MealDetailsPage(
-                  mealId: mealId,
-                  userId: widget.userId,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Image.asset(
+                imagePath,
+                height: 100,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 100,
+                  color: Colors.grey[200],
+                  child: const Icon(Icons.fastfood, size: 50),
                 ),
               ),
-            );
-          }
-        },
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    mealName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'}',
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

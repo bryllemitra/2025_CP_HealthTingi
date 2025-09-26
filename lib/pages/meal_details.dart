@@ -187,19 +187,19 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFECECD9),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Meal Details',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Colors.white,
             fontFamily: 'Orbitron',
           ),
         ),
@@ -211,11 +211,11 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                   ? const SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
                     )
                   : Icon(
                       _isFavorite ? Icons.star : Icons.star_border,
-                      color: _isFavorite ? Colors.yellow : Colors.black,
+                      color: _isFavorite ? Colors.yellow : Colors.white,
                     ),
               onPressed: _isLoading ? null : _toggleFavorite,
             ),
@@ -285,206 +285,255 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                 final price = mealData['price'] ?? 0.0;
                 final categories = (mealData['category'] as String?)?.split(', ') ?? [];
                 
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Show restriction warning only if there's a specific match
-                      if (hasSpecificRestriction)
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.orange[700],
-                            borderRadius: BorderRadius.circular(8),
+                return Stack(
+                  children: [
+                    // Background image with gradient overlay
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 300,
+                      child: _buildMealImage(mealData['mealPicture']),
+                    ),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 300,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Colors.black.withOpacity(0.6)],
                           ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.warning_amber_rounded, color: Colors.white),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: RichText(
-                                  text: TextSpan(
+                        ),
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          SizedBox(height: 250), // Space for header image
+                          Container(
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFECECD9),
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                            ),
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Meal name centered
+                                Center(
+                                  child: Text(
+                                    mealData['mealName'],
                                     style: const TextStyle(
                                       fontFamily: 'Orbitron',
-                                      fontSize: 12,
-                                      color: Colors.white),
-                                    children: [
-                                      const TextSpan(text: '⚠️ Dietary Alert: '),
-                                      TextSpan(
-                                        text: 'This meal contains ingredients that conflict with your ',
-                                      ),
-                                      TextSpan(
-                                        text: userRestriction.isNotEmpty ? userRestriction : 'dietary restriction',
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
-                                      ),
-                                      TextSpan(
-                                        text: '. Meal restrictions: $mealRestrictions. Consider choosing an alternative option.',
-                                      ),
-                                    ],
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 24,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFF66),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          children: [
-                            _buildMealImage(mealData['mealPicture']),
-                            const SizedBox(height: 8),
-                            Text(
-                              mealData['mealName'],
-                              style: const TextStyle(
-                                fontFamily: 'Orbitron',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            Text(
-                              '(Serving Size: ${mealData['servings']})',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontFamily: 'Orbitron',
-                                color: Colors.black54,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Price: Php ${price.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontFamily: 'Orbitron',
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (categories.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Wrap(
-                                  spacing: 4,
-                                  runSpacing: 4,
-                                  children: categories.map((category) {
-                                    return Chip(
-                                      label: Text(
-                                        category,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontFamily: 'Orbitron',
-                                        ),
-                                      ),
-                                      backgroundColor: const Color(0xFFE0E0E0),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    );
-                                  }).toList(),
+                                const SizedBox(height: 8),
+                                Center(
+                                  child: Text(
+                                    '(Serving Size: ${mealData['servings']})',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontFamily: 'Orbitron',
+                                      color: Colors.black54,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                                const SizedBox(height: 8),
+                                Center(
+                                  child: Text(
+                                    'Price: Php ${price.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontFamily: 'Orbitron',
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                if (categories.isNotEmpty) ...[
+                                  const SizedBox(height: 16),
+                                  Center(
+                                    child: Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      alignment: WrapAlignment.center,
+                                      children: categories.map((category) {
+                                        return Chip(
+                                          label: Text(
+                                            category,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontFamily: 'Orbitron',
+                                            ),
+                                          ),
+                                          backgroundColor: const Color(0xFFFFFF66),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 24),
 
-                      // Ingredients and Cost
-const Text(
-  'Ingredients and Cost',
-  style: TextStyle(
-    fontFamily: 'Orbitron',
-    fontWeight: FontWeight.bold,
-    fontSize: 14,
-  ),
-),
-const SizedBox(height: 6),
-Container(
-  width: double.infinity,
-  padding: const EdgeInsets.all(10),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    border: Border.all(color: Colors.black26),
-    borderRadius: BorderRadius.circular(8),
-  ),
-  child: ingredients.isEmpty
-      ? const Center(
-          child: Text(
-            'No ingredients listed',
-            style: TextStyle(fontStyle: FontStyle.italic),
-          ),
-        )
-      : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: ingredients.map((ingredient) {
-            final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown';
-            final quantity = ingredient['quantity']?.toString() ?? '';
-            final price = ingredient['price']?.toString() ?? 'N/A';
-            
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text(
-                '$quantity $ingredientName.........Php $price',
-                style: const TextStyle(fontSize: 12),
-              ),
-            );
-          }).toList(),
-        ),
-),
-                      const SizedBox(height: 10),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/reverse-ingredient');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFFF66),
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6)),
-                          ),
-                          child: const Text(
-                            'Change Ingredients',
-                            style: TextStyle(fontFamily: 'Orbitron'),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+                                // Dietary warning
+                                if (hasSpecificRestriction)
+                                  Card(
+                                    color: Colors.orange[700],
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 24),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: RichText(
+                                              text: TextSpan(
+                                                style: const TextStyle(
+                                                  fontFamily: 'Orbitron',
+                                                  fontSize: 14,
+                                                  color: Colors.white),
+                                                children: [
+                                                  const TextSpan(text: '⚠️ Dietary Alert: '),
+                                                  TextSpan(
+                                                    text: 'This meal contains ingredients that conflict with your ',
+                                                  ),
+                                                  TextSpan(
+                                                    text: userRestriction.isNotEmpty ? userRestriction : 'dietary restriction',
+                                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                                  ),
+                                                  TextSpan(
+                                                    text: '. Meal restrictions: $mealRestrictions. Consider choosing an alternative option.',
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                const SizedBox(height: 24),
 
-                      // Instructions
-                      const Text(
-                        'Instructions for Cooking',
-                        style: TextStyle(
-                          fontFamily: 'Orbitron',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: Colors.black26),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          mealData['instructions'] ?? 'No instructions available',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            height: 1.5,
-                            fontFamily: 'Orbitron',
+                                // Ingredients section
+                                const Text(
+                                  'Ingredients and Cost',
+                                  style: TextStyle(
+                                    fontFamily: 'Orbitron',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Card(
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: ingredients.isEmpty
+                                        ? const Center(
+                                            child: Text(
+                                              'No ingredients listed',
+                                              style: TextStyle(fontStyle: FontStyle.italic),
+                                            ),
+                                          )
+                                        : Column(
+                                            children: ingredients.map((ingredient) {
+                                              final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown';
+                                              final quantity = ingredient['quantity']?.toString() ?? '';
+                                              final price = ingredient['price']?.toString() ?? 'N/A';
+                                              
+                                              return Padding(
+                                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Flexible(
+                                                      flex: 3,
+                                                      child: Text(
+                                                        '$quantity $ingredientName',
+                                                        style: const TextStyle(fontSize: 14),
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                    Flexible(
+                                                      flex: 1,
+                                                      child: Text(
+                                                        'Php $price',
+                                                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                                                        textAlign: TextAlign.right,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Center(
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.edit),
+                                    label: const Text('Change Ingredients'),
+                                    onPressed: () {
+                                      Navigator.pushNamed(context, '/reverse-ingredient');
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFFFFF66),
+                                      foregroundColor: Colors.black,
+                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+
+                                // Instructions section
+                                const Text(
+                                  'Instructions for Cooking',
+                                  style: TextStyle(
+                                    fontFamily: 'Orbitron',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Card(
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: SelectableText(
+                                      mealData['instructions'] ?? 'No instructions available',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        height: 1.5,
+                                        fontFamily: 'Orbitron',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 );
               },
             ),
@@ -494,25 +543,25 @@ Container(
   Widget _buildMealImage(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {
       return Container(
-        height: 180,
+        height: 300,
         color: Colors.grey[200],
         child: const Center(
-          child: Icon(Icons.fastfood, size: 50, color: Colors.grey),
+          child: Icon(Icons.fastfood, size: 100, color: Colors.grey),
         ),
       );
     }
 
     return Image.asset(
       imagePath,
-      height: 180,
+      height: 300,
       width: double.infinity,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
         return Container(
-          height: 180,
+          height: 300,
           color: Colors.grey[200],
           child: const Center(
-            child: Icon(Icons.fastfood, size: 50, color: Colors.grey),
+            child: Icon(Icons.fastfood, size: 100, color: Colors.grey),
           ),
         );
       },
