@@ -19,8 +19,9 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
   ];
 
   Set<String> crossedOutIngredients = {};
-  List<String> recentlyRemovedIngredients = [];
-  Map<String, bool> alternativeIngredients = {};
+  List<Map<String, dynamic>> recentChanges = [];
+  Map<String, String?> selectedAlternatives = {};
+  Map<String, String> ingredientDisplay = {};
   bool showAlternatives = false;
 
   // Define main/important ingredients and their alternatives
@@ -43,18 +44,15 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
   @override
   void initState() {
     super.initState();
-    // Initialize alternative ingredients as not selected
-    alternativeIngredients = {
-      for (var altList in ingredientAlternatives.values)
-        for (var alt in altList) alt: false
-    };
+    selectedAlternatives = {};
+    ingredientDisplay = {};
   }
 
   void _removeIngredient(String ingredient) {
     setState(() {
       crossedOutIngredients.add(ingredient);
-      recentlyRemovedIngredients.add(ingredient);
-      
+      recentChanges.add({'type': 'remove', 'ingredient': ingredient});
+
       // Show alternatives if a main ingredient is removed
       if (ingredientAlternatives.containsKey(ingredient)) {
         showAlternatives = true;
@@ -63,9 +61,10 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
 
     // Auto-hide the undo snackbar after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted && recentlyRemovedIngredients.contains(ingredient)) {
+      if (mounted) {
         setState(() {
-          recentlyRemovedIngredients.remove(ingredient);
+          recentChanges.removeWhere((change) =>
+              change['type'] == 'remove' && change['ingredient'] == ingredient);
         });
       }
     });
@@ -74,8 +73,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
   void _undoRemoveIngredient(String ingredient) {
     setState(() {
       crossedOutIngredients.remove(ingredient);
-      recentlyRemovedIngredients.remove(ingredient);
-      
+
       // Check if we should hide alternatives
       if (!crossedOutIngredients.any((ing) => ingredientAlternatives.containsKey(ing))) {
         showAlternatives = false;
@@ -83,21 +81,47 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     });
   }
 
-  void _toggleAlternativeIngredient(String alternative, bool isSelected) {
+  void _setReplacement(String original, String alt) {
     setState(() {
-      alternativeIngredients[alternative] = isSelected;
+      selectedAlternatives[original] = alt;
+      ingredientDisplay[original] = alt;
+      crossedOutIngredients.remove(original);
+      recentChanges.add({'type': 'replace', 'original': original, 'alt': alt});
+    });
+
+    // Auto-hide the undo snackbar after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          recentChanges.removeWhere((change) =>
+              change['type'] == 'replace' && change['original'] == original);
+        });
+      }
+    });
+  }
+
+  void _undoReplace(String original) {
+    setState(() {
+      selectedAlternatives.remove(original);
+      ingredientDisplay.remove(original);
+      crossedOutIngredients.remove(original); // Bring back without cross
+
+      // Check if we should hide alternatives
+      if (!crossedOutIngredients.any((ing) => ingredientAlternatives.containsKey(ing))) {
+        showAlternatives = false;
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F2DF),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF3F2DF),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -105,193 +129,255 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
           style: TextStyle(
             fontFamily: 'Orbitron',
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Colors.white,
             fontSize: 18,
           ),
         ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Select Ingredients',
-                style: TextStyle(
-                    fontFamily: 'Orbitron',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black),
-                color: Colors.white,
-              ),
-              child: Column(
-                children: allIngredients.map((ingredient) {
-                  final isCrossed = crossedOutIngredients.contains(ingredient);
-                  return ListTile(
-                    leading: IconButton(
-                      icon: const Icon(Icons.close, size: 20, color: Colors.red),
-                      onPressed: () => _removeIngredient(ingredient),
-                    ),
-                    title: Text(
-                      ingredient,
-                      style: TextStyle(
-                        fontFamily: 'Orbitron',
-                        decoration: isCrossed
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                        color: isCrossed ? Colors.grey : Colors.black,
-                      ),
-                    ),
-                    trailing: isCrossed
-                        ? IconButton(
-                            icon: const Icon(Icons.undo, size: 20, color: Colors.blue),
-                            onPressed: () => _undoRemoveIngredient(ingredient),
-                          )
-                        : null,
-                  );
-                }).toList(),
+      body: Stack(
+        children: [
+          // Background gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black54, Color(0xFFECECD9)],
               ),
             ),
-            
-            // Show undo snackbar for recently removed ingredients
-            if (recentlyRemovedIngredients.isNotEmpty)
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline, size: 16, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Removed: ${recentlyRemovedIngredients.join(', ')}',
-                        style: const TextStyle(
-                          fontFamily: 'Orbitron',
-                          fontSize: 12,
-                          color: Colors.blue,
-                        ),
+          ),
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 80), // Space for app bar
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Select Ingredients',
+                            style: TextStyle(
+                              fontFamily: 'Orbitron',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ...allIngredients.map((ingredient) {
+                            final isCrossed = crossedOutIngredients.contains(ingredient);
+                            final isReplaced = ingredientDisplay.containsKey(ingredient);
+                            final displayText = ingredientDisplay[ingredient] ?? ingredient;
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: IconButton(
+                                icon: const Icon(Icons.close, size: 20, color: Colors.red),
+                                onPressed: isCrossed ? null : () => _removeIngredient(ingredient),
+                              ),
+                              title: Text(
+                                displayText,
+                                style: TextStyle(
+                                  fontFamily: 'Orbitron',
+                                  decoration: isCrossed
+                                      ? TextDecoration.lineThrough
+                                      : TextDecoration.none,
+                                  color: isCrossed ? Colors.grey : Colors.black,
+                                ),
+                              ),
+                              trailing: (isCrossed || isReplaced)
+                                  ? IconButton(
+                                      icon: const Icon(Icons.undo, size: 20, color: Colors.blue),
+                                      onPressed: isCrossed
+                                          ? () => _undoRemoveIngredient(ingredient)
+                                          : () => _undoReplace(ingredient),
+                                    )
+                                  : null,
+                            );
+                          }).toList(),
+                        ],
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        final lastRemoved = recentlyRemovedIngredients.last;
-                        _undoRemoveIngredient(lastRemoved);
-                      },
-                      child: const Text(
-                        'UNDO',
-                        style: TextStyle(
-                          fontFamily: 'Orbitron',
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            
-            const SizedBox(height: 16),
-            
-            // Alternative Ingredients Section (only shown when main ingredients are removed)
-            if (showAlternatives) ...[
-              const Text('Alternative Ingredients',
-                  style: TextStyle(
-                      fontFamily: 'Orbitron',
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold)),
-              const Text('Prices and taste may vary',
-                  style: TextStyle(fontSize: 12, fontFamily: 'Orbitron')),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black),
-                  color: Colors.white,
-                ),
-                child: Column(
-                  children: crossedOutIngredients
-                      .where((ingredient) => ingredientAlternatives.containsKey(ingredient))
-                      .expand((ingredient) => ingredientAlternatives[ingredient]!)
-                      .map((alternative) {
-                    return CheckboxListTile(
-                      title: Text(alternative, style: const TextStyle(fontFamily: 'Orbitron')),
-                      value: alternativeIngredients[alternative] ?? false,
-                      onChanged: (val) {
-                        _toggleAlternativeIngredient(alternative, val ?? false);
-                      },
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-            
-            const Text('Meals with Similar Ingredients',
-                style: TextStyle(
-                    fontFamily: 'Orbitron',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView.builder(
-                itemCount: similarMeals.length,
-                itemBuilder: (context, index) {
-                  final meal = similarMeals[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 3,
-                          offset: Offset(1, 2),
-                        ),
-                      ],
-                    ),
-                    child: ListTile(
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(
-                          meal['image']!,
-                          width: 60,
-                          height: 50,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            width: 60,
-                            height: 50,
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.fastfood, size: 24),
+                  ),
+                  if (recentChanges.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        color: Colors.blue[50],
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  recentChanges.map((change) => change['type'] == 'remove'
+                                      ? 'Removed ${change['ingredient']}'
+                                      : 'Replaced ${change['original']} with ${change['alt']}').join(', '),
+                                  style: const TextStyle(
+                                    fontFamily: 'Orbitron',
+                                    fontSize: 12,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  final lastChange = recentChanges.last;
+                                  if (lastChange['type'] == 'remove') {
+                                    _undoRemoveIngredient(lastChange['ingredient']);
+                                  } else {
+                                    _undoReplace(lastChange['original']);
+                                  }
+                                  setState(() {
+                                    recentChanges.removeLast();
+                                  });
+                                },
+                                child: const Text(
+                                  'UNDO',
+                                  style: TextStyle(
+                                    fontFamily: 'Orbitron',
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      title: Text(
-                        meal['name']!,
-                        style: const TextStyle(
-                          fontFamily: 'Orbitron',
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                    ),
+                  if (showAlternatives)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        color: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Alternative Ingredients',
+                                style: TextStyle(
+                                  fontFamily: 'Orbitron',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              const Text(
+                                'Prices and taste may vary',
+                                style: TextStyle(fontSize: 12, fontFamily: 'Orbitron'),
+                              ),
+                              const SizedBox(height: 12),
+                              ...crossedOutIngredients
+                                  .where((ingredient) => ingredientAlternatives.containsKey(ingredient))
+                                  .map((original) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Alternatives for $original',
+                                      style: const TextStyle(
+                                        fontFamily: 'Orbitron',
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    ...ingredientAlternatives[original]!.map((alternative) {
+                                      return RadioListTile<String>(
+                                        contentPadding: EdgeInsets.zero,
+                                        title: Text(alternative, style: const TextStyle(fontFamily: 'Orbitron')),
+                                        value: alternative,
+                                        groupValue: selectedAlternatives[original],
+                                        onChanged: (val) {
+                                          if (val != null) {
+                                            _setReplacement(original, val);
+                                          }
+                                        },
+                                      );
+                                    }),
+                                  ],
+                                );
+                              }).toList(),
+                            ],
+                          ),
                         ),
                       ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {}, // Optional: Add navigation here
                     ),
-                  );
-                },
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Meals with Similar Ingredients',
+                              style: TextStyle(
+                                fontFamily: 'Orbitron',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...similarMeals.map((meal) {
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.asset(
+                                    meal['image']!,
+                                    width: 60,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      width: 60,
+                                      height: 50,
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.fastfood, size: 24),
+                                    ),
+                                  ),
+                                ),
+                                title: Text(
+                                  meal['name']!,
+                                  style: const TextStyle(
+                                    fontFamily: 'Orbitron',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () {},
+                              );
+                            }).toList(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
