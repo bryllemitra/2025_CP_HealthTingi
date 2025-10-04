@@ -784,46 +784,59 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xfff0f0df),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.95),
-              child: Card(
-                elevation: 8,
-                shadowColor: Colors.grey,
-                child: Padding(
-                  padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'HealthTingi',
-                        style: const TextStyle(
-                          fontFamily: 'Orbitron',
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/register-background.jpg'), // Your local asset path
+            fit: BoxFit.cover, // Scales to fill the screen
+            colorFilter: ColorFilter.mode(
+              Colors.white.withOpacity(0.7), // Semi-transparent white overlay for readability (adjust opacity as needed, e.g., 0.6 for more visibility)
+              BlendMode.dstATop,
+            ),
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.95),
+                child: Card(
+                  color: Colors.white.withOpacity(0.9), // Slight transparency to blend with background while keeping form visible
+                  elevation: 8,
+                  shadowColor: Colors.grey,
+                  child: Padding(
+                    padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'HealthTingi',
+                          style: const TextStyle(
+                            fontFamily: 'Orbitron',
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black, // Ensure high contrast
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.6,
-                        child: PageView(
-                          controller: _pageController,
-                          onPageChanged: (index) => setState(() => _currentPage = index),
-                          children: [
-                            _buildPersonalInfoPage(),
-                            _buildAccountInfoPage(),
-                            _buildDietaryPage(),
-                            _buildTermsPage(),
-                          ],
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: PageView(
+                            controller: _pageController,
+                            onPageChanged: (index) => setState(() => _currentPage = index),
+                            children: [
+                              _buildPersonalInfoPage(),
+                              _buildAccountInfoPage(),
+                              _buildDietaryPage(),
+                              _buildTermsPage(),
+                            ],
+                          ),
                         ),
-                      ),
-                      _buildNavigationButtons(),
-                    ],
+                        _buildNavigationButtons(),
+                      ],
+                    ),
                   ),
                 ),
               ),

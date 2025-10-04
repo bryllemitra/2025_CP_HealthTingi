@@ -152,6 +152,7 @@ flutter:
     - assets/fried_egg_malunggay.jpg
     - assets/ginataang_kalabasa.jpg
     - assets/logo_op.png
+    - assets/register-background.jpg
 
     - assets/fonts/
     #- assets/models/best_float32.tflite
