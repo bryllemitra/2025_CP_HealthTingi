@@ -1,12 +1,13 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:flutter/services.dart';
+import 'package:crypto/crypto.dart' as crypto;
 import 'dart:convert';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _currentVersion = 9; 
+  static const int _currentVersion = 10; 
 
   factory DatabaseHelper() => _instance;
 
@@ -35,6 +36,7 @@ class DatabaseHelper {
     await _createMealsTable(db);
     await _createMealIngredientsTable(db);
     await _createUsersTable(db);
+    await _insertAdminUser(db);
     await _insertInitialData(db);
   }
 
@@ -70,8 +72,62 @@ class DatabaseHelper {
       await db.delete('ingredients');
       await _insertInitialData(db);
     }
+    if (oldVersion < 10) {
+      // Add isAdmin column to users table
+      try {
+        await db.execute('ALTER TABLE users ADD COLUMN isAdmin INTEGER DEFAULT 0');
+        await _insertAdminUser(db);
+      } catch (e) {
+        // Column might already exist, ignore
+      }
+    }
   }
 
+  // ADD THIS NEW METHOD
+  Future<void> _insertAdminUser(Database db) async {
+    // Check if admin already exists to avoid duplicates
+    final existingAdmin = await db.query(
+      'users',
+      where: 'emailAddress = ? OR username = ?',
+      whereArgs: ['admin@healthtingi.com', 'admin'],
+    );
+
+    if (existingAdmin.isEmpty) {
+      final adminPassword = _hashPassword('admin123'); // Default admin password
+      
+      await db.insert('users', {
+        'firstName': 'System',
+        'middleName': null,
+        'lastName': 'Administrator',
+        'emailAddress': 'admin@healthtingi.com',
+        'username': 'admin',
+        'password': adminPassword,
+        'hasDietaryRestriction': 0,
+        'dietaryRestriction': null,
+        'favorites': null,
+        'recentlyViewed': null,
+        'birthday': '1990-01-01',
+        'age': 34,
+        'gender': null,
+        'street': null,
+        'barangay': null,
+        'city': null,
+        'nationality': null,
+        'createdAt': DateTime.now().toIso8601String(),
+        'isAdmin': 1, // Mark as admin
+      });
+      
+      print('Admin user created successfully');
+    } else {
+      print('Admin user already exists');
+    }
+  }
+
+  String _hashPassword(String password) {
+    var bytes = utf8.encode(password);
+    var digest = crypto.sha256.convert(bytes);
+    return digest.toString();
+  }
 
   Future<void> _updateExistingRecordsWithPictures(Database db) async {
     // Update ingredients with picture paths
@@ -155,6 +211,7 @@ class DatabaseHelper {
         city TEXT,
         nationality TEXT,
         createdAt TEXT NOT NULL
+        isAdmin INTEGER DEFAULT 0
       )
     ''');
   }
@@ -1894,5 +1951,79 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     );
     return results.isNotEmpty ? results.first : null;
   }
+
+  Future<int> insertMeal(Map<String, dynamic> meal) async {
+  final db = await database;
+  return await db.insert('meals', meal);
+}
+
+Future<int> updateMeal(int mealId, Map<String, dynamic> updates) async {
+  final db = await database;
+  return await db.update(
+    'meals',
+    updates,
+    where: 'mealID = ?',
+    whereArgs: [mealId],
+  );
+}
+
+Future<int> deleteMeal(int mealId) async {
+  final db = await database;
+  return await db.delete(
+    'meals',
+    where: 'mealID = ?',
+    whereArgs: [mealId],
+  );
+}
+
+  Future<int> insertIngredient(Map<String, dynamic> ingredient) async {
+  final db = await database;
+  return await db.insert('ingredients', ingredient);
+}
+
+Future<int> updateIngredient(int ingredientId, Map<String, dynamic> updates) async {
+  final db = await database;
+  return await db.update(
+    'ingredients',
+    updates,
+    where: 'ingredientID = ?',
+    whereArgs: [ingredientId],
+  );
+}
+
+Future<int> deleteIngredient(int ingredientId) async {
+  final db = await database;
+  return await db.delete(
+    'ingredients',
+    where: 'ingredientID = ?',
+    whereArgs: [ingredientId],
+  );
+}
+
+Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) async {
+  final db = await database;
+  return await db.rawQuery(
+    '''
+    SELECT m.* FROM meals m
+    JOIN meal_ingredients mi ON m.mealID = mi.mealID
+    WHERE mi.ingredientID = ?
+    ''',
+    [ingredientId],
+  );
+}
+
+  Future<List<Map<String, dynamic>>> getAllUsers() async {
+    final db = await database;
+    return await db.query('users');
+  }
+
+  Future<int> deleteUser(int userId) async {
+  final db = await database;
+  return await db.delete(
+    'users',
+    where: 'userID = ?',
+    whereArgs: [userId],
+  );
+}
 
 }

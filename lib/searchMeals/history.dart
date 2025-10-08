@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import '../pages/meal_details.dart';
+import 'package:intl/intl.dart'; // Added for date formatting
 
 class HistoryPage extends StatefulWidget {
   final int userId;
 
   const HistoryPage({super.key, required this.userId});
+
+  // Static list to store completed meals in memory
+  static final List<Map<String, dynamic>> _completedMeals = [];
+
+  // Static method to add a completed meal
+  static void addCompletedMeal(Map<String, dynamic> meal) {
+    _completedMeals.add(meal);
+  }
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -31,22 +40,12 @@ class _HistoryPageState extends State<HistoryPage> {
     super.dispose();
   }
 
-  Future<void> _loadHistory() async {
-    try {
-      final dbHelper = DatabaseHelper();
-      final historyMeals = await dbHelper.getRecentlyViewedMeals(widget.userId);
-      
-      setState(() {
-        historyRecipes = historyMeals;
-        filteredRecipes = List.from(historyRecipes);
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Failed to load history: ${e.toString()}';
-        isLoading = false;
-      });
-    }
+  void _loadHistory() {
+    setState(() {
+      historyRecipes = List.from(HistoryPage._completedMeals);
+      filteredRecipes = List.from(historyRecipes);
+      isLoading = false;
+    });
   }
 
   void _filterHistory() {
@@ -57,7 +56,8 @@ class _HistoryPageState extends State<HistoryPage> {
       } else {
         filteredRecipes = historyRecipes.where((recipe) {
           final name = recipe['mealName'].toString().toLowerCase();
-          return name.contains(query);
+          final points = recipe['pointsEarned'].toString().toLowerCase();
+          return name.contains(query) || points.contains(query);
         }).toList();
       }
     });
@@ -77,7 +77,7 @@ class _HistoryPageState extends State<HistoryPage> {
         title: TextField(
           controller: searchController,
           decoration: InputDecoration(
-            hintText: 'Search your viewed recipes',
+            hintText: 'Search your completed recipes',
             hintStyle: const TextStyle(fontSize: 14),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             filled: true,
@@ -102,7 +102,7 @@ class _HistoryPageState extends State<HistoryPage> {
           : errorMessage != null
               ? Center(child: Text(errorMessage!))
               : historyRecipes.isEmpty
-                  ? const Center(child: Text('No viewed recipes yet'))
+                  ? const Center(child: Text('No completed recipes yet'))
                   : Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Column(
@@ -111,7 +111,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             const Padding(
                               padding: EdgeInsets.only(bottom: 16),
                               child: Text(
-                                'Meal not found in history',
+                                'Meal not found in completed history',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.grey,
@@ -123,12 +123,15 @@ class _HistoryPageState extends State<HistoryPage> {
                               itemCount: filteredRecipes.length,
                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                mainAxisExtent: 260,
+                                mainAxisExtent: 300, // Increased to accommodate new fields
                                 mainAxisSpacing: 16,
                                 crossAxisSpacing: 12,
                               ),
                               itemBuilder: (context, index) {
                                 final recipe = filteredRecipes[index];
+                                final completedAt = recipe['completedAt'] != null
+                                    ? DateFormat('MMM dd, yyyy HH:mm').format(recipe['completedAt'])
+                                    : 'Unknown';
                                 return Container(
                                   decoration: BoxDecoration(
                                     color: Colors.white,
@@ -177,6 +180,22 @@ class _HistoryPageState extends State<HistoryPage> {
                                             const SizedBox(height: 2),
                                             Text(
                                               'Servings: ${recipe['servings']}',
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.black54,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Completed: $completedAt',
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.black54,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Points: ${recipe['pointsEarned']}',
                                               style: const TextStyle(
                                                 fontSize: 10,
                                                 color: Colors.black54,

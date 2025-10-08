@@ -43,7 +43,7 @@ class _MealScanPageState extends State<MealScanPage> {
     setState(() => _isModelLoading = true);
     try {
       // Create interpreter from asset
-      _interpreter = await tfl.Interpreter.fromAsset('assets/models/healthtingi_current.tflite');
+      _interpreter = await tfl.Interpreter.fromAsset('assets/models/compatible_model_v2.tflite');
       
       // Create isolate interpreter for async inference (prevents UI blocking)
       _isolateInterpreter = await tfl.IsolateInterpreter.create(
@@ -310,7 +310,7 @@ class _MealScanPageState extends State<MealScanPage> {
   }
 
   Float32List _imageToByteListFloat32(
-      img.Image image, int inputSize, double mean, double std) {
+    img.Image image, int inputSize, double mean, double std) {
     final convertedBytes = Float32List(1 * inputSize * inputSize * 3);
     final buffer = Float32List.view(convertedBytes.buffer);
 
@@ -319,17 +319,15 @@ class _MealScanPageState extends State<MealScanPage> {
       for (var j = 0; j < inputSize; j++) {
         final pixel = image.getPixel(j, i);
         
-        // Extract RGB values and normalize to [0, 1] or [-1, 1] depending on your model
-        // Most models expect values in the range [0, 1] or normalized with ImageNet stats
+        // SIMPLE NORMALIZATION like your Python code
         final red = pixel.r / 255.0;
         final green = pixel.g / 255.0;
         final blue = pixel.b / 255.0;
         
-        // Normalize with ImageNet mean and std (common for many models)
-        // Adjust these values based on your model's requirements
-        buffer[pixelIndex++] = (red - 0.485) / 0.229;   // ImageNet normalization
-        buffer[pixelIndex++] = (green - 0.456) / 0.224;
-        buffer[pixelIndex++] = (blue - 0.406) / 0.225;
+        // Remove ImageNet normalization - use simple [0,1] range
+        buffer[pixelIndex++] = (red - 0.5) / 0.5;
+        buffer[pixelIndex++] = (green - 0.5) / 0.5;
+        buffer[pixelIndex++] = (blue - 0.5) / 0.5;
       }
     }
     return convertedBytes;

@@ -40,10 +40,14 @@ dependencies:
   font_awesome_flutter: ^10.6.0
   image_picker: ^1.0.4
   image: ^4.0.15
-  tflite_flutter: 0.11.0
+  tflite_flutter: ^0.11.0
   currency_code_to_currency_symbol: ^0.0.4
   carousel_slider: ^5.1.1
   shared_preferences: ^2.2.2
+  flutter_animate: ^4.5.2
+  intl: ^0.20.2
+  fl_chart: ^0.68.0
+  animate_do: ^3.3.4
 
 
 
@@ -163,6 +167,9 @@ flutter:
     - assets/models/labels.txt
     - assets/models/healthtingi_current.tflite
     - assets/models/ingredient_scanner.tflite
+    - assets/models/healthtingi_model.tflite
+    - assets/models/healthtingi_finetuned_new.tflite
+    - assets/models/compatible_model_v2.tflite
     - assets/models/class_info.txt
     - assets/models/class_info.json
   fonts:

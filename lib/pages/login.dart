@@ -6,6 +6,7 @@ import 'register.dart';
 import 'meal_scan.dart';
 import 'onboarding_screen.dart'; 
 import '../database/db_helper.dart';
+import '../admin/dashboard.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -37,30 +38,42 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // NEW METHOD: Handles navigation after successful login
-  Future<void> _navigateAfterLogin(int userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    // Check if the user has already seen the onboarding
-    final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding_$userId') ?? false;
-
-    if (hasSeenOnboarding) {
-      // User has seen it before, go straight to the scanner
+  Future<void> _navigateAfterLogin(int userId, bool isAdmin) async {
+    if (isAdmin) {
+      // Admin goes to admin dashboard
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MealScanPage(userId: userId),
+          builder: (context) => AdminDashboardPage(userId: userId),
         ),
       );
     } else {
-      // User is new, show onboarding first and set the flag
-      await prefs.setBool('hasSeenOnboarding_$userId', true);
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OnboardingScreen(userId: userId), // Go to Onboarding
-        ),
-      );
+      // Regular user flow
+      final prefs = await SharedPreferences.getInstance();
+      // Check if the user has already seen the onboarding
+      final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding_$userId') ?? false;
+
+      if (hasSeenOnboarding) {
+        // User has seen it before, go straight to the scanner
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MealScanPage(userId: userId),
+          ),
+        );
+      } else {
+        // User is new, show onboarding first and set the flag
+        await prefs.setBool('hasSeenOnboarding_$userId', true);
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OnboardingScreen(userId: userId), // Go to Onboarding
+          ),
+        );
+      }
     }
   }
 
@@ -93,11 +106,13 @@ class _LoginPageState extends State<LoginPage> {
         // Add debug print to verify the user ID
         print('User ID: ${user['id']} (Type: ${user['id'].runtimeType})');
 
+        final bool isAdmin = user['isAdmin'] == 1;
+
         // Explicitly convert the ID to int if it's not already
         final userId = user['id'] is int ? user['id'] : int.parse(user['id'].toString());
 
         // REPLACED the direct navigation with our new method
-        await _navigateAfterLogin(userId);
+        await _navigateAfterLogin(userId, isAdmin);
 
       } catch (e) {
         if (mounted) {

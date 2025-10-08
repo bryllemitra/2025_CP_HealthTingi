@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'login.dart';
-import '../information/terms_and_cond.dart';
 import '../database/db_helper.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -16,6 +15,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool hasDietaryRestrictions = false;
   List<String> selectedDietaryRestrictions = [];
   bool agreeToTerms = false;
+  bool hasReadTerms = false;
   bool _isLoading = false;
   final TextEditingController _otherRestrictionController = TextEditingController();
   DateTime? _selectedBirthday;
@@ -33,6 +33,7 @@ class _RegisterPageState extends State<RegisterPage> {
   late PageController _pageController;
   int _currentPage = 0;
   late List<GlobalKey<FormState>> _pageFormKeys;
+  final ScrollController _termsScrollController = ScrollController();
 
   @override
   void initState() {
@@ -44,6 +45,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _showPasswordNote = passwordController.text.length < 6;
       });
     });
+    _termsScrollController.addListener(_scrollListener);
   }
 
   @override
@@ -57,7 +59,17 @@ class _RegisterPageState extends State<RegisterPage> {
     confirmPasswordController.dispose();
     _otherRestrictionController.dispose();
     _pageController.dispose();
+    _termsScrollController.removeListener(_scrollListener);
+    _termsScrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_termsScrollController.position.extentAfter <= 20 && !hasReadTerms) {
+      setState(() {
+        hasReadTerms = true;
+      });
+    }
   }
 
   String _hashPassword(String password) {
@@ -641,38 +653,71 @@ class _RegisterPageState extends State<RegisterPage> {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+            Container(
+              height: MediaQuery.of(context).size.height * 0.4, // Adjust height as needed
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Scrollbar(
+                thumbVisibility: true,
+                controller: _termsScrollController,
+                child: SingleChildScrollView(
+                  controller: _termsScrollController,
+                  padding: const EdgeInsets.all(8.0),
+                  child: const Text(
+                    '''1. Acceptance of Terms
+By using this application, you agree to these Terms and Conditions. If you do not agree, please do not use the app.
+
+2. Purpose
+This app is designed for educational and informational use only. It helps users plan meals based on budget, scan ingredients, and suggest alternatives.
+
+3. User Responsibility
+You are responsible for how you use the information provided by the app. While we try to suggest healthy and affordable meals, the app does not guarantee nutritional accuracy or safety (especially for those with allergies or dietary conditions).
+
+4. Dietary & Health Disclaimers
+This app is not a substitute for professional medical advice. Always consult a nutritionist or healthcare provider for serious dietary concerns.
+
+5. Data Collection
+The app may store non-personal data such as dietary preferences and recent scans to improve your experience. We do not collect or share personal or sensitive information.
+
+6. Limitations
+This app is part of a student project and not intended for commercial use. There may be bugs, inaccuracies, or incomplete features.
+
+7. Changes to Terms
+We may update these terms as the app improves. Any changes will be reflected in this section.
+''',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
             Row(
               mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Checkbox(
                   value: agreeToTerms,
-                  onChanged: _isUnderage ? null : (val) => setState(() => agreeToTerms = val!),
+                  onChanged: (hasReadTerms && !_isUnderage)
+                      ? (val) => setState(() => agreeToTerms = val!)
+                      : null,
                 ),
                 Expanded(
-                  child: GestureDetector(
-                    onTap: _isUnderage ? null : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const TermsAndConditionsPage()),
-                      );
-                    },
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          const TextSpan(text: 'I agree to the '),
-                          TextSpan(
-                            text: 'terms and conditions',
-                            style: const TextStyle(
-                              decoration: TextDecoration.underline,
-                              color: Colors.blue,
-                            ),
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(text: 'I agree to the terms and conditions'),
+                        if (!hasReadTerms) ...[
+                          const TextSpan(
+                            text: ' (please scroll to the bottom to agree)',
+                            style: TextStyle(color: Colors.red),
                           ),
                         ],
-                      ),
-                      maxLines: null,
-                      softWrap: true,
+                      ],
                     ),
+                    maxLines: null,
+                    softWrap: true,
                   ),
                 ),
               ],
