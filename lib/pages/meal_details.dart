@@ -128,27 +128,19 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     return steps;
   }
 
-  void _stopAndResetTimer(int currentIndex) {
-    if (_stepTimers.containsKey(currentIndex)) {
-      _stepTimers[currentIndex]?.cancel();
-      _stepTimers[currentIndex] = null;
-    }
-    if (_stepOriginalDurations.containsKey(currentIndex)) {
-      _stepRemainingTimes[currentIndex] = _stepOriginalDurations[currentIndex]!;
+  void _pauseStepTimer(int index) {
+    if (_stepTimers.containsKey(index)) {
+      _stepTimers[index]?.cancel();
+      _stepTimers[index] = null;
     }
   }
 
-  void _startStepTimer(int index) async {
-    if (_stepTimers.containsKey(_currentStepIndex) && _currentStepIndex != index) {
-      _stopAndResetTimer(_currentStepIndex);
+  void _startStepTimer(int index) {
+    if (!_stepRemainingTimes.containsKey(index)) {
+      _stepRemainingTimes[index] = _stepOriginalDurations[index] ?? 0;
     }
 
-    final duration = await _mealDataFuture!.then((data) => data['steps'][index]['duration'] as int);
-    if (duration == 0) return;
-
-    _stepRemainingTimes[index] = _stepOriginalDurations[index]!;
-
-    if (_stepTimers[index] == null) {
+    if (_stepRemainingTimes[index]! > 0 && _stepTimers[index] == null) {
       _stepTimers[index] = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (_stepRemainingTimes[index]! > 0) {
           setState(() {
@@ -731,8 +723,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                           _cookingStartTime = DateTime.now();
                                           _currentStepIndex = 0;
                                           _cookingPoints = 0;
-                                          _startStepTimer(0);
                                         });
+                                        _startStepTimer(0);
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(0xFFFFD54F),
@@ -856,6 +848,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                                           if (_currentStepIndex > 0)
                                                             ElevatedButton(
                                                               onPressed: () {
+                                                                _pauseStepTimer(_currentStepIndex);
                                                                 setState(() {
                                                                   _currentStepIndex--;
                                                                 });
@@ -871,12 +864,14 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                                           ElevatedButton(
                                                             onPressed: () async {
                                                               if (_currentStepIndex < steps.length - 1) {
+                                                                _pauseStepTimer(_currentStepIndex);
                                                                 setState(() {
                                                                   _currentStepIndex++;
                                                                   _cookingPoints += 10;
                                                                 });
                                                                 _startStepTimer(_currentStepIndex);
                                                               } else {
+                                                                _pauseStepTimer(_currentStepIndex);
                                                                 setState(() {
                                                                   _cookingEndTime = DateTime.now();
                                                                   _isCookingMode = false;
@@ -912,10 +907,11 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                                 ],
                                               ),
                                               onTap: () {
+                                                _pauseStepTimer(_currentStepIndex);
                                                 setState(() {
                                                   _currentStepIndex = idx;
                                                 });
-                                                _startStepTimer(idx);
+                                                _startStepTimer(_currentStepIndex);
                                               },
                                             ),
                                           );

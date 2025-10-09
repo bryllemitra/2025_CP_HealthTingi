@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'register.dart';
 import 'meal_scan.dart';
-import 'onboarding_screen.dart'; 
+import 'onboarding_screen.dart';
 import '../database/db_helper.dart';
 import '../admin/dashboard.dart';
 
@@ -30,17 +30,15 @@ class _LoginPageState extends State<LoginPage> {
 
   String _sanitizeInput(String input) {
     return input
-      .replaceAll('<', '')
-      .replaceAll('>', '')
-      .replaceAll('"', '')
-      .replaceAll("'", '')
-      .replaceAll(';', '');
+        .replaceAll('<', '')
+        .replaceAll('>', '')
+        .replaceAll('"', '')
+        .replaceAll("'", '')
+        .replaceAll(';', '');
   }
 
-  // NEW METHOD: Handles navigation after successful login
   Future<void> _navigateAfterLogin(int userId, bool isAdmin) async {
     if (isAdmin) {
-      // Admin goes to admin dashboard
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -49,13 +47,10 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } else {
-      // Regular user flow
       final prefs = await SharedPreferences.getInstance();
-      // Check if the user has already seen the onboarding
       final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding_$userId') ?? false;
 
       if (hasSeenOnboarding) {
-        // User has seen it before, go straight to the scanner
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -64,13 +59,12 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       } else {
-        // User is new, show onboarding first and set the flag
         await prefs.setBool('hasSeenOnboarding_$userId', true);
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => OnboardingScreen(userId: userId), // Go to Onboarding
+            builder: (context) => OnboardingScreen(userId: userId),
           ),
         );
       }
@@ -103,15 +97,11 @@ class _LoginPageState extends State<LoginPage> {
           return;
         }
 
-        // Add debug print to verify the user ID
         print('User ID: ${user['id']} (Type: ${user['id'].runtimeType})');
 
         final bool isAdmin = user['isAdmin'] == 1;
-
-        // Explicitly convert the ID to int if it's not already
         final userId = user['id'] is int ? user['id'] : int.parse(user['id'].toString());
 
-        // REPLACED the direct navigation with our new method
         await _navigateAfterLogin(userId, isAdmin);
 
       } catch (e) {
@@ -158,75 +148,67 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  Row(
-                    children: [
-                      const Icon(Icons.person_outline),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _emailOrUsernameController,
-                          decoration: InputDecoration(
-                            hintText: 'Email or Username',
-                            filled: true,
-                            fillColor: Colors.grey[300],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Email or username is required';
-                            }
-                            if (value.length < 4) {
-                              return 'Input too short';
-                            }
-                            return null;
-                          },
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: TextFormField(
+                      controller: _emailOrUsernameController,
+                      decoration: InputDecoration(
+                        hintText: 'Email or Username',
+                        filled: true,
+                        fillColor: Colors.grey[300],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
                         ),
+                        prefixIcon: const Icon(Icons.person_outline),
                       ),
-                    ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Email or username is required';
+                        }
+                        if (value.length < 4) {
+                          return 'Input too short';
+                        }
+                        return null;
+                      },
+                    ),
                   ),
                   const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      const Icon(Icons.lock_outline),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            hintText: 'Password',
-                            filled: true,
-                            fillColor: Colors.grey[300],
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword 
-                                  ? Icons.visibility_off 
-                                  : Icons.visibility,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                            ),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                        filled: true,
+                        fillColor: Colors.grey[300],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword 
+                              ? Icons.visibility_off 
+                              : Icons.visibility,
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Password is required';
-                            }
-                            if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
                           },
                         ),
                       ),
-                    ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password is required';
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Align(
@@ -240,36 +222,39 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFFF66),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      minimumSize: const Size(double.infinity, 0),
-                      elevation: 5,
-                      shadowColor: Colors.grey[700],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFFF66),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        minimumSize: const Size(double.infinity, 0),
+                        elevation: 5,
+                        shadowColor: Colors.grey[700],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black,
+                              ),
+                            )
+                          : const Text(
+                              'LOGIN',
+                              style: TextStyle(
+                                fontFamily: 'PixelifySans',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.black,
-                            ),
-                          )
-                        : const Text(
-                            'LOGIN',
-                            style: TextStyle(
-                              fontFamily: 'PixelifySans',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.black,
-                            ),
-                          ),
                   ),
                   const SizedBox(height: 20),
                   Row(

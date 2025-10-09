@@ -124,6 +124,7 @@ flutter:
   # see https://flutter.dev/to/font-from-package
   assets:
     - assets/data/ingredients.json
+    - assets/data/substitutions.json
     - assets/ingredients/
     - assets/tinolang_manok.jpg
     - assets/escabeche.jpg

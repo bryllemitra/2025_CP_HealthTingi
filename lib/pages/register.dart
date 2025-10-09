@@ -654,7 +654,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.02),
             Container(
-              height: MediaQuery.of(context).size.height * 0.4, // Adjust height as needed
+              height: MediaQuery.of(context).size.height * 0.4,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(4),
@@ -693,35 +693,27 @@ We may update these terms as the app improves. Any changes will be reflected in 
               ),
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Checkbox(
-                  value: agreeToTerms,
-                  onChanged: (hasReadTerms && !_isUnderage)
-                      ? (val) => setState(() => agreeToTerms = val!)
-                      : null,
-                ),
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        const TextSpan(text: 'I agree to the terms and conditions'),
-                        if (!hasReadTerms) ...[
-                          const TextSpan(
-                            text: ' (please scroll to the bottom to agree)',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ],
-                      ],
-                    ),
-                    maxLines: null,
-                    softWrap: true,
+            if (hasReadTerms) ...[
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Checkbox(
+                    value: agreeToTerms,
+                    onChanged: (!_isUnderage)
+                        ? (val) => setState(() => agreeToTerms = val!)
+                        : null,
                   ),
-                ),
-              ],
-            ),
+                  const Expanded(
+                    child: Text(
+                      'I agree to the terms and conditions',
+                      maxLines: null,
+                      softWrap: true,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             SizedBox(height: MediaQuery.of(context).size.height * 0.02),
           ],
         ),
@@ -832,10 +824,10 @@ We may update these terms as the app improves. Any changes will be reflected in 
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/register-background.jpg'), // Your local asset path
-            fit: BoxFit.cover, // Scales to fill the screen
+            image: AssetImage('assets/register-background.jpg'),
+            fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
-              Colors.white.withOpacity(0.7), // Semi-transparent white overlay for readability (adjust opacity as needed, e.g., 0.6 for more visibility)
+              Colors.white.withOpacity(0.7),
               BlendMode.dstATop,
             ),
           ),
@@ -846,7 +838,7 @@ We may update these terms as the app improves. Any changes will be reflected in 
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.95),
                 child: Card(
-                  color: Colors.white.withOpacity(0.9), // Slight transparency to blend with background while keeping form visible
+                  color: Colors.white.withOpacity(0.9),
                   elevation: 8,
                   shadowColor: Colors.grey,
                   child: Padding(
@@ -861,7 +853,7 @@ We may update these terms as the app improves. Any changes will be reflected in 
                             fontFamily: 'Orbitron',
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black, // Ensure high contrast
+                            color: Colors.black,
                           ),
                           textAlign: TextAlign.center,
                         ),
