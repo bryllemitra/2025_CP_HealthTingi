@@ -174,8 +174,8 @@ class _HomePageState extends State<HomePage> {
           child: Container(
             constraints: const BoxConstraints(maxHeight: 300),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(4),
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black12,
@@ -314,8 +314,15 @@ class _HomePageState extends State<HomePage> {
         width: 160,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,7 +330,7 @@ class _HomePageState extends State<HomePage> {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                   child: _buildMealImage(recipe['image']),
                 ),
                 if (widget.userId != 0)
@@ -347,7 +354,8 @@ class _HomePageState extends State<HomePage> {
                 recipe['name'],
                 style: const TextStyle(
                   fontWeight: FontWeight.bold, 
-                  fontSize: 14
+                  fontSize: 14,
+                  color: Color(0xFF184E77),
                 ),
               ),
             ),
@@ -393,13 +401,13 @@ class _HomePageState extends State<HomePage> {
         width: 120,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -425,7 +433,8 @@ class _HomePageState extends State<HomePage> {
                 ingredientName,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold, 
-                  fontSize: 12
+                  fontSize: 12,
+                  color: Color(0xFF184E77),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -517,7 +526,19 @@ class _HomePageState extends State<HomePage> {
           children: [
             const Text(
               'Recipe Categories',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontFamily: 'Orbitron',
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    color: Colors.black26,
+                    offset: Offset(2, 2),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
             ),
             if (categories.length > 6)
               GestureDetector(
@@ -529,35 +550,36 @@ class _HomePageState extends State<HomePage> {
                 child: Text(
                   _showAllCategories ? 'See Less' : 'Explore All',
                   style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
+                    fontSize: 14,
+                    color: Colors.white70,
                   ),
                 ),
               ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 1.8,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 2.5,
           ),
           itemCount: displayedCategories.length,
           itemBuilder: (context, index) {
             final category = displayedCategories[index];
             return ElevatedButton(
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.black,
-                backgroundColor: Colors.white,
-                elevation: 3,
+                backgroundColor: Colors.white.withOpacity(0.9),
+                foregroundColor: const Color(0xFF184E77),
+                elevation: 10,
+                shadowColor: Colors.greenAccent,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               ),
               onPressed: () {
                 Navigator.pushNamed(
@@ -571,9 +593,13 @@ class _HomePageState extends State<HomePage> {
               },
               child: Text(
                 category.toUpperCase(),
-                style: const TextStyle(fontSize: 10),
+                style: const TextStyle(
+                  fontFamily: 'Orbitron',
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             );
@@ -609,9 +635,21 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 24),
         const Text(
           'Check Your Ingredients',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 20,
+            fontFamily: 'Orbitron',
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                color: Colors.black26,
+                offset: Offset(2, 2),
+                blurRadius: 6,
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         SizedBox(
           height: 180,
           child: ListView.builder(
@@ -626,6 +664,32 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildPopularRecipesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Popular Recipes',
+          style: TextStyle(
+            fontSize: 20,
+            fontFamily: 'Orbitron',
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                color: Colors.black26,
+                offset: Offset(2, 2),
+                blurRadius: 6,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildPopularRecipes(),
+      ],
+    );
+  }
+
   Widget _buildSpecialsCard() {
     if (widget.userId == 0) {
       return const SizedBox.shrink();
@@ -634,26 +698,62 @@ class _HomePageState extends State<HomePage> {
     if (recentlyViewedMeals.isEmpty || widget.userId == 0) {
       return Container(
         padding: const EdgeInsets.all(16),
-        margin: const EdgeInsets.only(top: 16, bottom: 24),
+        margin: const EdgeInsets.only(top: 24, bottom: 24),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFF66),
-          borderRadius: BorderRadius.circular(8),
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               widget.userId == 0 ? "Featured Recipes" : "Today's Specials",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 20,
+                fontFamily: 'Orbitron',
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    color: Colors.black26,
+                    offset: Offset(2, 2),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 6),
-            Text(widget.userId == 0 
-                ? "Discover delicious recipes to try" 
-                : "Discover new recipes based on your scans"),
             const SizedBox(height: 8),
             Text(
-              "See more recipes →",
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              widget.userId == 0 
+                  ? "Discover delicious recipes to try" 
+                  : "Discover new recipes based on your scans",
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MealSearchPage(userId: widget.userId),
+                  ),
+                );
+              },
+              child: const Text(
+                "See more recipes →",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.yellowAccent,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ),
           ],
         ),
@@ -662,19 +762,38 @@ class _HomePageState extends State<HomePage> {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(top: 16, bottom: 24),
+      margin: const EdgeInsets.only(top: 24, bottom: 24),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFF66),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             "Recently Viewed",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 20,
+              fontFamily: 'Orbitron',
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black26,
+                  offset: Offset(2, 2),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           CarouselSlider.builder(
             itemCount: recentlyViewedMeals.length,
             options: CarouselOptions(
@@ -708,14 +827,21 @@ class _HomePageState extends State<HomePage> {
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ClipRRect(
-                        borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                        borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
                         child: SizedBox(
                           width: 150,
                           height: double.infinity,
@@ -743,6 +869,7 @@ class _HomePageState extends State<HomePage> {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
+                                  color: Color(0xFF184E77),
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -768,7 +895,7 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(recentlyViewedMeals.length, (index) {
@@ -779,8 +906,8 @@ class _HomePageState extends State<HomePage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _currentPage == index
-                      ? Colors.black
-                      : Colors.black.withOpacity(0.3),
+                      ? Colors.white
+                      : Colors.white.withOpacity(0.5),
                 ),
               );
             }),
@@ -792,27 +919,48 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildGuestDrawer() {
     return Drawer(
-      backgroundColor: Colors.white,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 40),
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 16.0, bottom: 16),
-            child: Text(
-              'HealthTingi',
-              style: TextStyle(
-                fontFamily: 'Orbitron',
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
+      backgroundColor: Colors.white.withOpacity(0.1),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB5E48C), // soft lime green
+              Color(0xFF76C893), // muted forest green
+              Color(0xFF184E77), // deep slate blue
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 40),
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 16.0, bottom: 16),
+              child: Text(
+                'HealthTingi',
+                style: TextStyle(
+                  fontFamily: 'Orbitron',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black26,
+                      offset: Offset(2, 2),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          _drawerButton(context, Icons.info_outline, 'About Us'),
-          const SizedBox(height: 8),
-          _drawerButton(context, Icons.help_outline, 'FAQs'),
-          const SizedBox(height: 8),
-          _drawerButton(context, Icons.logout, 'Exit Guest Mode'),
-        ],
+            _drawerButton(context, Icons.info_outline, 'About Us'),
+            const SizedBox(height: 8),
+            _drawerButton(context, Icons.help_outline, 'FAQs'),
+            const SizedBox(height: 8),
+            _drawerButton(context, Icons.logout, 'Exit Guest Mode'),
+          ],
+        ),
       ),
     );
   }
@@ -820,12 +968,15 @@ class _HomePageState extends State<HomePage> {
   Widget _drawerButton(BuildContext context, IconData icon, String label) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFFFFF66),
-        foregroundColor: Colors.black,
-        minimumSize: const Size(double.infinity, 45),
+        backgroundColor: Colors.white.withOpacity(0.9),
+        foregroundColor: const Color(0xFF184E77),
+        elevation: 10,
+        shadowColor: Colors.greenAccent,
+        minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(20),
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
       onPressed: () {
         Navigator.pop(context);
@@ -851,41 +1002,52 @@ class _HomePageState extends State<HomePage> {
             break;
         }
       },
-      icon: Icon(icon, size: 20),
-      label: Text(label, style: const TextStyle(fontFamily: 'Orbitron')),
+      icon: Icon(icon, size: 24),
+      label: Text(
+        label, 
+        style: const TextStyle(
+          fontFamily: 'Orbitron',
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F2DF),
-      drawer: widget.userId != 0 
-          ? NavigationDrawerWidget(userId: widget.userId)
-          : _buildGuestDrawer(),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          widget.title,
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Orbitron',
-          ),
-        ),
-        centerTitle: true,
+        backgroundColor: Color(0xFF184E77),
+        elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
+            icon: const Icon(Icons.menu, color: Colors.white),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
           ),
         ),
+        title: Text(
+          widget.title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Orbitron',
+            shadows: [
+              Shadow(
+                color: Colors.black26,
+                offset: Offset(2, 2),
+                blurRadius: 6,
+              ),
+            ],
+          ),
+        ),
+        centerTitle: true,
         actions: [
           if (widget.userId != 0)
             IconButton(
-              icon: const Icon(Icons.star, color: Colors.black),
+              icon: const Icon(Icons.star, color: Colors.white),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -897,7 +1059,7 @@ class _HomePageState extends State<HomePage> {
             ),
           if (widget.userId != 0)
             IconButton(
-              icon: const Icon(Icons.history, color: Colors.black),
+              icon: const Icon(Icons.history, color: Colors.white),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -907,78 +1069,86 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-          const SizedBox(width: 8),
           const SizedBox(width: 16),
         ],
-        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: _performSearch,
+      drawer: widget.userId != 0 
+          ? NavigationDrawerWidget(userId: widget.userId)
+          : _buildGuestDrawer(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB5E48C), // soft lime green
+              Color(0xFF76C893), // muted forest green
+              Color(0xFF184E77), // deep slate blue
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      decoration: const InputDecoration(
-                        hintText: 'Search or Scan your ingredients',
-                        border: InputBorder.none,
-                        hintStyle: TextStyle(color: Colors.black54),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.search, color: Color(0xFF184E77)),
+                        onPressed: _performSearch,
                       ),
-                      style: const TextStyle(color: Colors.black),
-                      onSubmitted: (value) => _performSearch(),
-                      onTap: _navigateToSearchPage,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.camera_alt),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MealScanPage(userId: widget.userId),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          focusNode: _searchFocusNode,
+                          decoration: const InputDecoration(
+                            hintText: 'Search or Scan your ingredients',
+                            border: InputBorder.none,
+                            hintStyle: TextStyle(color: Colors.black54),
+                          ),
+                          style: const TextStyle(color: Colors.black87),
+                          onSubmitted: (value) => _performSearch(),
+                          onTap: _navigateToSearchPage,
                         ),
-                      );
-                    },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.camera_alt, color: Color(0xFF184E77)),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MealScanPage(userId: widget.userId),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 24),
+                _buildCategoryButtons(),
+                _buildSpecialsCard(),
+                _buildPopularRecipesSection(),
+                _buildIngredientsSection(),
+                const SizedBox(height: 32),
+              ],
             ),
-            const SizedBox(height: 24),
-            
-            _buildCategoryButtons(),
-            
-            _buildSpecialsCard(),
-            
-            const Text(
-              'Popular Recipes',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildPopularRecipes(),
-            
-            _buildIngredientsSection(),
-          ],
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF184E77), // Darker blue for better contrast
+        selectedItemColor: Color(0xFF184E77),
+        unselectedItemColor: Color(0xFF184E77).withOpacity(0.7),
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black54,
-        backgroundColor: const Color(0xEBE7D2),
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),

@@ -17,6 +17,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
   bool isLoading = true;
   String? errorMessage;
   TextEditingController searchController = TextEditingController();
+  final DatabaseHelper _dbHelper = DatabaseHelper();
 
   @override
   void initState() {
@@ -33,8 +34,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
   Future<void> _loadFavorites() async {
     try {
-      final dbHelper = DatabaseHelper();
-      final user = await dbHelper.getUserById(widget.userId);
+      final user = await _dbHelper.getUserById(widget.userId);
       
       if (user == null) {
         throw Exception('User not found');
@@ -51,7 +51,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
       }
 
       final favoriteIds = favorites.split(',').map((id) => int.parse(id)).toList();
-      final allMeals = await dbHelper.getAllMeals();
+      final allMeals = await _dbHelper.getAllMeals();
       
       setState(() {
         favoriteRecipes = allMeals.where((meal) {
@@ -70,8 +70,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
   Future<void> _toggleFavorite(int mealId, bool isCurrentlyFavorite) async {
     try {
-      final dbHelper = DatabaseHelper();
-      final user = await dbHelper.getUserById(widget.userId);
+      final user = await _dbHelper.getUserById(widget.userId);
       
       if (user == null) return;
 
@@ -79,19 +78,15 @@ class _FavoritesPageState extends State<FavoritesPage> {
       List<String> favoriteList = favorites.split(',').where((id) => id.isNotEmpty).toList();
 
       if (isCurrentlyFavorite) {
-        // Remove from favorites
         favoriteList.remove(mealId.toString());
       } else {
-        // Add to favorites
         favoriteList.add(mealId.toString());
       }
 
-      // Update user's favorites
-      await dbHelper.updateUser(widget.userId, {
+      await _dbHelper.updateUser(widget.userId, {
         'favorites': favoriteList.join(','),
       });
 
-      // Reload favorites
       await _loadFavorites();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -114,186 +109,245 @@ class _FavoritesPageState extends State<FavoritesPage> {
     });
   }
 
+  Widget _buildMealCard(Map<String, dynamic> recipe) {
+    final price = recipe['price'] is double 
+        ? (recipe['price'] as double).toStringAsFixed(2)
+        : recipe['price']?.toString() ?? '0.00';
+
+    return Container(
+      width: 160,
+      height: 240,
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                child: SizedBox(
+                  height: 100,
+                  width: double.infinity,
+                  child: Image.asset(
+                    recipe['mealPicture'] ?? 'assets/default_meal.jpg',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 6,
+                right: 6,
+                child: GestureDetector(
+                  onTap: () async {
+                    await _toggleFavorite(recipe['mealID'], true);
+                  },
+                  child: const Icon(
+                    Icons.star,
+                    color: Colors.yellow,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    child: Text(
+                      recipe['mealName'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold, 
+                        fontSize: 14,
+                        color: Color(0xFF184E77),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 12, color: Color(0xFF184E77)),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          "Est. ${recipe['cookingTime']}",
+                          style: const TextStyle(fontSize: 10, color: Colors.black54),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          "Php $price",
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black54,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFB5E48C),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      minimumSize: const Size.fromHeight(30),
+                      textStyle: const TextStyle(fontSize: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MealDetailsPage(
+                            mealId: recipe['mealID'],
+                            userId: widget.userId,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("VIEW INSTRUCTIONS"),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F1DC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-        title: TextField(
-          controller: searchController,
-          decoration: InputDecoration(
-            hintText: 'Search your favorite recipes',
-            hintStyle: const TextStyle(fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            filled: true,
-            fillColor: const Color(0xFFECECEC),
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-              borderSide: BorderSide.none,
-            ),
-            suffixIcon: searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      searchController.clear();
-                    },
-                  )
-                : null,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search your favorite recipes',
+                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54),
+                            suffixIcon: searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, color: Color(0xFF184E77)),
+                                    onPressed: () {
+                                      searchController.clear();
+                                    },
+                                  )
+                                : const Icon(Icons.search, color: Color(0xFF184E77)),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : errorMessage != null
+                        ? Center(
+                            child: Text(
+                              errorMessage!,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          )
+                        : favoriteRecipes.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'No favorites yet',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              )
+                            : GridView.builder(
+                                padding: const EdgeInsets.all(12.0),
+                                itemCount: filteredRecipes.length,
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisExtent: 260,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 12,
+                                ),
+                                itemBuilder: (context, index) {
+                                  return _buildMealCard(filteredRecipes[index]);
+                                },
+                              ),
+              ),
+            ],
           ),
         ),
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : errorMessage != null
-              ? Center(child: Text(errorMessage!))
-              : favoriteRecipes.isEmpty
-                  ? const Center(child: Text('No favorites yet'))
-                  : Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        children: [
-                          if (searchController.text.isNotEmpty && filteredRecipes.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.only(bottom: 16),
-                              child: Text(
-                                'Meal not found in favorites',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          Expanded(
-                            child: GridView.builder(
-                              itemCount: filteredRecipes.length,
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisExtent: 260,
-                                mainAxisSpacing: 16,
-                                crossAxisSpacing: 12,
-                              ),
-                              itemBuilder: (context, index) {
-                                final recipe = filteredRecipes[index];
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Colors.black26,
-                                        blurRadius: 4,
-                                        offset: Offset(2, 2),
-                                      )
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Stack(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius: const BorderRadius.vertical(
-                                                top: Radius.circular(10)),
-                                            child: Image.asset(
-                                              recipe['mealPicture'] ?? 'assets/default_meal.jpg',
-                                              height: 120,
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return Container(
-                                                  height: 120,
-                                                  color: Colors.grey[200],
-                                                  child: const Icon(Icons.fastfood,
-                                                      size: 40, color: Colors.grey),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                          Positioned(
-                                            top: 6,
-                                            right: 6,
-                                            child: GestureDetector(
-                                              onTap: () async {
-                                                await _toggleFavorite(
-                                                  recipe['mealID'],
-                                                  true, // This is always true since we're in favorites page
-                                                );
-                                              },
-                                              child: const Icon(
-                                                Icons.star,
-                                                color: Colors.yellow,
-                                                size: 22,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              recipe['mealName'],
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              'Servings: ${recipe['servings']}',
-                                              style: const TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.black54,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Container(
-                                        width: double.infinity,
-                                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                        child: ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFFF1FF57),
-                                            foregroundColor: Colors.black,
-                                            elevation: 2,
-                                            padding: const EdgeInsets.symmetric(vertical: 8),
-                                          ),
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => MealDetailsPage(
-                                                  mealId: recipe['mealID'],
-                                                  userId: widget.userId,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          child: const Text(
-                                            'VIEW INSTRUCTIONS',
-                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
     );
   }
 }

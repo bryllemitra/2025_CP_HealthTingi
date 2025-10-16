@@ -42,14 +42,20 @@ class MyApp extends StatelessWidget {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
           return MealScanPage(userId: args['userId']);
         },
-        '/reverse-ingredient': (context) => const ReverseIngredientPage(),
+        '/reverse-ingredient': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map? ?? {};
+          return ReverseIngredientPage(
+            ingredients: args['ingredients'],
+            userId: args['userId'] ?? 0, // Default to 0 (guest) if not provided
+          );
+        },
         '/searchIngredient/categories': (context) {
-        final args = ModalRoute.of(context)!.settings.arguments as Map;
-        return CategoryPage(
-          category: args['category'],
-          userId: args['userId'],
-        );
-      },
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return CategoryPage(
+            category: args['category'],
+            userId: args['userId'],
+          );
+        },
       },
     );
   }

@@ -1,3 +1,4 @@
+// Modified meal_scan.dart with UI consistency to login.dart theme
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
@@ -394,10 +395,11 @@ class _MealScanPageState extends State<MealScanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: NavigationDrawerWidget(userId: widget.userId),
-      backgroundColor: Colors.black,
+      backgroundColor: Color(0xFF184E77), // Keep black for camera preview visibility
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        backgroundColor: const Color(0xFF184E77), // Deep slate blue
+        elevation: 10,
+        //shadowColor: Colors.greenAccent,
         centerTitle: true,
         title: const Text(
           'Scanner',
@@ -405,6 +407,13 @@ class _MealScanPageState extends State<MealScanPage> {
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontFamily: 'Orbitron',
+            shadows: [
+              Shadow(
+                color: Colors.black26,
+                offset: Offset(2, 2),
+                blurRadius: 6,
+              ),
+            ],
           ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -454,7 +463,7 @@ class _MealScanPageState extends State<MealScanPage> {
                   child: Column(
                     children: [
                       LinearProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF76C893)),
                       ),
                       SizedBox(height: 8),
                       Text(
@@ -471,24 +480,24 @@ class _MealScanPageState extends State<MealScanPage> {
                   children: [
                     IconButton(
                       onPressed: _isModelLoading ? null : _pickImageFromGallery,
-                      icon: const Icon(Icons.photo_library, size: 32),
+                      icon: const Icon(Icons.photo_library, size: 36),
                       color: _isModelLoading ? Colors.grey : Colors.white,
                     ),
                     GestureDetector(
                       onTap: _isModelLoading ? null : _captureImage,
                       child: Container(
-                        width: 70,
-                        height: 70,
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: _isModelLoading ? Colors.grey : Colors.white, 
-                            width: 4,
+                            width: 5,
                           ),
                         ),
                         child: Icon(
                           Icons.camera,
-                          size: 40,
+                          size: 48,
                           color: _isModelLoading ? Colors.grey : Colors.white,
                         ),
                       ),
@@ -497,7 +506,7 @@ class _MealScanPageState extends State<MealScanPage> {
                       onPressed: _isModelLoading ? null : _toggleFlash,
                       icon: Icon(
                         _isFlashOn ? Icons.flash_on : Icons.flash_off,
-                        size: 32,
+                        size: 36,
                         color: _isModelLoading ? Colors.grey : Colors.white,
                       ),
                     ),
@@ -512,10 +521,10 @@ class _MealScanPageState extends State<MealScanPage> {
               left: 10,
               right: 10,
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFFFDD),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(20),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
@@ -529,7 +538,7 @@ class _MealScanPageState extends State<MealScanPage> {
                   style: TextStyle(
                     fontFamily: 'Orbitron',
                     fontSize: 14,
-                    color: Colors.black,
+                    color: Color(0xFF184E77),
                   ),
                 ),
               ),
@@ -537,9 +546,9 @@ class _MealScanPageState extends State<MealScanPage> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFFDDE2C6),
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black54,
+        backgroundColor: const Color(0xFF184E77), // Deep slate blue
+        selectedItemColor: Color(0xFF184E77),
+        unselectedItemColor: Color(0xFF184E77).withOpacity(0.7),
         currentIndex: 0,
         onTap: (index) {
           switch (index) {

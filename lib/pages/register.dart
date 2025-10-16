@@ -83,7 +83,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   bool _validatePasswordLength(String password) {
-    return RegExp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*(),.?":{}|<>]).{6,30}$').hasMatch(password);
+    return RegExp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*(),.?":{}|<>_]).{6,30}$').hasMatch(password);
   }
 
   int _calculateAge(DateTime birthDate) {
@@ -101,12 +101,13 @@ class _RegisterPageState extends State<RegisterPage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Age Restriction'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Age Restriction', style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('You must be at least 18 years old to register.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: const Text('OK', style: TextStyle(color: Color(0xFF184E77))),
           ),
         ],
       ),
@@ -119,6 +120,19 @@ class _RegisterPageState extends State<RegisterPage> {
       initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF184E77),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
     );
     
     if (picked != null) {
@@ -152,26 +166,32 @@ class _RegisterPageState extends State<RegisterPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Add Custom Restriction'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Add Custom Restriction', style: TextStyle(fontWeight: FontWeight.bold)),
           content: TextField(
             controller: _otherRestrictionController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Enter your dietary restriction',
-              border: OutlineInputBorder(),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.9),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
             ),
             autofocus: true,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Cancel', style: TextStyle(color: Color(0xFF184E77))),
             ),
             TextButton(
               onPressed: () {
                 _addCustomRestriction();
                 Navigator.pop(context);
               },
-              child: const Text('Add'),
+              child: const Text('Add', style: TextStyle(color: Color(0xFF184E77))),
             ),
           ],
         );
@@ -258,7 +278,7 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_validatePasswordLength(passwordController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Password must be between 6 and 30 characters long.'),
+          content: Text('Password must be between 6 and 30 characters and include uppercase, lowercase, and special characters.'),
           duration: Duration(seconds: 3),
         ),
       );
@@ -345,7 +365,7 @@ class _RegisterPageState extends State<RegisterPage> {
       .replaceAll(';', '');
   }
 
-  Widget _buildTextField(TextEditingController controller, String label,
+  Widget _buildTextField(TextEditingController controller, String hintText,
       {bool isObscure = false, 
        TextInputType? keyboardType, 
        String? Function(String?)? validator,
@@ -355,16 +375,26 @@ class _RegisterPageState extends State<RegisterPage> {
       obscureText: isObscure,
       keyboardType: keyboardType,
       decoration: InputDecoration(
-        labelText: isOptional ? '$label (Optional)' : label,
-        border: const OutlineInputBorder(),
-        helperStyle: const TextStyle(
-          color: Colors.grey,
-          fontSize: 12,
+        hintText: isOptional ? '$hintText (Optional)' : hintText,
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.9),
+        prefixIcon: Icon(
+          hintText.contains('Email') ? Icons.email_outlined :
+          hintText.contains('Password') ? Icons.lock_outline :
+          hintText.contains('Username') ? Icons.person_outline :
+          Icons.text_fields,
+          color: const Color(0xFF184E77),
         ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        errorStyle: const TextStyle(color: Color(0xFF184E77)),
       ),
       validator: validator ?? (isOptional ? null : (value) {
         if (value == null || value.isEmpty) {
-          return '$label is required';
+          return '$hintText is required';
         }
         return null;
       }),
@@ -376,25 +406,26 @@ class _RegisterPageState extends State<RegisterPage> {
       onTap: () => _selectBirthday(context),
       child: InputDecorator(
         decoration: InputDecoration(
-          labelText: 'Birthday *',
-          border: const OutlineInputBorder(),
+          hintText: 'Select your birthday',
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.9),
+          prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFF184E77)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
           errorText: _isUnderage ? 'Must be 18 years or older' : null,
+          errorStyle: const TextStyle(color: Color(0xFF184E77)),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              _selectedBirthday != null
-                  ? '${_selectedBirthday!.year}-${_selectedBirthday!.month.toString().padLeft(2, '0')}-${_selectedBirthday!.day.toString().padLeft(2, '0')}'
-                  : 'Select your birthday',
-              style: TextStyle(
-                color: _selectedBirthday != null 
-                  ? (_isUnderage ? Colors.red : Colors.black) 
-                  : Colors.grey,
-              ),
-            ),
-            const Icon(Icons.calendar_today),
-          ],
+        child: Text(
+          _selectedBirthday != null
+              ? '${_selectedBirthday!.year}-${_selectedBirthday!.month.toString().padLeft(2, '0')}-${_selectedBirthday!.day.toString().padLeft(2, '0')}'
+              : 'Select your birthday',
+          style: TextStyle(
+            color: _selectedBirthday != null 
+              ? (_isUnderage ? Colors.red : Colors.black87) 
+              : Colors.grey,
+          ),
         ),
       ),
     );
@@ -404,37 +435,46 @@ class _RegisterPageState extends State<RegisterPage> {
     return Form(
       key: _pageFormKeys[0],
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.9),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Step 1: Name and Birthday',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-              _buildTextField(firstNameController, 'First Name'),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-              _buildTextField(middleNameController, 'Middle Name', isOptional: true),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-              _buildTextField(lastNameController, 'Last Name'),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-              _buildBirthdayField(),
-              if (_selectedBirthday != null) ...[
-                SizedBox(height: MediaQuery.of(context).size.height * 0.005),
-                Text(
-                  'Age: ${_calculateAge(_selectedBirthday!)} years old',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _isUnderage ? Colors.red : Colors.grey,
+        padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Step 1: Personal Information',
+              style: TextStyle(
+                fontSize: 20,
+                fontFamily: 'Orbitron',
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    color: Colors.black26,
+                    offset: Offset(2, 2),
+                    blurRadius: 6,
                   ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            _buildTextField(firstNameController, 'First Name'),
+            const SizedBox(height: 16),
+            _buildTextField(middleNameController, 'Middle Name', isOptional: true),
+            const SizedBox(height: 16),
+            _buildTextField(lastNameController, 'Last Name'),
+            const SizedBox(height: 16),
+            _buildBirthdayField(),
+            if (_selectedBirthday != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Age: ${_calculateAge(_selectedBirthday!)} years old',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _isUnderage ? Colors.red : Colors.white70,
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -444,82 +484,91 @@ class _RegisterPageState extends State<RegisterPage> {
     return Form(
       key: _pageFormKeys[1],
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.9),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Step 2: Account Details',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+        padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Step 2: Account Details',
+              style: TextStyle(
+                fontSize: 20,
+                fontFamily: 'Orbitron',
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    color: Colors.black26,
+                    offset: Offset(2, 2),
+                    blurRadius: 6,
+                  ),
+                ],
               ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-              _buildTextField(
-                emailController, 
-                'Email Address', 
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Email is required';
-                  }
-                  if (!_validateEmail(value)) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-              _buildTextField(
-                usernameController, 
-                'Username',
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Username is required';
-                  }
-                  if (value.length < 4) {
-                    return 'Username must be at least 4 characters';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-              _buildTextField(
-                passwordController, 
-                'Password', 
-                isObscure: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Password is required';
-                  }
-                  if (!_validatePasswordLength(value)) {
-                    return 'Password must be between 6 and 30 characters';
-                  }
-                  return null;
-                },
-              ),
-              if (_showPasswordNote) ...[
-                SizedBox(height: MediaQuery.of(context).size.height * 0.005),
-                const Text(
-                  'Password must be at least 6 characters',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-              SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-              _buildTextField(
-                confirmPasswordController, 
-                'Confirm Password', 
-                isObscure: true,
-                validator: (value) {
-                  if (value != passwordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            _buildTextField(
+              emailController, 
+              'Email Address', 
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Email is required';
+                }
+                if (!_validateEmail(value)) {
+                  return 'Please enter a valid email';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              usernameController, 
+              'Username',
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Username is required';
+                }
+                if (value.length < 4) {
+                  return 'Username must be at least 4 characters';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              passwordController, 
+              'Password', 
+              isObscure: true,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Password is required';
+                }
+                if (!_validatePasswordLength(value)) {
+                  return 'Password must be 6-30 characters with uppercase, lowercase, and special characters';
+                }
+                return null;
+              },
+            ),
+            if (_showPasswordNote) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Password must be at least 6 characters with uppercase, lowercase, and special characters',
+                style: TextStyle(fontSize: 12, color: Colors.white70),
               ),
             ],
-          ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              confirmPasswordController, 
+              'Confirm Password', 
+              isObscure: true,
+              validator: (value) {
+                if (value != passwordController.text) {
+                  return 'Passwords do not match';
+                }
+                return null;
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -527,146 +576,189 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildDietaryPage() {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.9),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Step 3: Dietary Restrictions',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-            const Text('Do you have any Dietary Restrictions?'),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Checkbox(
-                  value: hasDietaryRestrictions,
-                  onChanged: _isUnderage ? null : (val) => setState(() => hasDietaryRestrictions = val!),
+      padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Step 3: Dietary Restrictions',
+            style: TextStyle(
+              fontSize: 20,
+              fontFamily: 'Orbitron',
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black26,
+                  offset: Offset(2, 2),
+                  blurRadius: 6,
                 ),
-                const Text('Yes'),
-                Checkbox(
-                  value: !hasDietaryRestrictions,
-                  onChanged: _isUnderage ? null : (val) => setState(() => hasDietaryRestrictions = !val!),
-                ),
-                const Text('No'),
               ],
             ),
-            if (hasDietaryRestrictions) ...[
-              SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-              const Text('Please select your dietary restriction(s):'),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 4.0,
-                children: [
-                  'Vegan',
-                  'Vegetarian',
-                  'Gluten-Free',
-                  'Lactose Intolerant',
-                  'Halal',
-                  'Kosher',
-                  'Nut Allergy',
-                  'Shellfish Allergy',
-                ].map((restriction) {
-                  return FilterChip(
-                    label: Text(restriction),
-                    selected: selectedDietaryRestrictions.contains(restriction),
-                    onSelected: _isUnderage ? null : (selected) {
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Do you have any dietary restrictions?',
+            style: TextStyle(color: Colors.white70),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Checkbox(
+                value: hasDietaryRestrictions,
+                onChanged: _isUnderage ? null : (val) => setState(() => hasDietaryRestrictions = val!),
+                activeColor: const Color(0xFF76C893),
+                checkColor: Colors.white,
+              ),
+              const Text('Yes', style: TextStyle(color: Colors.white70)),
+              const SizedBox(width: 16),
+              Checkbox(
+                value: !hasDietaryRestrictions,
+                onChanged: _isUnderage ? null : (val) => setState(() => hasDietaryRestrictions = !val!),
+                activeColor: const Color(0xFF76C893),
+                checkColor: Colors.white,
+              ),
+              const Text('No', style: TextStyle(color: Colors.white70)),
+            ],
+          ),
+          if (hasDietaryRestrictions) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Please select your dietary restriction(s):',
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              children: [
+                'Vegan',
+                'Vegetarian',
+                'Gluten-Free',
+                'Lactose Intolerant',
+                'Halal',
+                'Kosher',
+                'Nut Allergy',
+                'Shellfish Allergy',
+              ].map((restriction) {
+                return FilterChip(
+                  label: Text(restriction, style: const TextStyle(color: Colors.black87)),
+                  selected: selectedDietaryRestrictions.contains(restriction),
+                  onSelected: _isUnderage ? null : (selected) {
+                    setState(() {
+                      if (selected) {
+                        selectedDietaryRestrictions.add(restriction);
+                      } else {
+                        selectedDietaryRestrictions.remove(restriction);
+                      }
+                    });
+                  },
+                  selectedColor: const Color(0xFF76C893),
+                  backgroundColor: Colors.white.withOpacity(0.9),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8.0,
+              children: [
+                ActionChip(
+                  label: const Text('Other...'),
+                  onPressed: _isUnderage ? null : _showCustomRestrictionDialog,
+                  avatar: const Icon(Icons.add, color: Color(0xFF184E77)),
+                  backgroundColor: Colors.white.withOpacity(0.9),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                if (selectedDietaryRestrictions.isNotEmpty)
+                  ActionChip(
+                    label: const Text('Clear All'),
+                    onPressed: _isUnderage ? null : () {
                       setState(() {
-                        if (selected) {
-                          selectedDietaryRestrictions.add(restriction);
-                        } else {
-                          selectedDietaryRestrictions.remove(restriction);
-                        }
+                        selectedDietaryRestrictions.clear();
                       });
                     },
+                    backgroundColor: Colors.red.withOpacity(0.3),
+                    avatar: const Icon(Icons.clear, color: Colors.red),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+              ],
+            ),
+            if (selectedDietaryRestrictions.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              const Text(
+                'Selected Restrictions:',
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: selectedDietaryRestrictions.map((restriction) {
+                  return Chip(
+                    label: Text(restriction, style: const TextStyle(color: Colors.black87)),
+                    onDeleted: _isUnderage ? null : () {
+                      setState(() {
+                        selectedDietaryRestrictions.remove(restriction);
+                      });
+                    },
+                    backgroundColor: const Color(0xFF76C893),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    deleteIconColor: Colors.red,
                   );
                 }).toList(),
               ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-              Wrap(
-                spacing: 8.0,
-                children: [
-                  ActionChip(
-                    label: const Text('Other...'),
-                    onPressed: _isUnderage ? null : _showCustomRestrictionDialog,
-                    avatar: const Icon(Icons.add),
-                  ),
-                  if (selectedDietaryRestrictions.isNotEmpty)
-                    ActionChip(
-                      label: const Text('Clear All'),
-                      onPressed: _isUnderage ? null : () {
-                        setState(() {
-                          selectedDietaryRestrictions.clear();
-                        });
-                      },
-                      backgroundColor: Colors.red[100],
-                      avatar: const Icon(Icons.clear, color: Colors.red),
-                    ),
-                ],
-              ),
-              if (selectedDietaryRestrictions.isNotEmpty) ...[
-                SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                const Text('Selected Restrictions:'),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.005),
-                Wrap(
-                  spacing: 8.0,
-                  children: selectedDietaryRestrictions.map((restriction) {
-                    return Chip(
-                      label: Text(restriction),
-                      onDeleted: _isUnderage ? null : () {
-                        setState(() {
-                          selectedDietaryRestrictions.remove(restriction);
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
-              ],
-              if (selectedDietaryRestrictions.isEmpty && hasDietaryRestrictions)
-                const Text(
-                  'Please select at least one dietary restriction',
-                  style: TextStyle(color: Colors.red),
-                ),
             ],
+            if (selectedDietaryRestrictions.isEmpty && hasDietaryRestrictions)
+              const Text(
+                'Please select at least one dietary restriction',
+                style: TextStyle(color: Color(0xFF184E77)),
+              ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildTermsPage() {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.9),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Step 4: Terms and Conditions',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+      padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Step 4: Terms and Conditions',
+            style: TextStyle(
+              fontSize: 20,
+              fontFamily: 'Orbitron',
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black26,
+                  offset: Offset(2, 2),
+                  blurRadius: 6,
+                ),
+              ],
             ),
-            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-            Container(
-              height: MediaQuery.of(context).size.height * 0.4,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Scrollbar(
-                thumbVisibility: true,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          Container(
+            height: MediaQuery.of(context).size.height * 0.3,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Scrollbar(
+              thumbVisibility: true,
+              controller: _termsScrollController,
+              child: SingleChildScrollView(
                 controller: _termsScrollController,
-                child: SingleChildScrollView(
-                  controller: _termsScrollController,
-                  padding: const EdgeInsets.all(8.0),
-                  child: const Text(
-                    '''1. Acceptance of Terms
+                padding: const EdgeInsets.all(16),
+                child: const Text(
+                  '''1. Acceptance of Terms
 By using this application, you agree to these Terms and Conditions. If you do not agree, please do not use the app.
 
 2. Purpose
@@ -687,43 +779,37 @@ This app is part of a student project and not intended for commercial use. There
 7. Changes to Terms
 We may update these terms as the app improves. Any changes will be reflected in this section.
 ''',
-                    style: TextStyle(fontSize: 14),
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.black87),
                 ),
               ),
             ),
-            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-            if (hasReadTerms) ...[
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Checkbox(
-                    value: agreeToTerms,
-                    onChanged: (!_isUnderage)
-                        ? (val) => setState(() => agreeToTerms = val!)
-                        : null,
-                  ),
-                  const Expanded(
-                    child: Text(
-                      'I agree to the terms and conditions',
-                      maxLines: null,
-                      softWrap: true,
-                    ),
-                  ),
-                ],
+          ),
+          const SizedBox(height: 16),
+          if (hasReadTerms) ...[
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Checkbox(
+                value: agreeToTerms,
+                onChanged: (!_isUnderage)
+                    ? (val) => setState(() => agreeToTerms = val!)
+                    : null,
+                activeColor: const Color(0xFF76C893),
+                checkColor: Colors.white,
               ),
-            ],
-            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+              title: const Text(
+                'I agree to the terms and conditions',
+                style: TextStyle(color: Colors.white70),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildNavigationButtons() {
     return Padding(
-      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+      padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05, vertical: 16),
       child: Column(
         children: [
           Row(
@@ -738,7 +824,15 @@ We may update these terms as the app improves. Any changes will be reflected in 
                     );
                     setState(() => _currentPage--);
                   },
-                  child: const Text('Previous'),
+                  child: const Text(
+                    'Previous',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Colors.white70,
+                    ),
+                  ),
                 )
               else
                 const SizedBox(width: 60),
@@ -746,11 +840,11 @@ We may update these terms as the app improves. Any changes will be reflected in 
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(4, (index) => Container(
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: 8,
-                  height: 8,
+                  width: 10,
+                  height: 10,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _currentPage == index ? Colors.yellow[300] : Colors.grey,
+                    color: _currentPage == index ? Colors.white : Colors.white.withOpacity(0.5),
                   ),
                 )),
               ),
@@ -758,60 +852,78 @@ We may update these terms as the app improves. Any changes will be reflected in 
                 ElevatedButton(
                   onPressed: _goNext,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellow[300],
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF184E77),
+                    elevation: 10,
+                    shadowColor: Colors.greenAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                   ),
-                  child: const Text('Next'),
+                  child: const Text(
+                    'Next',
+                    style: TextStyle(
+                      fontFamily: 'Orbitron',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                    ),
+                  ),
                 )
               else
-                Flexible(
-                  child: ElevatedButton(
-                    onPressed: (_isUnderage || _isLoading || !agreeToTerms) ? null : _submitForm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _isUnderage ? Colors.grey : Colors.yellow[300],
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      textStyle: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
+                ElevatedButton(
+                  onPressed: (_isUnderage || _isLoading || !agreeToTerms) ? null : _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isUnderage ? Colors.grey : Colors.white,
+                    foregroundColor: const Color(0xFF184E77),
+                    elevation: 10,
+                    shadowColor: Colors.greenAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                            ),
-                          )
-                        : const Text('REGISTER'),
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 12),
                   ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF184E77)),
+                          ),
+                        )
+                      : const Text(
+                          'Register',
+                          style: TextStyle(
+                            fontFamily: 'Orbitron',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
                 ),
             ],
           ),
-          SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text("Already have an account? "),
-              GestureDetector(
-                onTap: _isLoading
-                    ? null
-                    : () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginPage()),
-                        );
-                      },
-                child: const Text(
-                  'Login',
-                  style: TextStyle(
-                    color: Colors.blue,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: _isLoading
+                ? null
+                : () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                    );
+                  },
+            child: const Text(
+              'Already have an account? Login Here',
+              style: TextStyle(
+                color: Colors.white70,
+                fontFamily: 'Orbitron',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                decoration: TextDecoration.underline,
+                decorationColor: Colors.white70,
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -822,58 +934,84 @@ We may update these terms as the app improves. Any changes will be reflected in 
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/register-background.jpg'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.white.withOpacity(0.7),
-              BlendMode.dstATop,
-            ),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB5E48C), // soft lime green
+              Color(0xFF76C893), // muted forest green
+              Color(0xFF184E77), // deep slate blue
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
             child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.95),
-                child: Card(
-                  color: Colors.white.withOpacity(0.9),
-                  elevation: 8,
-                  shadowColor: Colors.grey,
-                  child: Padding(
-                    padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.of(context).size.width * 0.05,
+                  vertical: 24,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.9,
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 40.0),
+                        child: const Text(
                           'HealthTingi',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Orbitron',
-                            fontSize: 28,
+                            fontSize: 36,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black26,
+                                offset: Offset(2, 2),
+                                blurRadius: 6,
+                              ),
+                            ],
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.6,
-                          child: PageView(
-                            controller: _pageController,
-                            onPageChanged: (index) => setState(() => _currentPage = index),
+                      ),
+                      const SizedBox(height: 50),
+                      Card(
+                        color: Colors.white.withOpacity(0.2),
+                        elevation: 10,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              _buildPersonalInfoPage(),
-                              _buildAccountInfoPage(),
-                              _buildDietaryPage(),
-                              _buildTermsPage(),
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height * 0.6,
+                                child: PageView(
+                                  controller: _pageController,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  onPageChanged: (index) => setState(() => _currentPage = index),
+                                  children: [
+                                    _buildPersonalInfoPage(),
+                                    _buildAccountInfoPage(),
+                                    _buildDietaryPage(),
+                                    _buildTermsPage(),
+                                  ],
+                                ),
+                              ),
+                              _buildNavigationButtons(),
                             ],
                           ),
                         ),
-                        _buildNavigationButtons(),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 60),
+                    ],
                   ),
                 ),
               ),

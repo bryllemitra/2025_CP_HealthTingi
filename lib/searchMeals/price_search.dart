@@ -28,7 +28,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
     super.initState();
     _mealsFuture = _fetchMeals();
     _searchController.addListener(_onSearchChanged);
-    if (widget.userId != 0) { // Only load favorites for registered users
+    if (widget.userId != 0) {
       _loadUserFavorites();
     }
   }
@@ -66,7 +66,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
   }
 
   Future<void> _toggleFavorite(int mealId) async {
-    if (widget.userId == 0) return; // Skip for guests
+    if (widget.userId == 0) return;
     
     try {
       final user = await _dbHelper.getUserById(widget.userId);
@@ -119,7 +119,6 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
           return price > 100;
         }).toList();
       default:
-        // For "Near X" case
         if (widget.priceRange.startsWith('Near')) {
           final budget = double.tryParse(
               widget.priceRange.replaceAll('Near', '').trim()) ?? 0;
@@ -163,17 +162,23 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
     final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
-    
+    final price = meal['price'] is double 
+        ? (meal['price'] as double).toStringAsFixed(2)
+        : meal['price']?.toString() ?? '0.00';
+
     return Container(
+      width: 160,
+      height: 240,
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black26,
-            blurRadius: 4,
-            offset: Offset(2, 2),
-          )
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -182,24 +187,21 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(10)),
-                child: Image.asset(
-                  meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                  height: 120,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                child: SizedBox(
+                  height: 100,
                   width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 120,
+                  child: Image.asset(
+                    meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
                       color: Colors.grey[200],
-                      child: const Icon(Icons.fastfood,
-                          size: 40, color: Colors.grey),
-                    );
-                  },
+                      child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                    ),
+                  ),
                 ),
               ),
-              if (widget.userId != 0) // Only show favorite button for registered users
+              if (widget.userId != 0)
                 Positioned(
                   top: 6,
                   right: 6,
@@ -214,57 +216,87 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                 ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  meal['mealName'],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Php ${(meal['price'] as num).toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Spacer(),
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF1FF57),
-                foregroundColor: Colors.black,
-                elevation: 2,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MealDetailsPage(
-                      mealId: meal['mealID'],
-                      userId: widget.userId,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    child: Text(
+                      meal['mealName'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold, 
+                        fontSize: 14,
+                        color: Color(0xFF184E77),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                );
-              },
-              child: const Text(
-                'VIEW INSTRUCTIONS',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 12, color: Color(0xFF184E77)),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          "Est. ${meal['cookingTime']}",
+                          style: const TextStyle(fontSize: 10, color: Colors.black54),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          "Php $price",
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black54,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFB5E48C),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      minimumSize: const Size.fromHeight(30),
+                      textStyle: const TextStyle(fontSize: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MealDetailsPage(
+                            mealId: meal['mealID'],
+                            userId: widget.userId,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("VIEW INSTRUCTIONS"),
+                  ),
+                ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -273,93 +305,118 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F1DC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Search ${_getTitle().toLowerCase()}',
-            hintStyle: const TextStyle(fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            filled: true,
-            fillColor: const Color(0xFFECECEC),
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-              borderSide: BorderSide.none,
-            ),
-            suffixIcon: _searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchController.clear();
-                    },
-                  )
-                : null,
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
-      ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _mealsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No meals available'));
-          }
-
-          // First filter by price range
-          var filteredMeals = _filterMealsByPriceRange(snapshot.data!);
-          
-          // Then filter by search query
-          filteredMeals = _filterMealsByName(filteredMeals, _searchQuery);
-
-          if (filteredMeals.isEmpty) {
-            return const Center(
-              child: Text('No meals found matching your criteria'),
-            );
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              children: [
-                if (_searchController.text.isNotEmpty && filteredMeals.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      'Meal not found in this price range',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search ${_getTitle().toLowerCase()}',
+                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54),
+                            suffixIcon: _searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, color: Color(0xFF184E77)),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                    },
+                                  )
+                                : const Icon(Icons.search, color: Color(0xFF184E77)),
+                            border: InputBorder.none,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                Expanded(
-                  child: GridView.builder(
-                    itemCount: filteredMeals.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisExtent: 260,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 12,
-                    ),
-                    itemBuilder: (context, index) {
-                      return _buildMealCard(filteredMeals[index]);
-                    },
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
+              ),
+              Expanded(
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _mealsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Error: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      );
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No meals available',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      );
+                    }
+
+                    var filteredMeals = _filterMealsByPriceRange(snapshot.data!);
+                    filteredMeals = _filterMealsByName(filteredMeals, _searchQuery);
+
+                    if (filteredMeals.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No meals found matching your criteria',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      );
+                    }
+
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(12.0),
+                      itemCount: filteredMeals.length,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisExtent: 260,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                      ),
+                      itemBuilder: (context, index) {
+                        return _buildMealCard(filteredMeals[index]);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

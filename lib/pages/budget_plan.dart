@@ -110,22 +110,22 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: const [
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
             BoxShadow(
-              color: Colors.black26,
-              blurRadius: 3,
-              offset: Offset(1, 2),
-            )
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: meal['mealPicture'] != null
                   ? Image.asset(
                       meal['mealPicture'],
@@ -157,6 +157,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                       fontFamily: 'Orbitron',
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
+                      color: Color(0xFF184E77),
                     ),
                   ),
                   Text(
@@ -188,9 +189,17 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
         Text(
           "Meals at Php ${section['budget']}",
           style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+            fontSize: 20,
             fontFamily: 'Orbitron',
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                color: Colors.black26,
+                offset: Offset(2, 2),
+                blurRadius: 6,
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
@@ -213,7 +222,11 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
               },
               child: const Text(
                 "See more →",
-                style: TextStyle(fontFamily: 'Orbitron'),
+                style: TextStyle(
+                  fontFamily: 'Orbitron',
+                  color: Colors.yellowAccent,
+                  decoration: TextDecoration.underline,
+                ),
               ),
             ),
           ),
@@ -224,27 +237,48 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
 
   Widget _buildGuestDrawer(BuildContext context) {
     return Drawer(
-      backgroundColor: Colors.white,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 40),
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 16.0, bottom: 16),
-            child: Text(
-              'HealthTingi',
-              style: TextStyle(
-                fontFamily: 'Orbitron',
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
+      backgroundColor: Colors.white.withOpacity(0.1),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB5E48C), // soft lime green
+              Color(0xFF76C893), // muted forest green
+              Color(0xFF184E77), // deep slate blue
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 40),
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 16.0, bottom: 16),
+              child: Text(
+                'HealthTingi',
+                style: TextStyle(
+                  fontFamily: 'Orbitron',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black26,
+                      offset: Offset(2, 2),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          _drawerButton(context, Icons.info_outline, 'About Us'),
-          const SizedBox(height: 8),
-          _drawerButton(context, Icons.help_outline, 'FAQs'),
-          const SizedBox(height: 8),
-          _drawerButton(context, Icons.logout, 'Exit Guest Mode'),
-        ],
+            _drawerButton(context, Icons.info_outline, 'About Us'),
+            const SizedBox(height: 8),
+            _drawerButton(context, Icons.help_outline, 'FAQs'),
+            const SizedBox(height: 8),
+            _drawerButton(context, Icons.logout, 'Exit Guest Mode'),
+          ],
+        ),
       ),
     );
   }
@@ -252,12 +286,15 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
   Widget _drawerButton(BuildContext context, IconData icon, String label) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFFFFF66),
-        foregroundColor: Colors.black,
-        minimumSize: const Size(double.infinity, 45),
+        backgroundColor: Colors.white.withOpacity(0.9),
+        foregroundColor: const Color(0xFF184E77),
+        elevation: 10,
+        shadowColor: Colors.greenAccent,
+        minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(20),
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
       onPressed: () {
         Navigator.pop(context); // Close drawer first
@@ -283,35 +320,49 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
             break;
         }
       },
-      icon: Icon(icon, size: 20),
-      label: Text(label, style: const TextStyle(fontFamily: 'Orbitron')),
+      icon: Icon(icon, size: 24),
+      label: Text(
+        label, 
+        style: const TextStyle(
+          fontFamily: 'Orbitron',
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFf3f2df),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF3F2DF),
+        backgroundColor: Color(0xFF184E77),
+        elevation: 0,
         title: const Text(
           'Budget Meal Planner',
           style: TextStyle(
-            color: Colors.black,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
             fontFamily: 'Orbitron',
+            shadows: [
+              Shadow(
+                color: Colors.black26,
+                offset: Offset(2, 2),
+                blurRadius: 6,
+              ),
+            ],
           ),
         ),
         centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
+            icon: const Icon(Icons.menu, color: Colors.white),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.black),
+            icon: const Icon(Icons.info_outline, color: Colors.white),
             onPressed: () {
               setState(() {
                 _showInfo = !_showInfo;
@@ -319,131 +370,173 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
             },
           ),
         ],
-        elevation: 0,
       ),
       drawer: widget.userId != 0 
           ? NavigationDrawerWidget(userId: widget.userId)
           : _buildGuestDrawer(context),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_showInfo)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.black87,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(1, 2),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB5E48C), // soft lime green
+              Color(0xFF76C893), // muted forest green
+              Color(0xFF184E77), // deep slate blue
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_showInfo)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(bottom: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Text(
-                  widget.userId == 0
-                      ? 'Enter your budget to see suggested meals. Register to save your preferences.'
-                      : 'Enter your budget to get suggested meals that match or come close to it.',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Orbitron',
-                    fontSize: 12,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.yellowAccent,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 4,
-                    offset: Offset(2, 2),
-                  )
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Enter Budget (in numbers)",
-                    style: TextStyle(fontFamily: 'Orbitron'),
-                  ),
-                  const SizedBox(height: 4),
-                  TextField(
-                    controller: _budgetController,
-                    style: const TextStyle(fontFamily: 'Orbitron'),
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                    ],
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                    child: Text(
+                      widget.userId == 0
+                          ? 'Enter your budget to see suggested meals. Register to save your preferences.'
+                          : 'Enter your budget to get suggested meals that match or come close to it.',
+                      style: const TextStyle(
+                        color: Color(0xFF184E77),
+                        fontFamily: 'Orbitron',
+                        fontSize: 14,
                       ),
-                      hintText: 'e.g. 57',
+                      textAlign: TextAlign.center,
                     ),
-                    onChanged: (value) {
-                      if (value.isEmpty) {
-                        setState(() => _searchQuery = '');
-                        return;
-                      }
-                      if (double.tryParse(value) != null) {
-                        setState(() => _searchQuery = value);
-                      }
-                    },
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            FutureBuilder<List<Map<String, dynamic>>>(
-              future: _mealsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No meals available'));
-                }
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Enter Budget (in numbers)",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontFamily: 'Orbitron',
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black26,
+                              offset: Offset(2, 2),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _budgetController,
+                        style: const TextStyle(color: Color(0xFF184E77)),
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                        ],
+                        decoration: InputDecoration(
+                          hintText: 'e.g. 57',
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.9),
+                          prefixIcon: const Icon(Icons.currency_ruble, color: Color(0xFF184E77)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                          hintStyle: const TextStyle(color: Colors.black54),
+                        ),
+                        onChanged: (value) {
+                          if (value.isEmpty) {
+                            setState(() => _searchQuery = '');
+                            return;
+                          }
+                          if (double.tryParse(value) != null) {
+                            setState(() => _searchQuery = value);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _mealsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('No meals available'));
+                    }
 
-                final allMeals = snapshot.data!;
-                final categorizedMeals = _searchQuery.isEmpty
-                    ? _groupMealsByPriceRange(allMeals)
-                    : [
-                        {
-                          'budget': 'Near ${_searchQuery}',
-                          'meals': _filterMealsByBudget(
-                              allMeals, double.parse(_searchQuery)),
-                        }
-                      ];
+                    final allMeals = snapshot.data!;
+                    final categorizedMeals = _searchQuery.isEmpty
+                        ? _groupMealsByPriceRange(allMeals)
+                        : [
+                            {
+                              'budget': 'Near ${_searchQuery}',
+                              'meals': _filterMealsByBudget(
+                                  allMeals, double.parse(_searchQuery)),
+                            }
+                          ];
 
-                return Column(
-                  children: categorizedMeals
-                      .map((section) => _buildBudgetSection(context, section))
-                      .toList(),
-                );
-              },
+                    return Column(
+                      children: categorizedMeals
+                          .map((section) => _buildBudgetSection(context, section))
+                          .toList(),
+                    );
+                  },
+                ),
+                const SizedBox(height: 40),
+                const Center(
+                  child: Text(
+                    'Plan Smart, Eat Healthy!',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF184E77), // Darker blue for better contrast
+        selectedItemColor: Color(0xFF184E77),
+        unselectedItemColor: Color(0xFF184E77).withOpacity(0.7),
         currentIndex: 3,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black54,
-        backgroundColor: const Color(0xEBE7D2),
         onTap: (index) {
           switch (index) {
             case 0:

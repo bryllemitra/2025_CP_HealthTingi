@@ -236,14 +236,18 @@ class _MealSearchPageState extends State<MealSearchPage> {
       : meal['price']?.toString() ?? '0.00';
   
   return Container(
-    width: 155,
+    width: 160,
     height: 240,
     margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
     decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: const [
-        BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(2, 2)),
+      color: Colors.white.withOpacity(0.9),
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
       ],
     ),
     child: Column(
@@ -252,7 +256,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
         Stack(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               child: SizedBox(
                 height: 100,
                 width: double.infinity,
@@ -281,7 +285,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
               ),
           ],
         ),
-
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -293,7 +296,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
                     meal['mealName'],
                     style: const TextStyle(
                       fontWeight: FontWeight.bold, 
-                      fontSize: 14
+                      fontSize: 14,
+                      color: Color(0xFF184E77),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -302,12 +306,12 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.access_time, size: 12),
+                    const Icon(Icons.access_time, size: 12, color: Color(0xFF184E77)),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
                         "Est. ${meal['cookingTime']}",
-                        style: const TextStyle(fontSize: 10),
+                        style: const TextStyle(fontSize: 10, color: Colors.black54),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -317,7 +321,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    //const Icon(Icons.attach_money, size: 12),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
@@ -325,7 +328,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          //color: Colors.green[700],
+                          color: Colors.black54,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -336,7 +339,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 const Spacer(),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellowAccent,
+                    backgroundColor: const Color(0xFFB5E48C),
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(horizontal: 6),
                     minimumSize: const Size.fromHeight(30),
@@ -381,10 +384,14 @@ class _MealSearchPageState extends State<MealSearchPage> {
       height: 165, // ADD FIXED HEIGHT TO PREVENT OVERFLOW
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(2, 2)),
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -422,7 +429,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 ingredientName,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold, 
-                  fontSize: 11 // SLIGHTLY SMALLER FONT
+                  fontSize: 11, // SLIGHTLY SMALLER FONT
+                  color: Color(0xFF184E77),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -449,7 +457,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // REDUCED PADDING
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.yellowAccent,
+                backgroundColor: const Color(0xFFB5E48C),
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // REDUCED PADDING
                 minimumSize: const Size.fromHeight(24), // SMALLER BUTTON
@@ -494,7 +502,15 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold, 
-                  fontSize: 18
+                  fontSize: 18,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black26,
+                      offset: Offset(2, 2),
+                      blurRadius: 6,
+                    ),
+                  ],
                 ),
               ),
               GestureDetector(
@@ -511,7 +527,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 },
                 child: const Text(
                   "Browse All",
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: Colors.white70),
                 ),
               ),
             ],
@@ -543,7 +559,15 @@ class _MealSearchPageState extends State<MealSearchPage> {
             "Ingredients",
             style: TextStyle(
               fontWeight: FontWeight.bold, 
-              fontSize: 18
+              fontSize: 18,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black26,
+                  offset: Offset(2, 2),
+                  blurRadius: 6,
+                ),
+              ],
             ),
           ),
         ),
@@ -562,127 +586,140 @@ class _MealSearchPageState extends State<MealSearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F2DF),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26, 
-                      blurRadius: 4, 
-                      offset: Offset(2, 2)
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB5E48C), // soft lime green
+              Color(0xFF76C893), // muted forest green
+              Color(0xFF184E77), // deep slate blue
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Search meals or ingredients...', // UPDATED TEXT
+                      suffixIcon: Icon(Icons.search, color: Color(0xFF184E77)),
+                      border: InputBorder.none,
                     ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    hintText: 'Search meals or ingredients...', // UPDATED TEXT
-                    suffixIcon: Icon(Icons.search),
-                    border: InputBorder.none,
                   ),
                 ),
               ),
-            ),
-            Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: _mealsFuture,
-                builder: (context, mealsSnapshot) {
-                  if (mealsSnapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (mealsSnapshot.hasError) {
-                    return Center(child: Text('Error: ${mealsSnapshot.error}'));
-                  }
+              Expanded(
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _mealsFuture,
+                  builder: (context, mealsSnapshot) {
+                    if (mealsSnapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (mealsSnapshot.hasError) {
+                      return Center(child: Text('Error: ${mealsSnapshot.error}'));
+                    }
 
-                  return FutureBuilder<List<Map<String, dynamic>>>(
-                    future: _ingredientsFuture,
-                    builder: (context, ingredientsSnapshot) {
-                      if (ingredientsSnapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (ingredientsSnapshot.hasError) {
-                        return Center(child: Text('Error: ${ingredientsSnapshot.error}'));
-                      }
+                    return FutureBuilder<List<Map<String, dynamic>>>(
+                      future: _ingredientsFuture,
+                      builder: (context, ingredientsSnapshot) {
+                        if (ingredientsSnapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (ingredientsSnapshot.hasError) {
+                          return Center(child: Text('Error: ${ingredientsSnapshot.error}'));
+                        }
 
-                      final allMeals = mealsSnapshot.data ?? [];
-                      final allIngredients = ingredientsSnapshot.data ?? [];
-                      
-                      // Filter by search query
-                      var filteredMeals = _filterMealsByName(allMeals, _searchQuery);
-                      var filteredIngredients = _filterIngredientsByName(allIngredients, _searchQuery);
-                      
-                      // Then filter by time
-                      final currentTime = _getCurrentMealTime();
-                      final timeBasedSections = _getTimeBasedSections(currentTime);
-                      
-                      final currentMeals = _filterMealsByTime(filteredMeals, "Current");
-                      final otherMeals = filteredMeals
-                          .where((meal) => !currentMeals.contains(meal))
-                          .toList();
+                        final allMeals = mealsSnapshot.data ?? [];
+                        final allIngredients = ingredientsSnapshot.data ?? [];
+                        
+                        // Filter by search query
+                        var filteredMeals = _filterMealsByName(allMeals, _searchQuery);
+                        var filteredIngredients = _filterIngredientsByName(allIngredients, _searchQuery);
+                        
+                        // Then filter by time
+                        final currentTime = _getCurrentMealTime();
+                        final timeBasedSections = _getTimeBasedSections(currentTime);
+                        
+                        final currentMeals = _filterMealsByTime(filteredMeals, "Current");
+                        final otherMeals = filteredMeals
+                            .where((meal) => !currentMeals.contains(meal))
+                            .toList();
 
-                      // Sort alphabetically
-                      final sortedCurrentMeals = _sortMeals(currentMeals);
-                      final sortedOtherMeals = _sortMeals(otherMeals);
+                        // Sort alphabetically
+                        final sortedCurrentMeals = _sortMeals(currentMeals);
+                        final sortedOtherMeals = _sortMeals(otherMeals);
 
-                      // Build time-based sections
-                      final timeSections = timeBasedSections.map((section) {
-                        final timeMeals = _filterMealsByTime(filteredMeals, section['time']!);
-                        return _buildSection(
-                          section['title']!,
-                          _sortMeals(timeMeals),
-                          section['time']!
-                        );
-                      }).toList();
+                        // Build time-based sections
+                        final timeSections = timeBasedSections.map((section) {
+                          final timeMeals = _filterMealsByTime(filteredMeals, section['time']!);
+                          return _buildSection(
+                            section['title']!,
+                            _sortMeals(timeMeals),
+                            section['time']!
+                          );
+                        }).toList();
 
-                      return ListView(
-                        children: [
-                          // Show ingredients section when searching
-                          if (_searchQuery.isNotEmpty && filteredIngredients.isNotEmpty)
-                            _buildIngredientsSection(filteredIngredients),
-                          
-                          if (sortedCurrentMeals.isNotEmpty)
-                            _buildSection(
-                              _getMealTimeGreeting(currentTime), 
-                              sortedCurrentMeals,
-                              "Current"
-                            ),
-                          ...timeSections,
-                          if (sortedOtherMeals.isNotEmpty)
-                            _buildSection("Other Meal Options", sortedOtherMeals, "All"),
-                          
-                          // Show message if no results found
-                          if (filteredMeals.isEmpty && filteredIngredients.isEmpty && _searchQuery.isNotEmpty)
-                            const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Text("No meals or ingredients found matching your search"),
+                        return ListView(
+                          children: [
+                            // Show ingredients section when searching
+                            if (_searchQuery.isNotEmpty && filteredIngredients.isNotEmpty)
+                              _buildIngredientsSection(filteredIngredients),
+                            
+                            if (sortedCurrentMeals.isNotEmpty)
+                              _buildSection(
+                                _getMealTimeGreeting(currentTime), 
+                                sortedCurrentMeals,
+                                "Current"
                               ),
-                            ),
-                          
-                          // Show ingredients section when not searching (at the end)
-                          if (_searchQuery.isEmpty && allIngredients.isNotEmpty)
-                            _buildIngredientsSection(allIngredients.take(10).toList()),
-                        ],
-                      );
-                    },
-                  );
-                },
+                            ...timeSections,
+                            if (sortedOtherMeals.isNotEmpty)
+                              _buildSection("Other Meal Options", sortedOtherMeals, "All"),
+                            
+                            // Show message if no results found
+                            if (filteredMeals.isEmpty && filteredIngredients.isEmpty && _searchQuery.isNotEmpty)
+                              const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Text("No meals or ingredients found matching your search", style: TextStyle(color: Colors.white)),
+                                ),
+                              ),
+                            
+                            // Show ingredients section when not searching (at the end)
+                            if (_searchQuery.isEmpty && allIngredients.isNotEmpty)
+                              _buildIngredientsSection(allIngredients.take(10).toList()),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF184E77), // Deep slate blue
+        selectedItemColor: const Color(0xFF184E77),
+        unselectedItemColor: const Color(0xFF184E77).withOpacity(0.7),
         currentIndex: 2,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black54,
-        backgroundColor: const Color(0xEBE7D2),
         onTap: (index) {
           switch (index) {
             case 0:

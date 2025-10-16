@@ -21,13 +21,16 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     final path = join(await getDatabasesPath(), 'healthtingi.db');
-    return await openDatabase(
+    final db = await openDatabase(
       path,
       version: _currentVersion,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onDowngrade: onDowngrade,
     );
+    await loadSubstitutions(); // Load substitutions here to ensure ready after DB init
+    _database = db;
+    return db;
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -210,7 +213,7 @@ class DatabaseHelper {
         barangay TEXT,
         city TEXT,
         nationality TEXT,
-        createdAt TEXT NOT NULL
+        createdAt TEXT NOT NULL,
         isAdmin INTEGER DEFAULT 0
       )
     ''');
@@ -2025,5 +2028,64 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     whereArgs: [userId],
   );
 }
+
+  Map<String, List<String>> _substitutions = {};
+
+  Future<void> loadSubstitutions() async {
+    if (_substitutions.isNotEmpty) return; // Already loaded, skip
+
+    try {
+      final String dataString = await rootBundle.loadString('assets/data/substitutions.json');
+      final Map<String, dynamic> data = jsonDecode(dataString);
+      _substitutions = data.map((key, value) => MapEntry(key, List<String>.from(value)));
+      print('Substitutions loaded successfully from JSON');
+    } catch (e) {
+      print('Error loading substitutions from JSON: $e');
+      // Optionally, fall back to hardcoded or empty map
+      _substitutions = {};
+    }
+  }
+
+  Future<List<String>> getAlternatives(String ingredient) async {
+    await loadSubstitutions();
+    // Case-insensitive lookup; adjust as needed for name mismatches (e.g., "Bagoong" vs "Bagoong (Shrimp Paste)")
+    final normalizedKey = ingredient.toLowerCase();
+    final matchingKey = _substitutions.keys.firstWhere(
+      (k) => k.toLowerCase() == normalizedKey || k.toLowerCase().contains(normalizedKey),
+      orElse: () => '',
+    );
+    return _substitutions[matchingKey] ?? [];
+  }
+
+  // Add this method to DatabaseHelper class in db_helper.dart
+  Future<List<Map<String, dynamic>>> getSimilarMeals(List<String> ingredientNames, {int limit = 6}) async {
+    final db = await database;
+    
+    if (ingredientNames.isEmpty) {
+      return [];
+    }
+
+    // Create placeholders for the SQL query
+    final placeholders = List.generate(ingredientNames.length, (_) => '?').join(',');
+    
+    // Query to find meals that share the most ingredients with the provided list
+    final result = await db.rawQuery('''
+      SELECT 
+        m.*,
+        COUNT(mi.ingredientID) as matching_ingredients,
+        (SELECT COUNT(*) FROM meal_ingredients WHERE mealID = m.mealID) as total_ingredients,
+        (COUNT(mi.ingredientID) * 100.0 / (SELECT COUNT(*) FROM meal_ingredients WHERE mealID = m.mealID)) as match_percentage
+      FROM meals m
+      JOIN meal_ingredients mi ON m.mealID = mi.mealID
+      JOIN ingredients i ON mi.ingredientID = i.ingredientID
+      WHERE i.ingredientName IN ($placeholders)
+      GROUP BY m.mealID
+      HAVING matching_ingredients > 0
+      ORDER BY matching_ingredients DESC, match_percentage DESC
+      LIMIT ?
+    ''', [...ingredientNames, limit]);
+
+    return result;
+  }
 
 }

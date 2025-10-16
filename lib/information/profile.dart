@@ -26,7 +26,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    final user = await dbHelper.getUserById(widget.userId); // Use the actual user ID
+    final user = await dbHelper.getUserById(widget.userId);
     setState(() {
       userData = user ?? {};
       hasDietaryRestrictions = user?['hasDietaryRestriction'] == 1;
@@ -53,7 +53,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() => isLoading = true);
     try {
-      // Add dietary restrictions to updates if they were modified
       if (hasDietaryRestrictions != (userData['hasDietaryRestriction'] == 1)) {
         _editedValues['hasDietaryRestriction'] = hasDietaryRestrictions ? 1 : 0;
       }
@@ -64,16 +63,26 @@ class _ProfilePageState extends State<ProfilePage> {
         _editedValues['dietaryRestriction'] = null;
       }
 
-      await dbHelper.updateUser(widget.userId, _editedValues); // Use the actual user ID
+      await dbHelper.updateUser(widget.userId, _editedValues);
       await _loadUserData();
       _editedValues.clear();
       
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully!')),
+        SnackBar(
+          content: Text('Profile updated successfully!'),
+          backgroundColor: Color(0xFF76C893),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update profile: ${e.toString()}')),
+        SnackBar(
+          content: Text('Failed to update profile: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
       );
     } finally {
       setState(() => isLoading = false);
@@ -85,24 +94,46 @@ class _ProfilePageState extends State<ProfilePage> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Edit ${field.replaceAll('_', ' ')}'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Edit ${field.replaceAll('_', ' ')}',
+          style: TextStyle(
+            fontFamily: 'Orbitron',
+            color: Color(0xFF184E77),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(hintText: 'Enter new ${field.replaceAll('_', ' ')}'),
+          decoration: InputDecoration(
+            hintText: 'Enter new ${field.replaceAll('_', ' ')}',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF184E77)),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF184E77),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () {
               setState(() {
                 _handleFieldChange(field, controller.text);
               });
               Navigator.pop(context);
             },
-            child: const Text('Save'),
+            child: Text(
+              'Save',
+              style: TextStyle(color: Colors.white), // Changed to white
+            ),
           ),
         ],
       ),
@@ -112,13 +143,23 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _showBirthdayPickerDialog() async {
     final DateTime initialDate = userData['birthday'] != null 
         ? DateTime.parse(userData['birthday']) 
-        : DateTime.now().subtract(const Duration(days: 365 * 20)); // Default to 20 years ago
+        : DateTime.now().subtract(const Duration(days: 365 * 20));
     
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: Color(0xFF184E77),
+            colorScheme: ColorScheme.light(primary: Color(0xFF184E77)),
+            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+          ),
+          child: child!,
+        );
+      },
     );
     
     if (pickedDate != null) {
@@ -145,6 +186,8 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return Dialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             insetPadding: const EdgeInsets.all(20),
             child: Container(
               padding: const EdgeInsets.all(20),
@@ -157,11 +200,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Dietary Restrictions',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'Orbitron',
+                        color: Color(0xFF184E77),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -170,6 +215,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         Checkbox(
                           value: hasDietaryRestrictions,
                           onChanged: (val) => setState(() => hasDietaryRestrictions = val!),
+                          activeColor: Color(0xFF184E77),
                         ),
                         const Expanded(
                           child: Text(
@@ -186,7 +232,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 8),
-                      // Use Wrap instead of GridView for better responsiveness
                       Wrap(
                         spacing: 8.0,
                         runSpacing: 8.0,
@@ -203,6 +248,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 }
                               });
                             },
+                            selectedColor: Color(0xFFB5E48C),
+                            checkmarkColor: Colors.black,
                           );
                         }).toList(),
                       ),
@@ -217,24 +264,30 @@ class _ProfilePageState extends State<ProfilePage> {
                           Expanded(
                             child: TextField(
                               controller: _otherRestrictionController,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 hintText: 'Enter other restriction',
-                                border: OutlineInputBorder(),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               ),
                             ),
                           ),
                           const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(Icons.add),
-                            onPressed: () {
-                              if (_otherRestrictionController.text.trim().isNotEmpty) {
-                                setState(() {
-                                  selectedDietaryRestrictions.add(_otherRestrictionController.text.trim());
-                                  _otherRestrictionController.clear();
-                                });
-                              }
-                            },
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Color(0xFF184E77),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.add, color: Colors.white),
+                              onPressed: () {
+                                if (_otherRestrictionController.text.trim().isNotEmpty) {
+                                  setState(() {
+                                    selectedDietaryRestrictions.add(_otherRestrictionController.text.trim());
+                                    _otherRestrictionController.clear();
+                                  });
+                                }
+                              },
+                            ),
                           ),
                         ],
                       ),
@@ -250,6 +303,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           runSpacing: 8.0,
                           children: selectedDietaryRestrictions.map((r) => Chip(
                             label: Text(r),
+                            backgroundColor: Color(0xFFB5E48C),
+                            deleteIconColor: Colors.black,
                             onDeleted: () {
                               setState(() => selectedDietaryRestrictions.remove(r));
                             },
@@ -263,10 +318,17 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(color: Color(0xFF184E77)),
+                          ),
                         ),
                         const SizedBox(width: 10),
                         ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF184E77),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
                           onPressed: () {
                             setState(() {
                               _handleFieldChange('hasDietaryRestriction', hasDietaryRestrictions ? 1 : 0);
@@ -278,7 +340,10 @@ class _ProfilePageState extends State<ProfilePage> {
                             });
                             Navigator.pop(context);
                           },
-                          child: const Text('Save'),
+                          child: Text(
+                            'Save',
+                            style: TextStyle(color: Colors.white), // Changed to white
+                          ),
                         ),
                       ],
                     ),
@@ -295,219 +360,463 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF3F2DF),
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFFB5E48C),
+                Color(0xFF76C893),
+                Color(0xFF184E77),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Center(
+            child: CircularProgressIndicator(
+              color: Colors.white,
+            ),
+          ),
+        ),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F2DF),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF3F2DF),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        centerTitle: true,
-        title: const Text(
-          'Account\nInformation',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Orbitron',
-            fontSize: 16,
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            height: 1.2,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           children: [
-            const SizedBox(height: 16),
+            // Fixed App Bar - won't move when scrolling
             Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.black, width: 3),
-              ),
-              child: CircleAvatar(
-                radius: 45,
-                backgroundColor: Colors.yellow,
-                child: Text(
-                  getInitials(),
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+              color: Colors.transparent,
+              child: SafeArea(
+                bottom: false,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.2),
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_back, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            'Account Information',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Orbitron',
+                              fontSize: 20,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black26,
+                                  offset: Offset(2, 2),
+                                  blurRadius: 6,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 48), // For balance
+                    ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}',
-              style: const TextStyle(
-                fontFamily: 'Orbitron',
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 20),
-            _menuTile(
-              title: 'Saved Recipes',
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => FavoritesPage(userId: widget.userId)));
-              },
-            ),
-            const Divider(thickness: 1),
-            const SizedBox(height: 8),
-            _editableInfoTile(
-              context,
-              title: 'First Name',
-              value: _editedValues['firstName'] ?? userData['firstName']?.toString() ?? '',
-              field: 'firstName',
-            ),
-            _editableInfoTile(
-              context,
-              title: 'Middle Name',
-              value: _editedValues['middleName'] ?? userData['middleName']?.toString() ?? '',
-              field: 'middleName',
-            ),
-            _editableInfoTile(
-              context,
-              title: 'Last Name',
-              value: _editedValues['lastName'] ?? userData['lastName']?.toString() ?? '',
-              field: 'lastName',
-            ),
-            _editableInfoTile(
-              context,
-              title: 'Username',
-              value: _editedValues['username'] ?? userData['username']?.toString() ?? '',
-              field: 'username',
-            ),
-            _editableInfoTile(
-              context,
-              title: 'Email',
-              value: _editedValues['emailAddress'] ?? userData['emailAddress']?.toString() ?? '',
-              field: 'emailAddress',
-            ),
-            // Birthday field - added before age
-            GestureDetector(
-              onTap: _showBirthdayPickerDialog,
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      offset: Offset(2, 2),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-                child: Row(
+
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Birthday',
-                              style: TextStyle(
-                                fontFamily: 'Orbitron',
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              )),
-                          const SizedBox(height: 2),
-                          Text(
-                            _editedValues['birthday'] ?? userData['birthday']?.toString() ?? 'Not set',
-                            style: const TextStyle(
+                    const SizedBox(height: 20),
+
+                    // Profile Avatar with glow effect
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                        ),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Color(0xFFB5E48C),
+                          child: Text(
+                            getInitials(),
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF184E77),
                               fontFamily: 'Orbitron',
-                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // User Name
+                    Text(
+                      '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}',
+                      style: TextStyle(
+                        fontFamily: 'Orbitron',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                        color: Colors.white,
+                        letterSpacing: 1.1,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black26,
+                            offset: Offset(2, 2),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // Saved Recipes Card
+                    Container(
+                      width: double.infinity,
+                      margin: EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            offset: Offset(0, 4),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => FavoritesPage(userId: widget.userId)));
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                            child: Row(
+                              children: [
+                                Icon(Icons.favorite, color: Color(0xFF184E77)),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Saved Recipes',
+                                  style: TextStyle(
+                                    fontFamily: 'Orbitron',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF184E77),
+                                  ),
+                                ),
+                                Spacer(),
+                                Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Color(0xFF184E77)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Profile Information Cards
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            offset: Offset(0, 4),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Personal Information',
+                            style: TextStyle(
+                              fontFamily: 'Orbitron',
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF184E77),
+                            ),
+                          ),
+                          SizedBox(height: 16),
+
+                          // Personal Info Fields
+                          _editableInfoTile(
+                            context,
+                            title: 'First Name',
+                            value: _editedValues['firstName'] ?? userData['firstName']?.toString() ?? '',
+                            field: 'firstName',
+                          ),
+                          _editableInfoTile(
+                            context,
+                            title: 'Middle Name',
+                            value: _editedValues['middleName'] ?? userData['middleName']?.toString() ?? '',
+                            field: 'middleName',
+                          ),
+                          _editableInfoTile(
+                            context,
+                            title: 'Last Name',
+                            value: _editedValues['lastName'] ?? userData['lastName']?.toString() ?? '',
+                            field: 'lastName',
+                          ),
+                          _editableInfoTile(
+                            context,
+                            title: 'Username',
+                            value: _editedValues['username'] ?? userData['username']?.toString() ?? '',
+                            field: 'username',
+                          ),
+                          _editableInfoTile(
+                            context,
+                            title: 'Email',
+                            value: _editedValues['emailAddress'] ?? userData['emailAddress']?.toString() ?? '',
+                            field: 'emailAddress',
+                          ),
+                          
+                          // Birthday field
+                          GestureDetector(
+                            onTap: _showBirthdayPickerDialog,
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    offset: Offset(1, 1),
+                                    blurRadius: 3,
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Birthday',
+                                            style: TextStyle(
+                                              fontFamily: 'Orbitron',
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF184E77),
+                                            )),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          _editedValues['birthday'] ?? userData['birthday']?.toString() ?? 'Not set',
+                                          style: TextStyle(
+                                            fontFamily: 'Orbitron',
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(Icons.calendar_today, size: 20, color: Color(0xFF184E77)),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          _editableInfoTile(
+                            context,
+                            title: 'Age',
+                            value: _editedValues['age'] ?? userData['age']?.toString() ?? '',
+                            field: 'age',
+                          ),
+                          _editableInfoTile(
+                            context,
+                            title: 'Gender',
+                            value: _editedValues['gender'] ?? userData['gender']?.toString() ?? '',
+                            field: 'gender',
+                          ),
+                          
+                          SizedBox(height: 16),
+                          Text(
+                            'Address Information',
+                            style: TextStyle(
+                              fontFamily: 'Orbitron',
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF184E77),
+                            ),
+                          ),
+                          SizedBox(height: 16),
+
+                          _editableInfoTile(
+                            context,
+                            title: 'Street',
+                            value: _editedValues['street'] ?? userData['street']?.toString() ?? '',
+                            field: 'street',
+                          ),
+                          _editableInfoTile(
+                            context,
+                            title: 'Barangay',
+                            value: _editedValues['barangay'] ?? userData['barangay']?.toString() ?? '',
+                            field: 'barangay',
+                          ),
+                          _editableInfoTile(
+                            context,
+                            title: 'City',
+                            value: _editedValues['city'] ?? userData['city']?.toString() ?? '',
+                            field: 'city',
+                          ),
+                          _editableInfoTile(
+                            context,
+                            title: 'Nationality',
+                            value: _editedValues['nationality'] ?? userData['nationality']?.toString() ?? '',
+                            field: 'nationality',
+                          ),
+
+                          // Dietary Restrictions
+                          GestureDetector(
+                            onTap: _showDietaryRestrictionsDialog,
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    offset: Offset(1, 1),
+                                    blurRadius: 3,
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Dietary Restrictions',
+                                            style: TextStyle(
+                                              fontFamily: 'Orbitron',
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF184E77),
+                                            )),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          _editedValues.containsKey('dietaryRestriction')
+                                              ? (_editedValues['dietaryRestriction'] ?? 'None')
+                                              : (userData['dietaryRestriction']?.toString() ?? 'None'),
+                                          style: TextStyle(
+                                            fontFamily: 'Orbitron',
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Color(0xFF184E77)),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.calendar_today, size: 20),
+
+                    const SizedBox(height: 30),
+
+                    // Update Profile Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Color(0xFF184E77),
+                          elevation: 10,
+                          shadowColor: Colors.greenAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onPressed: _updateProfile,
+                        child: Text(
+                          'Update Profile',
+                          style: TextStyle(
+                            fontFamily: 'Orbitron',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // Subtle Footer
+                    const Text(
+                      'Keep your information updated',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
-            /*
-            _editableInfoTile(
-              context,
-              title: 'Age',
-              value: _editedValues['age'] ?? userData['age']?.toString() ?? '',
-              field: 'age',
-            ),
-            */
-            _editableInfoTile(
-              context,
-              title: 'Age',
-              value: _editedValues['age'] ?? userData['age']?.toString() ?? '',
-              field: 'age',
-            ),
-            _editableInfoTile(
-              context,
-              title: 'Gender',
-              value: _editedValues['gender'] ?? userData['gender']?.toString() ?? '',
-              field: 'gender',
-            ),
-            _editableInfoTile(
-              context,
-              title: 'Street',
-              value: _editedValues['street'] ?? userData['street']?.toString() ?? '',
-              field: 'street',
-            ),
-            _editableInfoTile(
-              context,
-              title: 'Barangay',
-              value: _editedValues['barangay'] ?? userData['barangay']?.toString() ?? '',
-              field: 'barangay',
-            ),
-            _editableInfoTile(
-              context,
-              title: 'City',
-              value: _editedValues['city'] ?? userData['city']?.toString() ?? '',
-              field: 'city',
-            ),
-            _editableInfoTile(
-              context,
-              title: 'Nationality',
-              value: _editedValues['nationality'] ?? userData['nationality']?.toString() ?? '',
-              field: 'nationality',
-            ),
-            GestureDetector(
-              onTap: _showDietaryRestrictionsDialog,
-              child: _infoTile(
-                title: 'Dietary Restrictions',
-                value: _editedValues.containsKey('dietaryRestriction')
-                    ? (_editedValues['dietaryRestriction'] ?? 'None')
-                    : (userData['dietaryRestriction']?.toString() ?? 'None'),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _updateProfile,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.yellowAccent,
-                foregroundColor: Colors.black,
-                elevation: 3,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                textStyle: const TextStyle(
-                  fontFamily: 'Orbitron',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              child: const Text('Update Profile'),
-            ),
-            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -525,12 +834,12 @@ class _ProfilePageState extends State<ProfilePage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black26,
-            offset: Offset(2, 2),
-            blurRadius: 4,
+            color: Colors.black12,
+            offset: Offset(1, 1),
+            blurRadius: 3,
           ),
         ],
       ),
@@ -541,102 +850,32 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Orbitron',
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
+                      color: Color(0xFF184E77),
                     )),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(value.isEmpty ? 'Not set' : value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Orbitron',
                       fontSize: 12,
                     )),
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.edit, size: 20),
-            onPressed: () => _showEditDialog(context, field, value),
+          Container(
+            decoration: BoxDecoration(
+              color: Color(0xFF184E77),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(Icons.edit, size: 16, color: Colors.white),
+              onPressed: () => _showEditDialog(context, field, value),
+            ),
           )
         ],
-      ),
-    );
-  }
-
-  Widget _infoTile({required String title, required String value}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            offset: Offset(2, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                      fontFamily: 'Orbitron',
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    )),
-                const SizedBox(height: 2),
-                Text(value,
-                    style: const TextStyle(
-                      fontFamily: 'Orbitron',
-                      fontSize: 12,
-                    )),
-              ],
-            ),
-          ),
-          const Icon(Icons.edit, size: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _menuTile({required String title, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              offset: Offset(2, 2),
-              blurRadius: 4,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontFamily: 'Orbitron',
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-          ],
-        ),
       ),
     );
   }
