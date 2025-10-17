@@ -7,7 +7,7 @@ import 'dart:convert';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _currentVersion = 10; 
+  static const int _currentVersion = 11; 
 
   factory DatabaseHelper() => _instance;
 
@@ -83,6 +83,12 @@ class DatabaseHelper {
       } catch (e) {
         // Column might already exist, ignore
       }
+    }
+    if (oldVersion < 11) {
+      await db.execute('ALTER TABLE meals ADD COLUMN additionalPictures TEXT');
+    }
+    if (oldVersion < 11) {
+      await db.execute('ALTER TABLE ingredients ADD COLUMN additionalPictures TEXT');
     }
   }
 
@@ -229,6 +235,7 @@ class DatabaseHelper {
         nutritionalValue TEXT NOT NULL,
         ingredientPicture TEXT,
         category TEXT
+        additionalPictures TEXT
       )
     ''');
 
@@ -252,7 +259,8 @@ class DatabaseHelper {
         instructions TEXT,
         hasDietaryRestrictions TEXT,
         availableFrom TEXT,
-        availableTo TEXT
+        availableTo TEXT,
+        additionalPictures TEXT
       )
     ''');
   }
@@ -328,29 +336,38 @@ class DatabaseHelper {
       'category': 'main dish, soup',
       'content': 'Chicken soup with sayote, malunggay, and ginger',
       'instructions': '''
-1. Prep the Ingredients
-Peel and slice garlic, onion, and ginger.
-Peel and slice sayote into wedges.
-Wash and prepare greens (malunggay or pechay).
+1. Prep Time (5 mins)
+Wash the chicken pieces thoroughly.
+Peel and mince the garlic.
+Peel and slice the onion into wedges.
+Peel and julienne the ginger.
+Peel the sayote, remove the seed, and cut into wedges.
+Wash the malunggay leaves and separate them from the stems.
 
-2. Sauté Aromatics
-In a pot, heat 1 tbsp of oil.
-Sauté garlic, onion, and ginger until fragrant.
+2. Sauté Aromatics (3 mins)
+In a cooking pot over medium heat, add the cooking oil.
+Once the oil is hot, sauté the garlic until fragrant and light golden.
+Add the onion and ginger, and sauté until the onion becomes translucent.
 
-3. Add the Chicken
-Add chicken pieces. Sauté until slightly browned or no longer pink.
-Season with a little salt or a splash of patis (optional).
+3. Brown the Chicken (5 mins)
+Add the chicken pieces to the pot.
+Sauté until the chicken is lightly browned on the outside and no longer pink.
+Season with a pinch of salt or a splash of fish sauce (patis) at this stage.
 
-4. Simmer
-Pour in about 2–3 cups of water (just enough to cover the chicken).
-Bring to a boil, then lower heat to simmer for 15–20 minutes until chicken is tender.
+4. Simmer the Chicken (20 mins)
+Pour in enough water to just cover the chicken (about 2–3 cups).
+Bring to a boil, then immediately lower the heat to a gentle simmer.
+Cover the pot and let it cook for 20–25 minutes, or until the chicken is fully tender.
 
-5. Add Sayote
-Add sayote wedges and cook for another 5–7 minutes until tender.
+5. Add the Sayote (7 mins)
+Add the sayote wedges to the pot.
+Continue simmering until the sayote is tender but still firm, about 7–10 minutes.
 
-6. Add Greens
-Add malunggay or pechay, and simmer for another 1–2 minutes.
-Adjust seasoning to taste.
+6. Final Touches (2 mins)
+Add the malunggay leaves to the pot.
+Let it simmer for another 1–2 minutes until the leaves are just wilted.
+Do a final taste test and adjust the seasoning with more salt or fish sauce if needed.
+Serve hot.
 ''',
       'hasDietaryRestrictions': 'hypertension, chicken allergy',
       'availableFrom': '17:00',
@@ -424,7 +441,7 @@ Add the sliced sayote and sauté for a couple of minutes.
 Pour in the soy sauce.
 Stir occasionally, cover the pan, and let it cook until the sayote is tender but not mushy.
 
-6. Taste and Adjust (Optional)
+6. Taste and Adjust (1 min)
 You may add a bit of water if it's too salty or dry.
 Optional: Add chili flakes or ground pepper for heat.
 
@@ -484,11 +501,32 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Main Dish, Soup',
     'content': 'Classic Filipino chicken simmered in soy-vinegar garlic sauce.',
     'instructions': '''
-1. Sauté garlic in oil until golden.
-2. Add chicken, brown lightly.
-3. Pour in soy sauce, vinegar, water. Add bay leaf & peppercorns.
-4. Simmer 25–30 min until chicken is tender.
-5. Reduce sauce for a few more minutes.
+1. Prep Time (5 mins)
+Pat the chicken thighs dry with a paper towel.
+Peel and crush the garlic cloves.
+If using whole peppercorns, you can lightly crush them.
+
+2. Marinate (15–30 mins)
+In a large bowl, combine the chicken, soy sauce, crushed garlic, and peppercorns.
+You can let it marinate for 15-30 minutes for deeper flavor, or proceed immediately.
+
+3. Initial Simmer (25 mins)
+Transfer the chicken and marinade into a wide pot or pan.
+Add the bay leaves and 1 cup of water.
+Bring to a boil, then reduce the heat to low, cover, and simmer for 25-30 minutes until the chicken is tender.
+
+4. Add Vinegar (5 mins)
+Uncover the pot and pour in the vinegar.
+Do not stir immediately; let the vinegar cook off its raw acidity for about 3-5 minutes.
+
+5. Reduce the Sauce (7 mins)
+After the vinegar has cooked, you can now stir.
+Increase the heat to medium and let the sauce reduce and thicken to your desired consistency, stirring occasionally. This should take about 5-10 minutes.
+
+6. Sauté for Color (3 mins)
+In a separate pan, heat 1 tsp of cooking oil.
+You can optionally sauté the cooked chicken pieces briefly until they get a slightly browned, crispy exterior.
+Pour the reduced sauce over the chicken before serving.
 ''',
     'hasDietaryRestrictions': 'Hypertension, Halal if using halal-certified chicken',
     'availableFrom': '11:00',
@@ -542,11 +580,30 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Dessert, Snack',
     'content': 'Sticky rice cake with coconut milk and sweet brown sugar caramel (latik).',
     'instructions': '''
-1. Rinse rice and cook in coconut milk + water over medium heat.
-2. Stir constantly until nearly cooked.
-3. Add brown sugar + salt, continue stirring until mixture thickens.
-4. Transfer to pan, press flat, top with latik if desired.
-5. Bake 20–30 min at 180 °C or cool before slicing.
+1. Prep Time (10 mins)
+Rinse the glutinous rice thoroughly until the water runs clear.
+In a rice cooker or pot, combine the rinsed rice with 2 cups of coconut milk and 1 cup of water.
+Let the rice soak for 30 minutes if you have time.
+
+2. Cook the Rice (20 mins)
+Cook the rice mixture as you normally would (in a rice cooker or over the stove) until the liquid is absorbed and the rice is fully cooked.
+
+3. Prepare the Latik / Syrup (15 mins)
+In a separate, wide, heavy-bottomed pan, combine the remaining 2 cups of coconut milk and brown sugar.
+Cook over medium heat, stirring continuously, until the mixture thickens significantly into a sticky, caramel-like syrup. This can take 15-20 minutes.
+
+4. Combine Rice and Syrup (10 mins)
+Add the cooked sticky rice to the pan with the caramel syrup.
+Mix vigorously and continuously until the rice is fully coated and the mixture becomes very thick and difficult to stir.
+
+5. Transfer and Flatten (5 mins)
+Grease a baking pan or a tray with a little oil.
+Transfer the thick rice mixture into the pan.
+Using a spatula or a banana leaf, press and flatten the mixture evenly.
+
+6. Top and Cool (10 mins)
+If you made latik (coconut curds) from reducing coconut cream, sprinkle it on top.
+Allow the Biko to cool completely before slicing into squares or diamonds.
 ''',
     'hasDietaryRestrictions': 'Vegetarian (contains no meat), not vegan because of sugar/latik (check sugar source)',
     'availableFrom': '14:00',
@@ -580,11 +637,28 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Dessert, Snack, Soup',
     'content': 'Creamy Filipino sweet stew of coconut milk with tubers, saba banana, glutinous rice, and jackfruit.',
     'instructions': '''
-1. Combine coconut milk & water in pot; bring to simmer.
-2. Add glutinous rice; stir occasionally ~10–15 min.
-3. Add sweet potato, taro, ube; cook ~15–20 min until tender.
-4. Stir in banana, jackfruit, sago; cook 5 min more.
-5. Add sugar & salt; simmer until thickened. Serve warm or chilled.
+1. Prep Time (10 mins)
+Peel and cube the sweet potato, taro, and purple yam into bite-sized pieces.
+Peel the saba bananas and slice into thick rounds.
+If using fresh jackfruit, remove the seeds and cut into chunks.
+If tapioca pearls are raw, cook them separately according to package directions until translucent.
+
+2. Simmer the Base (10 mins)
+In a large pot, bring the coconut milk and 2 cups of water to a gentle simmer over medium heat.
+Add the rinsed glutinous rice and cook, stirring occasionally to prevent sticking, for about 10-15 minutes.
+
+3. Cook the Root Vegetables (15 mins)
+Add the cubed sweet potato, taro, and purple yam to the pot.
+Continue to simmer, stirring occasionally, until the root vegetables are almost tender.
+
+4. Add Soft Fruits (5–7 mins)
+Stir in the saba bananas and jackfruit pieces.
+Cook for another 5-7 minutes until the bananas are soft.
+
+5. Final Touches (5 mins)
+Add the cooked tapioca pearls and brown sugar.
+Stir well and simmer for a final 5 minutes until everything is heated through and the sugar is dissolved. The consistency should be thick and porridge-like.
+Serve warm or chilled.
 ''',
     'hasDietaryRestrictions': 'Vegetarian (no meat), Vegan-friendly if sugar is vegan',
     'availableFrom': '14:00',
@@ -648,10 +722,24 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Dessert, Snack',
     'content': 'A classic Filipino shave-ice treat layered with sweet fruit, beans, jellies, milk and topped with ice cream or leche flan.',
     'instructions': '''
-1. Layer sweet beans, nata de coco, kaong, banana, jackfruit, macapuno, gulaman in tall glass.
-2. Fill glass with shaved ice.
-3. Drizzle evaporated or condensed milk.
-4. Top with flan and ice cream if desired. Mix before eating.
+1. Prep Time (5 mins)
+Ensure all your ingredients (sweetened beans, nata de coco, kaong, macapuno, gulaman, etc.) are prepared, sweetened, and chilled.
+If using leche flan, have it sliced and ready.
+Scoop the ube ice cream and keep it in the freezer until serving time.
+
+2. Prepare the Glass (3 mins)
+Get a tall glass.
+Start layering your sweet ingredients at the bottom. Begin with the sweetened beans, then add nata de coco, kaong, saba banana, jackfruit, macapuno, and gulaman.
+
+3. Add Ice (1 min)
+Fill the glass to the top with finely shaved ice, pressing down gently.
+
+4. Add Milk and Toppings (1 min)
+Drizzle the evaporated milk (and/or condensed milk) over the shaved ice.
+Place your chosen toppings on top: a slice of leche flan and a scoop (or two) of ube ice cream.
+
+5. Serve Immediately
+Serve immediately with a long spoon. Instruct to mix all the ingredients together thoroughly before eating.
 ''',
     'hasDietaryRestrictions': 'Vegetarian (contains dairy), not suitable for strict vegans',
     'availableFrom': '11:00',
@@ -725,11 +813,36 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Main Dish, Vegetable',
     'content': 'Stir-fried mixed vegetables with chicken/shrimp in savory sauce.',
     'instructions': '''
-1. Sauté onion & garlic in oil until fragrant.
-2. Add chicken or shrimp, cook until opaque.
-3. Stir in vegetables & mushrooms; cook ~3–5 min.
-4. Pour in broth + sauces; mix well.
-5. Stir in cornstarch slurry; cook until sauce thickens. Season and serve.
+1. Prep Time (10–15 mins)
+Cut the chicken into thin slices or bite-sized pieces.
+Peel and mince the garlic.
+Slice the onion.
+Chop the carrots, broccoli, and cauliflower into florets.
+Slice the bell pepper and cabbage.
+If using mushrooms, slice them.
+
+2. Sauté Aromatics and Protein (5 mins)
+Heat oil in a large wok or pan over medium-high heat.
+Sauté garlic and onion until fragrant and softened.
+Add the chicken slices and cook until they are no longer pink and are lightly browned.
+
+3. Cook Harder Vegetables (4–5 mins)
+Add the carrots, broccoli, and cauliflower to the wok.
+Stir-fry for about 4-5 minutes until they start to soften but are still crisp.
+
+4. Add Sauces and Broth (3–4 mins)
+Pour in the chicken broth, soy sauce, and oyster sauce.
+Stir everything together and bring to a simmer.
+
+5. Thicken the Sauce (2–3 mins)
+In a small bowl, mix the cornstarch with 2 tablespoons of water to create a slurry.
+While stirring the contents of the wok, slowly pour in the cornstarch slurry.
+Continue to cook until the sauce thickens to a glossy consistency.
+
+6. Final Stir-in (2 mins)
+Add the bell peppers, cabbage, and mushrooms.
+Stir-fry for just another 1-2 minutes until the cabbage is slightly wilted but still colorful and crisp.
+Season with ground pepper to taste. Serve immediately.
 ''',
     'hasDietaryRestrictions': 'Contains soy; can omit meat to make vegetarian',
     'availableFrom': '11:00',
@@ -818,12 +931,30 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Main Dish, Soup, Vegetable',
     'content': 'Creamy coconut-based taro leaf stew with shrimp paste and chili.',
     'instructions': '''
-1. Heat oil, sauté garlic, onion, ginger until aromatic.
-2. Add pork and shrimp paste; cook 2 min.
-3. Pour in coconut milk and bring to simmer.
-4. Add taro leaves; do NOT stir for first 15 min—push leaves down.
-5. Simmer 40–45 min until leaves absorb liquid and soften.
-6. Stir in coconut cream & chilies; simmer 10 more min until sauce thickens. Season and serve.
+1. Prep Time (10 mins)
+If using dried taro leaves, ensure they are properly rehydrated.
+Peel and mince the garlic and ginger.
+Slice the onion.
+Cut the pork belly into small cubes.
+Slice the Thai chilies (for less heat, you can leave them whole).
+
+2. Sauté the Base (3 mins)
+In a pot, heat the cooking oil over medium heat.
+Sauté the garlic, onion, and ginger until very fragrant and the onion is soft.
+
+3. Cook the Pork and Shrimp Paste (5 mins)
+Add the pork belly cubes and cook until they start to render fat and brown slightly.
+Add the shrimp paste (bagoong alamang) and sauté for another 2 minutes to incorporate its flavor.
+
+4. Simmer with Coconut Milk (40 mins)
+Pour in the coconut milk and bring the mixture to a gentle simmer.
+Carefully add the taro leaves, pushing them down into the liquid. IMPORTANT: Do not stir for the first 15 minutes to prevent itching.
+Let it simmer uncovered for 40-45 minutes, stirring occasionally after the first 15 minutes, until the leaves have absorbed much of the liquid and the sauce has thickened.
+
+5. Add Cream and Chili (10 mins)
+Stir in the coconut cream and the sliced chilies.
+Continue to simmer for another 10 minutes until the sauce is rich and creamy, and the oil starts to separate slightly.
+Season with salt if needed. Serve hot.
 ''',
     'hasDietaryRestrictions': 'Not suitable for strict vegetarians due to shrimp paste',
     'availableFrom': '12:00',
@@ -892,11 +1023,33 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Soup, Main Dish',
     'content': 'Sour tamarind broth soup with pork and veggies.',
     'instructions': '''
-1. Boil pork with water, tomato, onion until meat is tender (~40 min).
-2. Add gabi, cook until slightly soft.
-3. Add tamarind mix; simmer until broth turns sour.
-4. Add veggies: radish/eggplant, then kangkong last.
-5. Season with fish sauce; serve hot with rice.
+1. Prep Time (8 mins)
+Wash the pork belly and cut into serving pieces.
+Slice the tomato.
+Quarter the onion.
+Peel and slice the gabi (taro) into chunks.
+Peel and slice the radish.
+Slice the eggplant.
+Wash the kangkong leaves.
+
+2. Boil the Pork (40–45 mins)
+In a large pot, combine the pork, tomato, and onion.
+Cover with about 8-10 cups of water.
+Bring to a boil, then skim off any scum that rises to the surface.
+Lower the heat, cover, and simmer for 40-45 minutes or until the pork is tender.
+
+3. Add Gabi and Tamarind (10 mins)
+Add the gabi (taro) and your tamarind seasoning mix (or fresh tamarind pulp).
+Simmer for about 10 minutes until the gabi starts to soften.
+
+4. Add Other Vegetables (5–7 mins)
+Add the radish and eggplant.
+Continue to simmer for 5-7 minutes until these vegetables are tender.
+
+5. Final Touches (2 mins)
+Add the kangkong leaves.
+Season the soup with fish sauce (patis) to your taste.
+Let it cook for just another minute until the kangkong wilts. Serve hot.
 ''',
     'hasDietaryRestrictions': 'Halal/vegetarian option if using fish instead of pork',
     'availableFrom': '11:00',
@@ -960,11 +1113,29 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Main Dish, Vegetable',
     'content': 'A creamy vegetable stew simmered in coconut milk, rich and comforting.',
     'instructions': '''
-1. Heat oil in a pan. Sauté garlic, onion, and ginger.
-2. Add vegetables and stir-fry for 2–3 minutes.
-3. Pour in coconut milk and simmer for 10–15 minutes.
-4. Add coconut cream and season with salt and pepper.
-5. Simmer until veggies are soft and sauce thickens.
+1. Prep Time (8 mins)
+Slice the string beans into 2-inch lengths.
+Peel the squash, remove seeds, and cut into cubes.
+Slice the eggplant.
+Peel and mince the garlic and ginger.
+Slice the onion.
+
+2. Sauté Aromatics (2 mins)
+In a pot, heat the cooking oil over medium heat.
+Sauté the garlic, onion, and ginger until fragrant and the onion is translucent.
+
+3. Sauté Vegetables (4–5 mins)
+Add the string beans and squash cubes.
+Stir-fry for about 4-5 minutes to lightly cook the exterior.
+
+4. Simmer in Coconut Milk (10–12 mins)
+Pour in the coconut milk and bring to a gentle simmer.
+Let it cook, uncovered, for 10-12 minutes, or until the squash is fork-tender.
+
+5. Add Cream and Season (3–5 mins)
+Stir in the coconut cream.
+Add the sliced eggplant and simmer for another 3-5 minutes until the eggplant is cooked and the sauce has thickened slightly.
+Season with salt and pepper to taste. Serve hot.
 ''',
     'hasDietaryRestrictions': 'Vegan, Halal, Gluten-Free',
     'availableFrom': '11:00',
@@ -1028,11 +1199,27 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Main Dish, Vegetable',
     'content': 'A budget-friendly sautéed squash dish that is simple and hearty.',
     'instructions': '''
-1. Sauté garlic, onion, and tomato in oil.
-2. Add pork or shrimp (if using), cook until brown.
-3. Add kalabasa and water/broth.
-4. Cover and simmer until tender.
-5. Season with salt and pepper.
+1. Prep Time (8 mins)
+Peel the kalabasa (squash), remove seeds, and cut into small cubes.
+Dice the tomato and onion.
+Mince the garlic.
+If using meat, have your ground pork or shrimp ready.
+
+2. Sauté Aromatics and Protein (5–7 mins)
+Heat oil in a pan over medium heat.
+Sauté the garlic and onion until soft and fragrant.
+Add the tomato and cook until it softens and releases its juice.
+If using, add the ground pork or shrimp and cook until browned or opaque.
+
+3. Cook the Squash (12–15 mins)
+Add the kalabasa cubes to the pan.
+Pour in about ½ cup of water or broth.
+Cover the pan and let it simmer for 12-15 minutes, or until the kalabasa is very tender and can be easily mashed with a spoon.
+
+4. Mash and Season (2–3 mins)
+You can lightly mash some of the kalabasa with the back of your spoon to thicken the sauce.
+Season with salt and plenty of ground black pepper to taste.
+Simmer for another 2-3 minutes. Serve hot.
 ''',
     'hasDietaryRestrictions': 'Vegetarian (if no meat), Halal',
     'availableFrom': '11:00',
@@ -1081,11 +1268,30 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Soup, Main Dish',
     'content': 'A tangy tamarind-based fish soup perfect for rainy days.',
     'instructions': '''
-1. In a pot, boil water, tomato, and onion.
-2. Add tamarind paste and stir.
-3. Add bangus or fish of choice; simmer for 5–7 minutes.
-4. Add vegetables; cook until tender.
-5. Add kangkong and chili last. Season and serve.
+1. Prep Time (8–10 mins)
+Clean the fish (bangus or tilapia) and cut into large slices.
+Slice the tomato.
+Quarter the onion.
+Peel and slice the radish.
+Slice the eggplant.
+Wash the kangkong leaves.
+
+2. Boil the Broth Base (5 mins)
+In a pot, bring 6-8 cups of water to a boil.
+Add the tomato and onion, and boil for about 5 minutes until they soften.
+
+3. Add Tamarind and Fish (7–10 mins)
+Stir in the tamarind seasoning mix until dissolved.
+Gently add the fish slices and simmer for 7-10 minutes until the fish is cooked through.
+
+4. Add Vegetables (5–7 mins)
+Add the radish and eggplant.
+Continue to simmer for 5-7 minutes until the vegetables are tender.
+
+5. Final Touches (2 mins)
+Add the kangkong leaves and the whole green chili (if using).
+Season with fish sauce to taste.
+Cook for just another minute until the kangkong wilts. Serve immediately.
 ''',
     'hasDietaryRestrictions': 'Halal, Pescatarian',
     'availableFrom': '11:00',
@@ -1149,11 +1355,30 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Soup, Main Dish',
     'content': 'A light and tangy shrimp soup that warms and satisfies with its sour kick.',
     'instructions': '''
-1. Boil water with tomato and onion.
-2. Add tamarind paste and let it dissolve.
-3. Add shrimp and simmer for 5 minutes.
-4. Add radish, eggplant, and sitaw.
-5. Add kangkong and green chili, season, and serve hot.
+1. Prep Time (10 mins)
+Clean the shrimp, leaving the heads on for more flavor if desired.
+Slice the tomato.
+Quarter the onion.
+Peel and slice the radish.
+Slice the eggplant and cut the sitaw into 2-inch lengths.
+Wash the kangkong leaves.
+
+2. Boil the Broth Base (5 mins)
+In a pot, bring 6-8 cups of water to a boil.
+Add the tomato and onion and boil for about 5 minutes.
+
+3. Add Tamarind and Shrimp (5–7 mins)
+Stir in the tamarind paste until it dissolves.
+Gently add the shrimp and simmer for 5-7 minutes until they turn pink and are cooked through. Do not overcook.
+
+4. Add Vegetables (5 mins)
+Add the radish, eggplant, and sitaw.
+Simmer for about 5 minutes until the vegetables are tender but still firm.
+
+5. Final Touches (2 mins)
+Add the kangkong leaves and green chili.
+Season with fish sauce to taste.
+Let it cook for just another minute until the kangkong wilts. Serve hot.
 ''',
     'hasDietaryRestrictions': 'Halal, Pescatarian',
     'availableFrom': '11:00',
@@ -1222,11 +1447,28 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Appetizer, Vegetable',
     'content': 'A crispy egg-and-chayote omelette—simple, budget-friendly, and filling.',
     'instructions': '''
-1. Squeeze excess water from grated sayote.
-2. Mix sayote with eggs, garlic, onion, flour, salt & pepper.
-3. Heat oil in pan and spoon in mixture like patties.
-4. Fry each side until golden brown.
-5. Serve hot with ketchup or vinegar dip.
+1. Prep and Grate Sayote (7 mins)
+Peel the sayote, remove the seed, and grate them using a grater.
+Place the grated sayote in a clean cloth or cheesecloth and squeeze out as much excess water as possible. This is a crucial step for a crispy torta.
+
+2. Mix the Batter (3 mins)
+In a bowl, beat the eggs.
+Add the squeezed grated sayote, minced garlic, chopped onion, and flour.
+Season with salt and pepper. Mix everything until well-combined.
+
+3. Heat the Pan (2 mins)
+Place a non-stick pan over medium heat and add enough cooking oil to coat the surface.
+Let the oil get hot.
+
+4. Fry the Patties (10–12 mins)
+Scoop about ¼ cup of the mixture and pour it into the pan, shaping it into a patty.
+Fry for about 3-4 minutes on one side until the bottom is golden brown and set.
+Carefully flip and cook the other side for another 3-4 minutes.
+Repeat with the remaining mixture.
+
+5. Drain and Serve (2 mins)
+Place the cooked Tortang Sayote on a plate lined with paper towels to drain excess oil.
+Serve hot with ketchup or a vinegar and garlic dip.
 ''',
     'hasDietaryRestrictions': 'Vegetarian, Halal',
     'availableFrom': '11:00',
@@ -1275,11 +1517,26 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Main Dish, Seafood',
     'content': 'A bold, savory squid dish stewed in soy sauce and vinegar with a hint of garlic.',
     'instructions': '''
-1. Sauté garlic and onion in oil.
-2. Add squid and cook for 1–2 minutes.
-3. Add soy sauce, vinegar, and pepper (no stirring yet).
-4. Let it boil, then simmer for 10–15 minutes.
-5. Remove from heat once sauce reduces.
+1. Prep Time (10 mins)
+Clean the squid thoroughly, removing the ink sac, quill, and innards. You can keep the ink for a darker sauce if you like.
+Leave the squid whole or slice it into rings.
+Mince the garlic and slice the onion.
+
+2. Sauté Aromatics (3 mins)
+Heat oil in a pan over medium heat.
+Sauté the garlic and onion until soft and aromatic.
+
+3. Cook the Squid (2–3 mins)
+Add the squid to the pan and cook for 2-3 minutes, stirring, until it firms up and turns opaque.
+
+4. Add Sauces and Simmer (10 mins)
+Pour in the soy sauce and vinegar. DO NOT STIR. Let the vinegar cook for about 3 minutes to lose its raw acidity.
+Add the black pepper and, if using, the optional tomato.
+After 3 minutes, you can stir. Let it simmer on low heat for 10-15 minutes until the squid is tender and the sauce has reduced. Be careful not to overcook the squid, or it will become rubbery.
+
+5. Final Reduction (2 mins)
+If there's still a lot of sauce, increase the heat for the last 2 minutes to reduce it to a glazy consistency.
+Serve hot.
 ''',
     'hasDietaryRestrictions': 'Halal, Pescatarian',
     'availableFrom': '11:00',
@@ -1338,11 +1595,26 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Main Dish',
     'content': 'A hearty Filipino classic of pork stewed in soy sauce, vinegar, and spices.',
     'instructions': '''
-1. In a pot, marinate pork in soy sauce, vinegar, garlic, pepper, and bay leaves (10–15 mins).
-2. Add water and bring to boil.
-3. Simmer over low heat until pork is tender (30–40 mins).
-4. Add oil, adjust seasoning, and reduce sauce.
-5. Serve hot with rice.
+1. Prep and Marinate (20–30 mins)
+Cut the pork belly into bite-sized cubes.
+In a large bowl, combine the pork, soy sauce, crushed garlic, peppercorns, and bay leaves.
+Let it marinate for at least 20-30 minutes.
+
+2. Initial Simmer (30–40 mins)
+Transfer the pork and its marinade into a pot.
+Add 1 cup of water.
+Bring to a boil, then reduce the heat to low, cover, and simmer for 30-40 minutes until the pork is very tender.
+
+3. Add Vinegar (5 mins)
+Uncover the pot and pour in the vinegar.
+Do not stir. Let it cook undisturbed for about 5 minutes to allow the vinegar's sharpness to mellow.
+
+4. Brown and Reduce (10–15 mins)
+You can now stir. Increase the heat to medium.
+Let the pork cook in the reducing sauce until the sauce thickens and the pork starts to sizzle and fry in its own rendered fat, getting slightly crispy edges. This should take 10-15 minutes.
+
+5. Serve
+Serve the Adobong Baboy hot with its reduced sauce, alongside steamed rice.
 ''',
     'hasDietaryRestrictions': 'Not suitable for Halal, Hypertension',
     'availableFrom': '11:00',
@@ -1396,11 +1668,29 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Main Dish, Seafood',
     'content': 'Rich and creamy crab dish simmered in coconut milk with vegetables.',
     'instructions': '''
-1. Sauté garlic, onion, and ginger in oil.
-2. Add alimango and cook for 5 minutes.
-3. Pour in coconut milk and simmer for 15 minutes.
-4. Add squash and sitaw, simmer until tender.
-5. Add coconut cream and chili. Simmer until thick and fragrant.
+1. Prep Time (10–15 mins)
+Clean the live crabs thoroughly. You can leave them whole or chop them into sections.
+Peel and mince the garlic and ginger.
+Slice the onion.
+Cut the squash into chunks and the sitaw into lengths.
+
+2. Sauté the Base (2 mins)
+In a wide pot, heat oil over medium heat.
+Sauté the garlic, onion, and ginger until very fragrant.
+
+3. Cook the Crab (5–7 mins)
+Add the crab pieces to the pot.
+Sauté for 5-7 minutes until the shells start to turn orange-red.
+
+4. Simmer in Coconut Milk (15–20 mins)
+Pour in the coconut milk and bring to a gentle boil.
+Lower the heat, cover, and simmer for 15-20 minutes to cook the crab through and infuse the flavor.
+
+5. Add Veggies and Cream (7–10 mins)
+Add the squash and sitaw.
+Continue to simmer until the vegetables are tender, about 7-10 minutes.
+Stir in the coconut cream and add the red chili.
+Simmer for another 5 minutes until the sauce is rich and creamy. Season with salt if needed.
 ''',
     'hasDietaryRestrictions': 'Pescatarian, Halal',
     'availableFrom': '11:00',
@@ -1469,10 +1759,25 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Dessert, Snack',
     'content': 'Golden fried saba bananas—crispy outside, soft and sweet inside.',
     'instructions': '''
-1. Roll banana slices in sugar.
-2. Heat oil in pan.
-3. Fry bananas until golden and caramelized.
-4. Drain on paper towel and serve hot.
+1. Prep Time (5 mins)
+Peel the saba bananas.
+You can leave them whole, slice them in half lengthwise, or diagonally into thick slices.
+Place the brown sugar on a plate.
+
+2. Coat Bananas in Sugar (2 mins)
+Roll the banana pieces in the brown sugar until they are evenly coated.
+
+3. Heat the Oil (3 mins)
+In a frying pan, pour enough cooking oil to reach about ½ inch deep.
+Heat the oil over medium heat until hot (a piece of banana should sizzle when added).
+
+4. Fry the Bananas (8–10 mins)
+Carefully place the sugar-coated bananas in the hot oil.
+Fry for about 4-5 minutes on each side, or until they are golden brown and caramelized, and the sugar forms a crispy coating.
+
+5. Drain and Cool (2 mins)
+Remove the bananas from the oil and place them on a wire rack or a plate lined with paper towels to drain excess oil.
+Let them cool for a minute or two before serving, as the caramelized sugar will be very hot.
 ''',
     'hasDietaryRestrictions': 'Vegan, Vegetarian, Halal',
     'availableFrom': '14:00',
@@ -1506,11 +1811,31 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Main Dish',
     'content': 'A sweet and tangy fried fish dish topped with sautéed vegetables in sauce.',
     'instructions': '''
-1. Fry fish until golden. Set aside.
-2. Sauté garlic, onion, carrots, and bell pepper.
-3. Add soy sauce, vinegar, and sugar.
-4. Add cornstarch slurry to thicken.
-5. Pour sauce over fried fish and serve.
+1. Prep and Fry the Fish (10–12 mins)
+Clean the fish (tilapia or bangus) and score the sides.
+Pat it completely dry with paper towels.
+Heat oil for frying in a pan over medium-high heat.
+Fry the fish until golden brown and crispy on both sides. Remove and set aside on a serving plate.
+
+2. Sauté Vegetables for Sauce (5 mins)
+In a separate pan, heat a tablespoon of oil.
+Sauté the garlic and onion until soft.
+Add the julienned carrots and bell pepper, and stir-fry for 2-3 minutes until they begin to soften.
+
+3. Combine Sauce Ingredients (2 mins)
+Pour in the soy sauce, vinegar, and about ½ cup of water.
+Add the sugar and stir until dissolved.
+Let the mixture come to a simmer.
+
+4. Thicken the Sauce (2 mins)
+In a small bowl, create a slurry by mixing the cornstarch with 2 tablespoons of water.
+While stirring the simmering sauce, slowly add the cornstarch slurry.
+Continue to cook and stir until the sauce thickens to a glossy, syrupy consistency.
+
+5. Assemble and Serve (1 min)
+Taste the sauce and adjust seasoning if needed.
+Pour the hot sweet and sour sauce with vegetables over the fried fish.
+Serve immediately.
 ''',
     'hasDietaryRestrictions': 'Pescatarian, Halal',
     'availableFrom': '11:00',
@@ -1579,10 +1904,26 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Vegetable, Main Dish',
     'content': 'Creamy coconut-based stew with squash and string beans.',
     'instructions': '''
-1. Sauté onion and garlic in oil.
-2. Add kalabasa and stir for 2 minutes.
-3. Add coconut milk and simmer.
-4. Add sitaw and shrimp. Cook until tender.
+1. Prep Time (8–10 mins)
+Peel the kalabasa, remove seeds, and cut into cubes.
+Cut the sitaw into 2-inch lengths.
+Mince the garlic and slice the onion.
+
+2. Sauté Aromatics (2 mins)
+Heat oil in a pot over medium heat.
+Sauté the garlic and onion until soft and translucent.
+
+3. Sauté Squash (2–3 mins)
+Add the kalabasa cubes and sauté for 2-3 minutes.
+
+4. Simmer in Coconut Milk (10–12 mins)
+Pour in the coconut milk and bring to a gentle simmer.
+Let it cook for 10-12 minutes until the kalabasa is almost tender.
+
+5. Add Sitaw and Shrimp (5–7 mins)
+Add the sitaw and the shrimp (if using).
+Continue to simmer for another 5-7 minutes until the sitaw is cooked but still crisp, the shrimp is pink, and the kalabasa is fully tender.
+Season with salt or fish sauce to taste. Serve hot.
 ''',
     'hasDietaryRestrictions': 'Vegetarian (if no shrimp), Vegan (if no fish), Halal',
     'availableFrom': '11:00',
@@ -1636,9 +1977,27 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Vegetable',
     'content': 'A healthy sautéed bottle gourd dish, light and perfect for lunch.',
     'instructions': '''
-1. Sauté garlic, onion, tomato in oil.
-2. Add pork/shrimp until cooked.
-3. Add upo, season, and simmer until soft.
+1. Prep Time (8 mins)
+Peel the upo (bottle gourd), remove the soft inner part with seeds, and slice into half-moons.
+Dice the tomato and onion.
+Mince the garlic.
+Prepare your protein (ground pork or shrimp).
+
+2. Sauté Aromatics and Protein (5 mins)
+Heat oil in a pan over medium heat.
+Sauté the garlic and onion until fragrant.
+Add the tomato and cook until soft.
+Add the ground pork or shrimp and cook until browned or opaque.
+
+3. Cook the Upo (8–10 mins)
+Add the sliced upo to the pan.
+Season with salt and pepper.
+You can add about ¼ cup of water to create some steam.
+Cover the pan and let it simmer for 8-10 minutes, or until the upo is translucent and tender but not mushy.
+
+4. Season and Serve (1 min)
+Do a final taste test and adjust seasoning if necessary.
+Serve hot.
 ''',
     'hasDietaryRestrictions': 'Halal (if using shrimp), Pescatarian, Not Vegan if using meat',
     'availableFrom': '11:00',
@@ -1687,9 +2046,27 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     'category': 'Breakfast, Appetizer',
     'content': 'Nutritious fried egg packed with moringa leaves for an energy boost.',
     'instructions': '''
-1. Beat eggs and mix with malunggay leaves.
-2. Heat oil and pour egg mix.
-3. Fry until cooked and serve with rice.
+1. Prep Time (3 mins)
+Crack the eggs into a bowl.
+Wash the malunggay leaves and pluck them from the stems.
+If using, mince a small amount of garlic.
+
+2. Beat the Eggs (1 min)
+Beat the eggs vigorously with a fork or whisk until the yolks and whites are fully combined.
+Stir in the malunggay leaves and minced garlic (if using). Season with a pinch of salt and pepper.
+
+3. Heat the Pan (1 min)
+Place a non-stick skillet over medium heat and add the cooking oil.
+Let the oil get hot.
+
+4. Cook the Egg (3–4 mins)
+Pour the egg and malunggay mixture into the hot skillet.
+Let it cook undisturbed for about 2 minutes until the edges are set and the bottom is golden.
+You can scramble it or flip it to cook as a single omelette until it's cooked to your liking.
+
+5. Serve Immediately
+Slide the fried egg onto a plate.
+Serve immediately while hot, ideally with a side of rice.
 ''',
     'hasDietaryRestrictions': 'Halal, Vegetarian',
     'availableFrom': '07:00',

@@ -67,97 +67,145 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F1DC),
-      appBar: AppBar(
-        title: const Text(
-          'User Management',
-          style: TextStyle(
-            fontFamily: 'PixelifySans',
-            fontWeight: FontWeight.bold,
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
-        backgroundColor: const Color(0xFFFFFF66),
-        foregroundColor: Colors.black,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+        child: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search and Filter
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search users...',
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          'User Management',
+                          style: TextStyle(
+                            fontFamily: 'Orbitron',
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withOpacity(0.3),
+                                offset: const Offset(2, 2),
+                                blurRadius: 6,
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          FilterChip(
-                            label: const Text('All Users'),
-                            onSelected: (_) {
-                              setState(() {
-                                _selectedFilter = 'All Users';
-                                _filterUsers();
-                              });
-                            },
-                            selected: _selectedFilter == 'All Users',
-                          ),
-                          const SizedBox(width: 8),
-                          FilterChip(
-                            label: const Text('Admins'),
-                            onSelected: (_) {
-                              setState(() {
-                                _selectedFilter = 'Admins';
-                                _filterUsers();
-                              });
-                            },
-                            selected: _selectedFilter == 'Admins',
-                          ),
-                          const SizedBox(width: 8),
-                          FilterChip(
-                            label: const Text('Regular'),
-                            onSelected: (_) {
-                              setState(() {
-                                _selectedFilter = 'Regular';
-                                _filterUsers();
-                              });
-                            },
-                            selected: _selectedFilter == 'Regular',
-                          ),
-                        ],
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Search users...',
+                      hintStyle: TextStyle(color: Colors.black54),
+                      suffixIcon: Icon(Icons.search, color: Color(0xFF184E77)),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      FilterChip(
+                        label: const Text('All Users'),
+                        labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                        selectedColor: const Color(0xFFB5E48C),
+                        onSelected: (_) {
+                          setState(() {
+                            _selectedFilter = 'All Users';
+                            _filterUsers();
+                          });
+                        },
+                        selected: _selectedFilter == 'All Users',
+                      ),
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: const Text('Admins'),
+                        labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                        selectedColor: const Color(0xFFB5E48C),
+                        onSelected: (_) {
+                          setState(() {
+                            _selectedFilter = 'Admins';
+                            _filterUsers();
+                          });
+                        },
+                        selected: _selectedFilter == 'Admins',
+                      ),
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: const Text('Regular'),
+                        labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                        selectedColor: const Color(0xFFB5E48C),
+                        onSelected: (_) {
+                          setState(() {
+                            _selectedFilter = 'Regular';
+                            _filterUsers();
+                          });
+                        },
+                        selected: _selectedFilter == 'Regular',
                       ),
                     ],
                   ),
                 ),
               ),
-              
               const SizedBox(height: 16),
-              
-              // Users List
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : ListView.builder(
-                        itemCount: _filteredUsers.length,
-                        itemBuilder: (context, index) {
-                          final user = _filteredUsers[index];
-                          return _UserCard(
-                            user: user,
-                            onRefresh: _refreshUsers,
-                          );
-                        },
+                    : RefreshIndicator(
+                        onRefresh: _refreshUsers,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _filteredUsers.length,
+                          itemBuilder: (context, index) {
+                            final user = _filteredUsers[index];
+                            return _UserCard(
+                              user: user,
+                              onRefresh: _refreshUsers,
+                            );
+                          },
+                        ),
                       ),
               ),
             ],
@@ -168,8 +216,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         onPressed: () {
           _showAddUserDialog(context);
         },
-        backgroundColor: const Color(0xFFFFFF66),
-        child: const Icon(Icons.person_add, color: Colors.black),
+        backgroundColor: const Color(0xFFB5E48C),
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(Icons.person_add, color: Color(0xFF184E77)),
       ),
     );
   }
@@ -183,26 +235,62 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add New User'),
+        backgroundColor: Colors.white.withOpacity(0.9),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Add New User',
+          style: TextStyle(
+            fontFamily: 'Orbitron',
+            color: Color(0xFF184E77),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Full Name'),
+                decoration: InputDecoration(
+                  labelText: 'Full Name',
+                  labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
+              const SizedBox(height: 8),
               TextField(
                 controller: emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
+              const SizedBox(height: 8),
               TextField(
                 controller: usernameController,
-                decoration: const InputDecoration(labelText: 'Username'),
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: userType,
+                decoration: InputDecoration(
+                  labelText: 'User Type',
+                  labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 items: ['Regular', 'Admin'].map((String value) {
                   return DropdownMenuItem(
                     value: value,
@@ -212,7 +300,6 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 onChanged: (value) {
                   userType = value;
                 },
-                decoration: const InputDecoration(labelText: 'User Type'),
               ),
             ],
           ),
@@ -220,7 +307,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF184E77))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -245,9 +332,11 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               _refreshUsers();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFFF66),
+              backgroundColor: const Color(0xFFB5E48C),
+              foregroundColor: const Color(0xFF184E77),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             ),
-            child: const Text('Add User', style: TextStyle(color: Colors.black)),
+            child: const Text('Add User'),
           ),
         ],
       ),
@@ -271,40 +360,64 @@ class _UserCard extends StatelessWidget {
     final type = user['isAdmin'] == 1 ? 'Admin' : 'Regular';
     final joinDate = user['createdAt']?.substring(0, 10) ?? 'Unknown';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: type == 'Admin' ? Colors.red : Colors.blue,
+          backgroundColor: type == 'Admin' ? const Color(0xFF184E77) : const Color(0xFFB5E48C),
           child: Text(
             name.isNotEmpty ? name[0] : '?',
             style: const TextStyle(color: Colors.white),
           ),
         ),
-        title: Text(name),
+        title: Text(
+          name,
+          style: const TextStyle(
+            color: Color(0xFF184E77),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(user['email'] ?? ''),
-            Text('Joined: $joinDate'),
+            Text(
+              user['email'] ?? '',
+              style: const TextStyle(color: Colors.black54),
+            ),
+            Text(
+              'Joined: $joinDate',
+              style: const TextStyle(color: Colors.black54),
+            ),
           ],
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: status == 'Active' ? Colors.green : Colors.grey,
-                borderRadius: BorderRadius.circular(12),
+                color: status == 'Active' ? const Color(0xFFB5E48C) : Colors.grey,
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 status,
-                style: const TextStyle(color: Colors.white, fontSize: 12),
+                style: const TextStyle(color: Color(0xFF184E77), fontSize: 12),
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.more_vert),
+              icon: const Icon(Icons.more_vert, color: Color(0xFF184E77)),
               onPressed: () {
                 _showUserOptions(context);
               },
@@ -318,28 +431,32 @@ class _UserCard extends StatelessWidget {
   void _showUserOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white.withOpacity(0.9),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.edit),
-            title: const Text('Edit User'),
+            leading: const Icon(Icons.edit, color: Color(0xFF184E77)),
+            title: const Text('Edit User', style: TextStyle(color: Color(0xFF184E77))),
             onTap: () {
               Navigator.pop(context);
               _showEditUserDialog(context);
             },
           ),
           ListTile(
-            leading: const Icon(Icons.delete),
-            title: const Text('Delete User'),
+            leading: const Icon(Icons.delete, color: Colors.red),
+            title: const Text('Delete User', style: TextStyle(color: Colors.red)),
             onTap: () {
               Navigator.pop(context);
               _showDeleteConfirmation(context);
             },
           ),
           ListTile(
-            leading: const Icon(Icons.visibility),
-            title: const Text('View Details'),
+            leading: const Icon(Icons.visibility, color: Color(0xFF184E77)),
+            title: const Text('View Details', style: TextStyle(color: Color(0xFF184E77))),
             onTap: () {
               Navigator.pop(context);
               _showUserDetails(context);
@@ -359,26 +476,62 @@ class _UserCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit User'),
+        backgroundColor: Colors.white.withOpacity(0.9),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Edit User',
+          style: TextStyle(
+            fontFamily: 'Orbitron',
+            color: Color(0xFF184E77),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Full Name'),
+                decoration: InputDecoration(
+                  labelText: 'Full Name',
+                  labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
+              const SizedBox(height: 8),
               TextField(
                 controller: emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
+              const SizedBox(height: 8),
               TextField(
                 controller: usernameController,
-                decoration: const InputDecoration(labelText: 'Username'),
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: userType,
+                decoration: InputDecoration(
+                  labelText: 'User Type',
+                  labelStyle: const TextStyle(color: Color(0xFF184E77)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 items: ['Regular', 'Admin'].map((String value) {
                   return DropdownMenuItem(
                     value: value,
@@ -388,7 +541,6 @@ class _UserCard extends StatelessWidget {
                 onChanged: (value) {
                   userType = value;
                 },
-                decoration: const InputDecoration(labelText: 'User Type'),
               ),
             ],
           ),
@@ -396,7 +548,7 @@ class _UserCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF184E77))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -420,9 +572,11 @@ class _UserCard extends StatelessWidget {
               onRefresh();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFFF66),
+              backgroundColor: const Color(0xFFB5E48C),
+              foregroundColor: const Color(0xFF184E77),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             ),
-            child: const Text('Save', style: TextStyle(color: Colors.black)),
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -433,12 +587,21 @@ class _UserCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete User'),
+        backgroundColor: Colors.white.withOpacity(0.9),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Delete User',
+          style: TextStyle(
+            fontFamily: 'Orbitron',
+            color: Color(0xFF184E77),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: Text('Are you sure you want to delete ${user['firstName']} ${user['lastName']}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF184E77))),
           ),
           TextButton(
             onPressed: () async {
@@ -472,31 +635,40 @@ class _UserCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('User Details: ${user['firstName']} ${user['lastName']}'),
+        backgroundColor: Colors.white.withOpacity(0.9),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'User Details: ${user['firstName']} ${user['lastName']}',
+          style: const TextStyle(
+            fontFamily: 'Orbitron',
+            color: Color(0xFF184E77),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Name: ${user['firstName']} ${user['lastName']}'),
-              Text('Email: ${user['email']}'),
-              Text('Username: ${user['username']}'),
-              Text('Type: ${user['isAdmin'] == 1 ? 'Admin' : 'Regular'}'),
-              Text('Join Date: ${user['createdAt']?.substring(0, 10) ?? 'Unknown'}'),
-              Text('Status: ${user['isActive'] == 1 ? 'Active' : 'Inactive'}'),
+              Text('Name: ${user['firstName']} ${user['lastName']}', style: const TextStyle(color: Color(0xFF184E77))),
+              Text('Email: ${user['email']}', style: const TextStyle(color: Color(0xFF184E77))),
+              Text('Username: ${user['username']}', style: const TextStyle(color: Color(0xFF184E77))),
+              Text('Type: ${user['isAdmin'] == 1 ? 'Admin' : 'Regular'}', style: const TextStyle(color: Color(0xFF184E77))),
+              Text('Join Date: ${user['createdAt']?.substring(0, 10) ?? 'Unknown'}', style: const TextStyle(color: Color(0xFF184E77))),
+              Text('Status: ${user['isActive'] == 1 ? 'Active' : 'Inactive'}', style: const TextStyle(color: Color(0xFF184E77))),
               const SizedBox(height: 16),
-              const Text('Dietary Restrictions:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(user['dietaryRestrictions'] ?? 'None'),
+              const Text('Dietary Restrictions:', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF184E77))),
+              Text(user['dietaryRestrictions'] ?? 'None', style: const TextStyle(color: Color(0xFF184E77))),
               const SizedBox(height: 16),
-              const Text('Favorite Meals:', style: TextStyle(fontWeight: FontWeight.bold)),
-              ...favoriteMeals.map((meal) => Text('• ${meal['mealName']}')),
+              const Text('Favorite Meals:', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF184E77))),
+              ...favoriteMeals.map((meal) => Text('• ${meal['mealName']}', style: const TextStyle(color: Color(0xFF184E77)))),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('Close', style: TextStyle(color: Color(0xFF184E77))),
           ),
         ],
       ),

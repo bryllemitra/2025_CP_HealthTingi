@@ -40,7 +40,7 @@ class FAQSPage extends StatelessWidget {
                               style: TextStyle(
                                 fontFamily: 'Orbitron',
                                 fontWeight: FontWeight.bold,
-                                fontSize: 24,
+                                fontSize: 22,
                                 color: Colors.white,
                                 shadows: [
                                   Shadow(
@@ -56,7 +56,7 @@ class FAQSPage extends StatelessWidget {
                               style: TextStyle(
                                 fontFamily: 'Orbitron',
                                 fontWeight: FontWeight.bold,
-                                fontSize: 24,
+                                fontSize: 22,
                                 color: Colors.white,
                                 shadows: [
                                   Shadow(
@@ -82,23 +82,6 @@ class FAQSPage extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Logo with soft highlight glow
-                        Container(
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.3),
-                                blurRadius: 25,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: Image.asset(
-                            'assets/logo.png',
-                            width: 120,
-                            height: 120,
-                          ),
-                        ),
                         const SizedBox(height: 24),
                         Container(
                           margin: const EdgeInsets.all(16),
