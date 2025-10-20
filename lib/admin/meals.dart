@@ -1,9 +1,11 @@
+// Updated admin/meals.dart with multiple image support
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:photo_view/photo_view.dart';
 
 class AdminMealsPage extends StatefulWidget {
   final int userId;
@@ -270,6 +272,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
     final toController = TextEditingController();
     final restrictionsController = TextEditingController();
     String? _selectedImagePath;
+    List<String> _additionalImages = [];
 
     showDialog(
       context: context,
@@ -354,6 +357,14 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
+                  const Text(
+                    'Default Meal Image',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF184E77),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -373,7 +384,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                         }
                       },
                       icon: const Icon(Icons.image),
-                      label: const Text('Add Meal Image'),
+                      label: const Text('Add Default Image'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF184E77),
                         foregroundColor: Colors.white,
@@ -418,6 +429,84 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                       ),
                     ),
                   const SizedBox(height: 24),
+                  const Text(
+                    'Additional Images (up to 5)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF184E77),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_additionalImages.isNotEmpty)
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _additionalImages.length,
+                      itemBuilder: (context, index) {
+                        final path = _additionalImages[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    p.basename(path),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () {
+                                    setDialogState(() {
+                                      _additionalImages.removeAt(index);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  if (_additionalImages.length < 5)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final ImagePicker picker = ImagePicker();
+                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) {
+                            final directory = await getApplicationDocumentsDirectory();
+                            final imagesDir = Directory('${directory.path}/meal_images');
+                            await imagesDir.create(recursive: true);
+                            final fileName = p.basename(image.path);
+                            final savedPath = '${imagesDir.path}/$fileName';
+                            await File(image.path).copy(savedPath);
+                            setDialogState(() {
+                              _additionalImages.add(savedPath);
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.add_photo_alternate),
+                        label: const Text('Add Additional Image'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF76C893),
+                          foregroundColor: Colors.white,
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
                   Row(
                     children: [
                       Expanded(
@@ -451,6 +540,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                               'content': '',
                               'instructions': '',
                               'mealPicture': _selectedImagePath,
+                              'additionalPictures': _additionalImages.join(','),
                             };
                             final dbHelper = DatabaseHelper();
                             await dbHelper.insertMeal(meal);
@@ -861,6 +951,9 @@ class _MealCard extends StatelessWidget {
   Future<void> _showMealDetails(BuildContext context) async {
     final dbHelper = DatabaseHelper();
     final ingredients = await dbHelper.getMealIngredients(meal['mealID']);
+    print('Meal additionalPictures: ${meal['additionalPictures']}');
+    final additionalPictures = (meal['additionalPictures'] as String? ?? '').split(',').where((p) => p.isNotEmpty).toList();
+    final allImages = [meal['mealPicture'] as String?, ...additionalPictures].where((p) => p != null && p.isNotEmpty).cast<String>().toList();
 
     showDialog(
       context: context,
@@ -888,17 +981,49 @@ class _MealCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (meal['mealPicture'] != null)
-                  Center(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
-                      child: SizedBox(
-                        width: 200,
-                        height: 150,
-                        child: _getMealImage(meal['mealPicture']),
-                      ),
+                if (allImages.isNotEmpty)
+                  SizedBox(
+                    height: 150,
+                    child: PageView.builder(
+                      itemCount: allImages.length,
+                      itemBuilder: (context, index) {
+                        final path = allImages[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => GestureDetector(
+                                  onTap: () => Navigator.pop(context),
+                                  child: PhotoView(
+                                    imageProvider: path.startsWith('assets/') ? AssetImage(path) : FileImage(File(path)),
+                                    backgroundDecoration: const BoxDecoration(color: Colors.black),
+                                    minScale: PhotoViewComputedScale.contained,
+                                    maxScale: PhotoViewComputedScale.covered * 4.0,
+                                    heroAttributes: PhotoViewHeroAttributes(tag: path),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: SizedBox(
+                                width: 200,
+                                child: path.startsWith('assets/') 
+                                  ? Image.asset(path, fit: BoxFit.cover)
+                                  : Image.file(File(path), fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.broken_image, size: 100);
+                                    }),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  ),
+                  )
+                else
+                  const Center(child: Text('No images available')),
                 const SizedBox(height: 20),
                 _buildDetailItem('Name', meal['mealName'] ?? 'Unknown'),
                 _buildDetailItem('Category', meal['category'] ?? ''),
@@ -992,6 +1117,7 @@ class _MealCard extends StatelessWidget {
     final toController = TextEditingController(text: meal['availableTo']);
     final restrictionsController = TextEditingController(text: meal['hasDietaryRestrictions']);
     String? _selectedImagePath = meal['mealPicture'];
+    List<String> _additionalImages = (meal['additionalPictures'] as String? ?? '').split(',').where((p) => p.isNotEmpty).toList();
 
     showDialog(
       context: context,
@@ -1076,6 +1202,14 @@ class _MealCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
+                  const Text(
+                    'Default Meal Image',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF184E77),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -1095,7 +1229,7 @@ class _MealCard extends StatelessWidget {
                         }
                       },
                       icon: const Icon(Icons.image),
-                      label: Text(_selectedImagePath == null ? 'Add Meal Image' : 'Change Meal Image'),
+                      label: Text(_selectedImagePath == null ? 'Add Default Image' : 'Change Default Image'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF184E77),
                         foregroundColor: Colors.white,
@@ -1127,14 +1261,6 @@ class _MealCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                              onPressed: () {
-                                setDialogState(() {
-                                  _selectedImagePath = null;
-                                });
-                              },
-                            ),
                           ],
                         ),
                       ),
@@ -1142,7 +1268,85 @@ class _MealCard extends StatelessWidget {
                   else
                     const Padding(
                       padding: EdgeInsets.only(top: 8),
-                      child: Text('No image selected', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      child: Text('No default image', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Additional Images (up to 5)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF184E77),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_additionalImages.isNotEmpty)
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _additionalImages.length,
+                      itemBuilder: (context, index) {
+                        final path = _additionalImages[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    p.basename(path),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () {
+                                    setDialogState(() {
+                                      _additionalImages.removeAt(index);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  if (_additionalImages.length < 5)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final ImagePicker picker = ImagePicker();
+                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) {
+                            final directory = await getApplicationDocumentsDirectory();
+                            final imagesDir = Directory('${directory.path}/meal_images');
+                            await imagesDir.create(recursive: true);
+                            final fileName = p.basename(image.path);
+                            final savedPath = '${imagesDir.path}/$fileName';
+                            await File(image.path).copy(savedPath);
+                            setDialogState(() {
+                              _additionalImages.add(savedPath);
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.add_photo_alternate),
+                        label: const Text('Add Additional Image'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF76C893),
+                          foregroundColor: Colors.white,
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
                     ),
                   const SizedBox(height: 24),
                   Row(
@@ -1174,6 +1378,7 @@ class _MealCard extends StatelessWidget {
                               'availableFrom': fromController.text,
                               'availableTo': toController.text,
                               'mealPicture': _selectedImagePath,
+                              'additionalPictures': _additionalImages.join(','),
                             };
                             final dbHelper = DatabaseHelper();
                             await dbHelper.updateMeal(meal['mealID'], updates);

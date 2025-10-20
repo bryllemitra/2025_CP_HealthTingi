@@ -26,7 +26,7 @@ android {
         applicationId = "com.example.heath_tingi"
         
         // ✅ Override targetSdk to match SDK 35 requirement
-        minSdk = 23       //flutter.minSdkVersion
+        minSdkVersion = flutter.minSdkVersion       //flutter.minSdkVersion
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName

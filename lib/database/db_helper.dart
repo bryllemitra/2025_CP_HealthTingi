@@ -7,7 +7,7 @@ import 'dart:convert';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _currentVersion = 11; 
+  static const int _currentVersion = 13; 
 
   factory DatabaseHelper() => _instance;
 
@@ -39,8 +39,12 @@ class DatabaseHelper {
     await _createMealsTable(db);
     await _createMealIngredientsTable(db);
     await _createUsersTable(db);
+    await _createFaqsTable(db);
+    await _createAboutUsTable(db);
     await _insertAdminUser(db);
     await _insertInitialData(db);
+    await _insertInitialFaqs(db);
+    await _insertInitialAboutUs(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -89,6 +93,12 @@ class DatabaseHelper {
     }
     if (oldVersion < 11) {
       await db.execute('ALTER TABLE ingredients ADD COLUMN additionalPictures TEXT');
+    }
+    if (oldVersion < 13) {
+      await _createFaqsTable(db);
+      await _createAboutUsTable(db);
+      await _insertInitialFaqs(db);
+      await _insertInitialAboutUs(db);
     }
   }
 
@@ -195,6 +205,8 @@ class DatabaseHelper {
     await db.execute('DROP TABLE IF EXISTS ingredients');
     await db.execute('DROP TABLE IF EXISTS meals');
     await db.execute('DROP TABLE IF EXISTS meal_ingredients');
+    await db.execute('DROP TABLE IF EXISTS faqs');
+    await db.execute('DROP TABLE IF EXISTS about_us');
     await _onCreate(db, _currentVersion);
   }
 
@@ -234,7 +246,7 @@ class DatabaseHelper {
         calories INTEGER NOT NULL,
         nutritionalValue TEXT NOT NULL,
         ingredientPicture TEXT,
-        category TEXT
+        category TEXT,
         additionalPictures TEXT
       )
     ''');
@@ -276,6 +288,95 @@ class DatabaseHelper {
         FOREIGN KEY (ingredientID) REFERENCES ingredients(ingredientID)
       )
     ''');
+  }
+
+  
+
+  Future<void> _createFaqsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE faqs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        order_num INTEGER DEFAULT 0
+      )
+    ''');
+  }
+
+  Future<void> _createAboutUsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE about_us (
+        id INTEGER PRIMARY KEY,
+        content TEXT NOT NULL
+      )
+    ''');
+  }
+
+  Future<void> _insertInitialFaqs(Database db) async {
+    List<Map<String, dynamic>> initialFaqs = [
+      {
+        'question': '1. What is HealthTingi?',
+        'answer': 'HealthTingi is an Android app that helps you scan ingredients using your phone’s camera and suggests budget-friendly recipes you can cook with them—even without an internet connection.',
+        'order_num': 1
+      },
+      {
+        'question': '2. Who is the app for?',
+        'answer': 'It’s specially designed for low-income Filipino households, but anyone looking for affordable and nutritious meals can use it.',
+        'order_num': 2
+      },
+      {
+        'question': '3. Do I need Wi-Fi or mobile data to use it?',
+        'answer': 'No. HealthTingi works offline, so you can use all main features like scanning, viewing recipes, and searching ingredients anytime.',
+        'order_num': 3
+      },
+      {
+        'question': '4. How does the scanner work?',
+        'answer': 'Just take a photo of your ingredients, and the app will identify multiple items at once using image recognition powered by a trained AI model.',
+        'order_num': 4
+      },
+      {
+        'question': '5. Can I still get recipe suggestions if I don’t have a complete ingredient list?',
+        'answer': 'Yes! HealthTingi shows substitution options and recommends recipes based on what you do have.',
+        'order_num': 5
+      },
+      {
+        'question': '6. What if prices in my area are different?',
+        'answer': 'You can manually input or update prices, and the app averages community-submitted prices to stay accurate for your location.',
+        'order_num': 6
+      },
+      {
+        'question': '7. Is it free to use?',
+        'answer': 'Yes, HealthTingi is completely free.',
+        'order_num': 7
+      },
+      {
+        'question': '8. Where does the recipe and nutrition data come from?',
+        'answer': 'The app uses locally sourced data and Filipino recipes tailored to ingredients commonly found in local markets.',
+        'order_num': 8
+      },
+      {
+        'question': '9. How does it know what recipes are affordable for me?',
+        'answer': 'You can enter your budget (like ₱70), and the app filters out recipes that exceed it, using current ingredient prices.',
+        'order_num': 9
+      },
+      {
+        'question': '10. Can I suggest a recipe or report a problem?',
+        'answer': 'Yes, you can suggest recipes or feedback through the app’s “Contact Us” feature (if included), or by email.',
+        'order_num': 10
+      },
+    ];
+
+    for (var faq in initialFaqs) {
+      await db.insert('faqs', faq);
+    }
+  }
+
+  Future<void> _insertInitialAboutUs(Database db) async {
+    await db.insert('about_us', {
+      'id': 1,
+      'content': 'HealthTingi is a mobile application designed to promote affordable and nutritious eating for low-income Filipino households. Built with accessibility in mind, the app helps users identify ingredients using a simple photo and suggests budget-friendly recipes based on what they have and how much they can spend.\n\n'
+          'By combining real-time ingredient recognition, a local price-aware recipe engine, and offline access, HealthTingi empowers families to make the most of what’s available—whether in urban or rural communities. Our mission is to use simple technology to address food insecurity, improve nutrition, and support smarter meal planning across the Philippines.'
+    });
   }
 
   Future<void> _insertInitialData(Database db) async {
@@ -2463,6 +2564,61 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     ''', [...ingredientNames, limit]);
 
     return result;
+  }
+
+  // ========== FAQ OPERATIONS ==========
+  Future<List<Map<String, dynamic>>> getFaqs() async {
+    final db = await database;
+    return await db.query('faqs', orderBy: 'order_num ASC');
+  }
+
+  Future<int> insertFaq(Map<String, dynamic> faq) async {
+    final db = await database;
+    // Set order_num to max + 1
+    final maxOrder = await db.rawQuery('SELECT MAX(order_num) as max FROM faqs');
+    int newOrder = (maxOrder.first['max'] as int? ?? 0) + 1;
+    faq['order_num'] = newOrder;
+    return await db.insert('faqs', faq);
+  }
+
+  Future<int> updateFaq(int id, Map<String, dynamic> updates) async {
+    final db = await database;
+    return await db.update('faqs', updates, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteFaq(int id) async {
+    final db = await database;
+    return await db.delete('faqs', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> reorderFaqs(List<Map<String, dynamic>> faqs) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      for (int i = 0; i < faqs.length; i++) {
+        await txn.update(
+          'faqs',
+          {'order_num': i + 1},
+          where: 'id = ?',
+          whereArgs: [faqs[i]['id']],
+        );
+      }
+    });
+  }
+
+  // ========== ABOUT US OPERATIONS ==========
+  Future<String?> getAboutUsContent() async {
+    final db = await database;
+    final result = await db.query('about_us', limit: 1);
+    return result.isNotEmpty ? result.first['content'] as String? : null;
+  }
+
+  Future<int> updateAboutUsContent(String content) async {
+    final db = await database;
+    if (await db.query('about_us').then((res) => res.isEmpty)) {
+      return await db.insert('about_us', {'id': 1, 'content': content});
+    } else {
+      return await db.update('about_us', {'content': content}, where: 'id = 1');
+    }
   }
 
 }

@@ -48,7 +48,7 @@ dependencies:
   intl: ^0.20.2
   fl_chart: ^0.68.0
   animate_do: ^3.3.4
-
+  photo_view: ^0.15.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -126,6 +126,7 @@ flutter:
     - assets/data/ingredients.json
     - assets/data/substitutions.json
     - assets/ingredients/
+    - assets/meals/
     - assets/tinolang_manok.jpg
     - assets/escabeche.jpg
     - assets/green.jpg
