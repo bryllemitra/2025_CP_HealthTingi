@@ -254,6 +254,10 @@ class DatabaseHelper {
     await db.execute('''
       CREATE INDEX idx_ingredient_name ON ingredients(ingredientName)
     ''');
+
+    await db.execute('''
+    CREATE INDEX idx_ingredient_name_lower ON ingredients(LOWER(ingredientName))
+  ''');
   }
 
   Future<void> _createMealsTable(Database db) async {

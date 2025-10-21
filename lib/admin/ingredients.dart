@@ -911,7 +911,7 @@ class _IngredientCard extends StatelessWidget {
         child: Icon(Icons.kitchen, color: const Color(0xFF184E77).withOpacity(0.7)),
       );
     }
-    if (path.startsWith('assets/data')) {
+    if (path.startsWith('assets/ingredients/')) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.asset(path, width: 60, height: 60, fit: BoxFit.cover),

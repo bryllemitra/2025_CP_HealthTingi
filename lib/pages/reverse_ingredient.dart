@@ -344,7 +344,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                         style: const TextStyle(fontFamily: 'Orbitron', color: Color(0xFF184E77)),
                       ),
                       subtitle: Text(
-                        'Php ${ingredient['price']?.toStringAsFixed(2) ?? '0.00'}',
+                        'Php ${ingredient['price'] is num ? (ingredient['price'] as num).toStringAsFixed(2) : ingredient['price']?.toString() ?? '0.00'}',
                         style: const TextStyle(fontFamily: 'Orbitron', fontSize: 12, color: Color(0xFF76C893)),
                       ),
                       trailing: isAlreadyAdded

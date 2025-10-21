@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'ingredient_details.dart';
 import '../pages/meal_scan.dart';
 import '../pages/meal_details.dart';
@@ -28,6 +29,11 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isLoadingRecipes = false;
+  
+  // NEW: Debounce timer for search
+  Timer? _searchDebounce;
+  // NEW: Cache for search results
+  final Map<String, List<Map<String, dynamic>>> _searchCache = {};
 
   @override
   void initState() {
@@ -36,6 +42,13 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
     _loadAllIngredients();
     _loadIngredientDetails();
     _loadRecipeSuggestions();
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadAllIngredients() async {
@@ -62,6 +75,50 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
         print('Error loading details for $ingredientName: $e');
       }
     }
+  }
+
+  // NEW: Optimized search handler with debouncing
+  void _onSearchChanged(String value) {
+    // Cancel previous timer if it exists
+    _searchDebounce?.cancel();
+    
+    // Set new timer for debouncing
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (_searchQuery != value) {
+        setState(() {
+          _searchQuery = value;
+        });
+      }
+    });
+  }
+
+  // NEW: Optimized filtered ingredients with caching
+  List<Map<String, dynamic>> get filteredIngredients {
+    if (_searchQuery.isEmpty) return [];
+    
+    // Check cache first
+    if (_searchCache.containsKey(_searchQuery)) {
+      return _searchCache[_searchQuery]!;
+    }
+    
+    final lowerQuery = _searchQuery.toLowerCase();
+    final lowerExisting = ingredients.map((i) => i.toLowerCase()).toSet();
+    
+    final results = allIngredients.where((ing) {
+      final name = ing['ingredientName']?.toString().toLowerCase() ?? '';
+      return name.contains(lowerQuery) && !lowerExisting.contains(name);
+    }).toList();
+    
+    // Cache the results
+    _searchCache[_searchQuery] = results;
+    
+    // Limit cache size to prevent memory issues
+    if (_searchCache.length > 20) {
+      final firstKey = _searchCache.keys.first;
+      _searchCache.remove(firstKey);
+    }
+    
+    return results;
   }
 
   Future<void> _loadRecipeSuggestions() async {
@@ -157,16 +214,6 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
         _isLoadingRecipes = false;
       });
     }
-  }
-
-  List<Map<String, dynamic>> get filteredIngredients {
-    if (_searchQuery.isEmpty) return [];
-    final lowerQuery = _searchQuery.toLowerCase();
-    final lowerExisting = ingredients.map((i) => i.toLowerCase()).toSet();
-    return allIngredients.where((ing) {
-      final name = ing['ingredientName']?.toString().toLowerCase() ?? '';
-      return name.contains(lowerQuery) && !lowerExisting.contains(name);
-    }).toList();
   }
 
   @override
@@ -300,11 +347,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                     border: InputBorder.none,
                                     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                   ),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _searchQuery = value;
-                                    });
-                                  },
+                                  onChanged: _onSearchChanged, // CHANGED: Use optimized handler
                                 ),
                               ),
                             ],
@@ -339,7 +382,8 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-                                ...filteredIngredients.map((ing) {
+                                // NEW: Limited results with lazy loading
+                                ...filteredIngredients.take(10).map((ing) {
                                   final name = ing['ingredientName'] as String;
                                   return Container(
                                     margin: const EdgeInsets.only(bottom: 8),
@@ -394,12 +438,26 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                           _ingredientDetails[name] = ing;
                                           _searchController.clear();
                                           _searchQuery = '';
+                                          _searchCache.clear(); // NEW: Clear cache when search is cleared
                                           _loadRecipeSuggestions();
                                         });
                                       },
                                     ),
                                   );
                                 }).toList(),
+                                // NEW: Show message if there are more results
+                                if (filteredIngredients.length > 10)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Text(
+                                      '... and ${filteredIngredients.length - 10} more results',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
