@@ -1,3 +1,4 @@
+// Modified: pages/meal_details.dart
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import 'dart:async';
@@ -6,6 +7,7 @@ import '../searchMeals/history.dart'; // Import HistoryPage to access completed 
 import 'reverse_ingredient.dart'; // Add this import for navigation
 import 'dart:io';
 import 'package:photo_view/photo_view.dart';
+import 'meal_steps.dart'; // Add this import for the new page
 
 class MealDetailsPage extends StatefulWidget {
   final int mealId;
@@ -26,13 +28,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
   bool _isFavorite = false;
   bool _isLoading = false;
   String? _errorMessage;
-  bool _isCookingMode = false;
-  int _currentStepIndex = 0;
-  DateTime? _cookingStartTime;
-  DateTime? _cookingEndTime;
-  Map<int, int> _stepRemainingTimes = {};
-  Map<int, int> _stepOriginalDurations = {};
-  Map<int, Timer?> _stepTimers = {};
   late PageController _imagePageController;
   int _currentImageIndex = 0;
   Timer? _carouselTimer;
@@ -55,7 +50,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
   void dispose() {
     _carouselTimer?.cancel();
     _imagePageController.dispose();
-    _stepTimers.values.forEach((timer) => timer?.cancel());
     super.dispose();
   }
 
@@ -129,78 +123,15 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       
       title = title.replaceAll(RegExp(r'\s*\(.*?\)'), '').trim();
       
-      int stepIndex = steps.length;
       steps.add({
         'number': int.parse(match.group(1)!),
         'title': title,
         'content': content,
         'duration': duration,
       });
-      _stepOriginalDurations[stepIndex] = duration;
     }
     
     return steps;
-  }
-
-  void _pauseStepTimer(int index) {
-    if (_stepTimers.containsKey(index)) {
-      _stepTimers[index]?.cancel();
-      _stepTimers[index] = null;
-    }
-  }
-
-  void _resetStepTimer(int index) {
-    _stepRemainingTimes[index] = _stepOriginalDurations[index] ?? 0;
-  }
-
-  void _startStepTimer(int index, List<Map<String, dynamic>> steps) {
-    if (!_stepRemainingTimes.containsKey(index)) {
-      _stepRemainingTimes[index] = _stepOriginalDurations[index] ?? 0;
-    }
-
-    if (_stepRemainingTimes[index]! > 0 && _stepTimers[index] == null) {
-      _stepTimers[index] = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (_stepRemainingTimes[index]! > 0) {
-          setState(() {
-            _stepRemainingTimes[index] = _stepRemainingTimes[index]! - 1;
-          });
-        } else {
-          timer.cancel();
-          _stepTimers[index] = null;
-          // Auto-advance to next step if not the last
-          if (_currentStepIndex < steps.length - 1) {
-            _currentStepIndex++;
-            _startStepTimer(_currentStepIndex, steps);
-          }
-        }
-      });
-    }
-  }
-
-  Future<void> _saveToCompletedHistory() async {
-    if (widget.userId == 0) return;
-
-    try {
-      final mealData = await _mealDataFuture;
-      if (mealData == null) throw Exception('Meal data not loaded');
-
-      HistoryPage.addCompletedMeal({
-        'mealID': widget.mealId,
-        'mealName': mealData['mealName'],
-        'mealPicture': mealData['mealPicture'] ?? 'assets/default_meal.jpg',
-        'servings': mealData['servings'] ?? 1,
-        'completedAt': _cookingEndTime ?? DateTime.now(),
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save to history: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   Future<Map<String, dynamic>> _loadMealData() async {
@@ -513,7 +444,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     final ingredients = mealData['ingredients'] as List<Map<String, dynamic>>;
                     final price = mealData['price'] ?? 0.0;
                     final categories = (mealData['category'] as String?)?.split(', ') ?? [];
-                    final steps = mealData['steps'] as List<Map<String, dynamic>>;
 
                     return Column(
                       children: [
@@ -777,356 +707,56 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-                                  if (_cookingEndTime != null)
-                                    Card(
-                                      color: const Color(0xFF76C893),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                      elevation: 10,
-                                      shadowColor: Colors.black54,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Column(
-                                          children: [
-                                            Text(
-                                              'Quest Completed in ${_cookingEndTime!.difference(_cookingStartTime!).inMinutes} minutes!',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                fontFamily: 'Orbitron',
-                                                color: Colors.white,
-                                                shadows: [
-                                                  Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6),
-                                                ],
-                                              ),
-                                              textAlign: TextAlign.center,
+                                  Card(
+                                    elevation: 10,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                    shadowColor: Colors.black26,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: SelectableText(
+                                        mealData['instructions'] ?? 'No instructions available',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          height: 1.5,
+                                          fontFamily: 'Orbitron',
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Center(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => MealStepsPage(
+                                              mealId: widget.mealId,
+                                              userId: widget.userId,
+                                              mealData: mealData,
                                             ),
-                                            const SizedBox(height: 16),
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  _isCookingMode = false;
-                                                  _cookingStartTime = null;
-                                                  _cookingEndTime = null;
-                                                  _currentStepIndex = 0;
-                                                  _stepRemainingTimes.clear();
-                                                  _stepOriginalDurations.clear();
-                                                  _stepTimers.values.forEach((t) => t?.cancel());
-                                                  _stepTimers.clear();
-                                                });
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.white,
-                                                foregroundColor: const Color(0xFF184E77),
-                                                elevation: 10,
-                                                shadowColor: Colors.greenAccent,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                              ),
-                                              child: const Text(
-                                                'Restart Quest',
-                                                style: TextStyle(
-                                                  fontFamily: 'Orbitron',
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ).animate().scale(duration: 200.ms, curve: Curves.easeInOut),
-                                          ],
+                                          ),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        foregroundColor: const Color(0xFF184E77),
+                                        elevation: 10,
+                                        shadowColor: Colors.greenAccent,
+                                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      ),
+                                      child: const Text(
+                                        'Start Cooking Quest',
+                                        style: TextStyle(
+                                          fontFamily: 'Orbitron',
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                    ).animate().fadeIn(duration: 500.ms).scale(),
-                                  if (!_isCookingMode) ...[
-                                    Card(
-                                      elevation: 10,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                      shadowColor: Colors.black26,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: SelectableText(
-                                          mealData['instructions'] ?? 'No instructions available',
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            height: 1.5,
-                                            fontFamily: 'Orbitron',
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Center(
-                                      child: ElevatedButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            _isCookingMode = true;
-                                            _cookingStartTime = DateTime.now();
-                                            _currentStepIndex = 0;
-                                          });
-                                          _startStepTimer(0, steps);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.white,
-                                          foregroundColor: const Color(0xFF184E77),
-                                          elevation: 10,
-                                          shadowColor: Colors.greenAccent,
-                                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                        ),
-                                        child: const Text(
-                                          'Start Cooking Quest',
-                                          style: TextStyle(
-                                            fontFamily: 'Orbitron',
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ).animate().scale(duration: 200.ms, curve: Curves.easeInOut),
-                                    ),
-                                  ] else ...[
-                                    Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                          child: Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              SizedBox(
-                                                width: 120,
-                                                height: 120,
-                                                child: CircularProgressIndicator(
-                                                  value: (_currentStepIndex + 1) / steps.length,
-                                                  strokeWidth: 10,
-                                                  backgroundColor: Colors.white.withOpacity(0.5),
-                                                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF76C893)),
-                                                ),
-                                              ),
-                                              Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    '${((_currentStepIndex + 1) / steps.length * 100).toInt()}%',
-                                                    style: const TextStyle(
-                                                      fontFamily: 'Orbitron',
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 24,
-                                                      color: Colors.white,
-                                                      shadows: [
-                                                        Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  const Text(
-                                                    'Progress',
-                                                    style: TextStyle(
-                                                      fontFamily: 'Orbitron',
-                                                      fontSize: 12,
-                                                      color: Colors.white70,
-                                                      shadows: [
-                                                        Shadow(color: Colors.black26, offset: Offset(1, 1), blurRadius: 3),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        ListView.builder(
-                                          shrinkWrap: true,
-                                          physics: const NeverScrollableScrollPhysics(),
-                                          itemCount: steps.length,
-                                          itemBuilder: (context, idx) {
-                                            var step = steps[idx];
-                                            bool isCurrent = idx == _currentStepIndex;
-                                            bool isCompleted = idx < _currentStepIndex;
-                                            return AnimatedContainer(
-                                              duration: const Duration(milliseconds: 300),
-                                              margin: const EdgeInsets.symmetric(vertical: 8),
-                                              decoration: BoxDecoration(
-                                                color: isCurrent ? const Color(0xFFB5E48C).withOpacity(0.2) : Colors.white,
-                                                borderRadius: BorderRadius.circular(20),
-                                                border: Border.all(
-                                                  color: isCurrent ? const Color(0xFF76C893) : Colors.grey[300]!,
-                                                  width: isCurrent ? 2 : 1,
-                                                ),
-                                                boxShadow: isCurrent
-                                                    ? [
-                                                        const BoxShadow(
-                                                          color: Colors.black12,
-                                                          blurRadius: 8,
-                                                          offset: Offset(0, 4),
-                                                        ),
-                                                      ]
-                                                    : [
-                                                        const BoxShadow(
-                                                          color: Colors.black12,
-                                                          blurRadius: 6,
-                                                          offset: Offset(0, 2),
-                                                        ),
-                                                      ],
-                                              ),
-                                              child: ListTile(
-                                                leading: CircleAvatar(
-                                                  backgroundColor: isCompleted
-                                                      ? const Color(0xFF76C893)
-                                                      : (isCurrent ? const Color(0xFFB5E48C) : Colors.grey[300]),
-                                                  child: isCompleted
-                                                      ? const Icon(Icons.check, color: Colors.white)
-                                                      : Text(
-                                                          '${step['number']}',
-                                                          style: TextStyle(
-                                                            color: isCurrent ? const Color(0xFF184E77) : Colors.black54,
-                                                            fontFamily: 'Orbitron',
-                                                            fontWeight: FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                ),
-                                                title: Text(
-                                                  step['title'],
-                                                  style: TextStyle(
-                                                    fontFamily: 'Orbitron',
-                                                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                                                    color: isCurrent ? const Color(0xFF184E77) : Colors.black87,
-                                                  ),
-                                                ),
-                                                subtitle: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      step['content'],
-                                                      style: const TextStyle(
-                                                        fontFamily: 'Orbitron',
-                                                        fontSize: 14,
-                                                        color: Colors.black87,
-                                                      ),
-                                                    ),
-                                                    if (step['duration'] > 0 && _stepRemainingTimes.containsKey(idx))
-                                                      Padding(
-                                                        padding: const EdgeInsets.only(top: 8),
-                                                        child: Text(
-                                                          'Time Left: ${(_stepRemainingTimes[idx]! ~/ 60)}:${(_stepRemainingTimes[idx]! % 60).toString().padLeft(2, '0')}',
-                                                          style: TextStyle(
-                                                            fontFamily: 'Orbitron',
-                                                            fontWeight: FontWeight.bold,
-                                                            color: isCurrent ? Colors.red[600] : Colors.black54,
-                                                          ),
-                                                        ).animate().fadeIn(duration: 300.ms),
-                                                      ),
-                                                    if (step['duration'] > 0)
-                                                      Text(
-                                                        'Estimated: ${step['duration'] ~/ 60} mins',
-                                                        style: const TextStyle(
-                                                          fontFamily: 'Orbitron',
-                                                          fontSize: 12,
-                                                          color: Colors.black54,
-                                                        ),
-                                                      ),
-                                                    if (isCurrent)
-                                                      Padding(
-                                                        padding: const EdgeInsets.only(top: 16),
-                                                        child: Row(
-                                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                          children: [
-                                                            if (_currentStepIndex > 0)
-                                                              ElevatedButton(
-                                                                onPressed: () {
-                                                                  _pauseStepTimer(_currentStepIndex);
-                                                                  _resetStepTimer(_currentStepIndex);
-                                                                  setState(() {
-                                                                    _currentStepIndex--;
-                                                                  });
-                                                                  _startStepTimer(_currentStepIndex, steps);
-                                                                },
-                                                                style: ElevatedButton.styleFrom(
-                                                                  backgroundColor: const Color(0xFF184E77),
-                                                                  foregroundColor: Colors.white,
-                                                                  elevation: 10,
-                                                                  shadowColor: Colors.black54,
-                                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                                                ),
-                                                                child: const Text(
-                                                                  'Back',
-                                                                  style: TextStyle(
-                                                                    fontFamily: 'Orbitron',
-                                                                    fontSize: 14,
-                                                                    fontWeight: FontWeight.w600,
-                                                                  ),
-                                                                ),
-                                                              ).animate().scale(duration: 200.ms, curve: Curves.easeInOut),
-                                                            SizedBox(
-                                                              width: MediaQuery.of(context).size.width * 0.35, // Adjusted width constraint
-                                                              child: ElevatedButton(
-                                                                onPressed: () async {
-                                                                  if (_currentStepIndex < steps.length - 1) {
-                                                                    _pauseStepTimer(_currentStepIndex);
-                                                                    _resetStepTimer(_currentStepIndex);
-                                                                    setState(() {
-                                                                      _currentStepIndex++;
-                                                                    });
-                                                                    _startStepTimer(_currentStepIndex, steps);
-                                                                  } else {
-                                                                    _pauseStepTimer(_currentStepIndex);
-                                                                    _resetStepTimer(_currentStepIndex);
-                                                                    setState(() {
-                                                                      _cookingEndTime = DateTime.now();
-                                                                      _isCookingMode = false;
-                                                                      _stepTimers.values.forEach((t) => t?.cancel());
-                                                                      _stepTimers.clear();
-                                                                      _stepRemainingTimes.clear();
-                                                                      _stepOriginalDurations.clear();
-                                                                    });
-                                                                    await _saveToCompletedHistory();
-                                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                                      SnackBar(
-                                                                        content: Text(
-                                                                          'Quest Completed!',
-                                                                          style: TextStyle(fontFamily: 'Orbitron'),
-                                                                        ),
-                                                                        backgroundColor: const Color(0xFF76C893),
-                                                                      ),
-                                                                    );
-                                                                  }
-                                                                },
-                                                                style: ElevatedButton.styleFrom(
-                                                                  backgroundColor: Colors.white,
-                                                                  foregroundColor: const Color(0xFF184E77),
-                                                                  elevation: 10,
-                                                                  shadowColor: Colors.greenAccent,
-                                                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                                                ),
-                                                                child: Text(
-                                                                  _currentStepIndex == steps.length - 1 ? 'Complete Quest' : 'Next Step',
-                                                                  style: const TextStyle(
-                                                                    fontFamily: 'Orbitron',
-                                                                    fontSize: 14,
-                                                                    fontWeight: FontWeight.w600,
-                                                                  ),
-                                                                  textAlign: TextAlign.center,
-                                                                ),
-                                                              ),
-                                                            ).animate().scale(duration: 200.ms, curve: Curves.easeInOut),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                  ],
-                                                ),
-                                                onTap: () {
-                                                  _pauseStepTimer(_currentStepIndex);
-                                                  _resetStepTimer(_currentStepIndex);
-                                                  setState(() {
-                                                    _currentStepIndex = idx;
-                                                  });
-                                                  _startStepTimer(_currentStepIndex, steps);
-                                                },
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                    ).animate().scale(duration: 200.ms, curve: Curves.easeInOut),
+                                  ),
                                   const SizedBox(height: 32),
                                 ],
                               ),
