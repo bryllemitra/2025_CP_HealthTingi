@@ -1,3 +1,4 @@
+// Modified pages/home.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:currency_code_to_currency_symbol/currency_code_to_currency_symbol.dart';
@@ -381,9 +382,10 @@ class _HomePageState extends State<HomePage> {
       imagePath = 'assets/ingredients/default_ingredient.jpg';
     }
     
-    final price = ingredient['price'] is double 
-        ? (ingredient['price'] as double).toStringAsFixed(2)
-        : ingredient['price']?.toString() ?? '0.00';
+    final price = ingredient['price_text'] ?? 
+        (ingredient['price'] is double 
+            ? (ingredient['price'] as double).toStringAsFixed(2)
+            : ingredient['price']?.toString() ?? '0.00');
     
     return GestureDetector(
       onTap: () {

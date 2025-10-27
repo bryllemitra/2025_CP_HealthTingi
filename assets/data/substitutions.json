@@ -86,7 +86,9 @@
     "Tofu": [
         "Egg (Jumbo)",
         "Egg (Medium)",
-        "Egg (Small)"
+        "Egg (Small)",
+        "Chicken",
+        "Shrimp"
     ],
     "Bokchoy": [
         "Pechay (Bok Choy)",
@@ -108,7 +110,9 @@
     ],
     "Bagoong (Shrimp Paste)": [
         "Soy Sauce",
-        "Atchal"
+        "Atchal",
+        "Bagoong Isda",
+        "Fish Sauce"
     ],
     "Tungkoy": [
         "Bokchoy",
@@ -116,7 +120,10 @@
     ],
     "Kamaron (Shrimp)": [
         "Itlog ng pugo (Quail egg)",
-        "Tofu"
+        "Tofu",
+        "Tilapia",
+        "Bangus",
+        "Squid"
     ],
     "Oregano": [
         "Parsley",
@@ -228,7 +235,9 @@
     ],
     "Pork Liempo (Belly)": [
         "Pork Kasim (Shoulder)",
-        "Pork Ribs"
+        "Pork Ribs",
+        "Ground Pork",
+        "Chicken"
     ],
     "Pork Ribs": [
         "Pork Liempo (Belly)",
@@ -536,7 +545,11 @@
     ],
     "Shrimps": [
         "Prawns",
-        "Squids"
+        "Squids",
+        "Tilapia",
+        "Bangus",
+        "Squid",
+        "Tofu"
     ],
     "Squids": [
         "Prawns",
@@ -664,11 +677,16 @@
     ],
     "Malunggay (Moringa) Leaves": [
         "Mustasa",
-        "Tambo paklay"
+        "Tambo paklay",
+        "Kangkong",
+        "Pechay",
+        "Spinach"
     ],
     "Soy Sauce (Toyo)": [
         "Cane Vinegar",
-        "Bagoong"
+        "Bagoong",
+        "Oyster Sauce",
+        "Fish Sauce"
     ],
     "Brown Sugar": [
         "White Sugar"
@@ -718,5 +736,99 @@
     "Evaporated Milk": [
         "Coconut Milk",
         "Coconut Cream"
+    ],
+    "Sayote": [
+        "Green Papaya",
+        "Upo",
+        "Patola",
+        "Talong"
+    ],
+    "Green Papaya": [
+        "Sayote",
+        "Upo",
+        "Patola"
+    ],
+    "Upo": [
+        "Sayote",
+        "Green Papaya",
+        "Patola"
+    ],
+    "Patola": [
+        "Sayote",
+        "Green Papaya",
+        "Upo"
+    ],
+    "Talong": [
+        "Sayote"
+    ],
+    "Chicken": [
+        "Pork Belly",
+        "Ground Pork",
+        "Tofu"
+    ],
+    "Pork Belly": [
+        "Ground Pork",
+        "Chicken"
+    ],
+    "Ground Pork": [
+        "Pork Belly",
+        "Chicken"
+    ],
+    "Shrimp": [
+        "Tilapia",
+        "Bangus",
+        "Squid",
+        "Tofu"
+    ],
+    "Tilapia": [
+        "Shrimp"
+    ],
+    "Bangus": [
+        "Shrimp"
+    ],
+    "Squid": [
+        "Shrimp"
+    ],
+    "Soy Sauce": [
+        "Oyster Sauce",
+        "Fish Sauce"
+    ],
+    "Oyster Sauce": [
+        "Soy Sauce"
+    ],
+    "Fish Sauce": [
+        "Soy Sauce",
+        "Bagoong"
+    ],
+    "Bagoong Isda": [
+        "Bagoong (Shrimp Paste)",
+        "Fish Sauce"
+    ],
+    "Garlic": [
+        "Onion",
+        "Ginger"
+    ],
+    "Onion": [
+        "Garlic"
+    ],
+    "Ginger": [
+        "Garlic"
+    ],
+    "Kangkong": [
+        "Malunggay (Moringa) Leaves",
+        "Pechay"
+    ],
+    "Pechay": [
+        "Malunggay (Moringa) Leaves",
+        "Kangkong"
+    ],
+    "Spinach": [
+        "Malunggay (Moringa) Leaves"
+    ],
+    "Sweet Potato": [
+        "Potato"
+    ],
+    "Potato": [
+        "Sweet Potato"
     ]
 }

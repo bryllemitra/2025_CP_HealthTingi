@@ -44,7 +44,7 @@ class _MealScanPageState extends State<MealScanPage> {
     setState(() => _isModelLoading = true);
     try {
       // Create interpreter from asset
-      _interpreter = await tfl.Interpreter.fromAsset('assets/models/compatible_model_v2.tflite');
+      _interpreter = await tfl.Interpreter.fromAsset('assets/models/healthtingi_update2.tflite');
       
       // Create isolate interpreter for async inference (prevents UI blocking)
       _isolateInterpreter = await tfl.IsolateInterpreter.create(

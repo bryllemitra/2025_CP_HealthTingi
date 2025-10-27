@@ -3,11 +3,12 @@ import 'package:path/path.dart';
 import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'dart:convert';
+import 'dart:math';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _currentVersion = 13; 
+  static const int _currentVersion = 18; 
 
   factory DatabaseHelper() => _instance;
 
@@ -41,10 +42,63 @@ class DatabaseHelper {
     await _createUsersTable(db);
     await _createFaqsTable(db);
     await _createAboutUsTable(db);
+    // New tables for substitutions
+    await db.execute('''
+      CREATE TABLE unit_conversions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        unit_name TEXT NOT NULL UNIQUE,
+        grams_per_unit REAL NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE substitutions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        original_ingredient_id INTEGER NOT NULL,
+        substitute_ingredient_id INTEGER NOT NULL,
+        equivalence_ratio REAL NOT NULL DEFAULT 1.0,
+        flavor_similarity REAL NOT NULL DEFAULT 0.5,
+        notes TEXT,
+        confidence TEXT DEFAULT 'medium',
+        FOREIGN KEY (original_ingredient_id) REFERENCES ingredients(ingredientID),
+        FOREIGN KEY (substitute_ingredient_id) REFERENCES ingredients(ingredientID)
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE meal_substitution_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        meal_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        original_ingredient_id INTEGER NOT NULL,
+        substitute_ingredient_id INTEGER NOT NULL,
+        original_amount_g REAL NOT NULL,
+        substitute_amount_g REAL NOT NULL,
+        cost_delta REAL NOT NULL,
+        calorie_delta REAL NOT NULL,
+        substitution_date TEXT NOT NULL,
+        FOREIGN KEY (meal_id) REFERENCES meals(mealID),
+        FOREIGN KEY (user_id) REFERENCES users(userID)
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE customized_meals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        original_meal_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        customized_name TEXT,
+        original_ingredients TEXT NOT NULL,
+        substituted_ingredients TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        is_active INTEGER DEFAULT 1,
+        FOREIGN KEY (original_meal_id) REFERENCES meals(mealID),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    ''');
     await _insertAdminUser(db);
     await _insertInitialData(db);
     await _insertInitialFaqs(db);
     await _insertInitialAboutUs(db);
+    await _insertCompleteSubstitutionData(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -100,6 +154,76 @@ class DatabaseHelper {
       await _insertInitialFaqs(db);
       await _insertInitialAboutUs(db);
     }
+    if (oldVersion < 15) {
+      // Add new tables and fields for substitutions
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS unit_conversions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          unit_name TEXT NOT NULL UNIQUE,
+          grams_per_unit REAL NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS substitutions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          original_ingredient_id INTEGER NOT NULL,
+          substitute_ingredient_id INTEGER NOT NULL,
+          equivalence_ratio REAL NOT NULL DEFAULT 1.0,
+          flavor_similarity REAL NOT NULL DEFAULT 0.5,
+          notes TEXT,
+          confidence TEXT DEFAULT 'medium',
+          FOREIGN KEY (original_ingredient_id) REFERENCES ingredients(ingredientID),
+          FOREIGN KEY (substitute_ingredient_id) REFERENCES ingredients(ingredientID)
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS meal_substitution_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          meal_id INTEGER NOT NULL,
+          user_id INTEGER NOT NULL,
+          original_ingredient_id INTEGER NOT NULL,
+          substitute_ingredient_id INTEGER NOT NULL,
+          original_amount_g REAL NOT NULL,
+          substitute_amount_g REAL NOT NULL,
+          cost_delta REAL NOT NULL,
+          calorie_delta REAL NOT NULL,
+          substitution_date TEXT NOT NULL,
+          FOREIGN KEY (meal_id) REFERENCES meals(mealID),
+          FOREIGN KEY (user_id) REFERENCES users(userID)
+        )
+      ''');
+      // Add new fields to ingredients
+      try {
+        await db.execute('ALTER TABLE ingredients ADD COLUMN price_text TEXT');
+        await db.execute('ALTER TABLE ingredients ADD COLUMN unit TEXT');
+        await db.execute('ALTER TABLE ingredients ADD COLUMN sodium_mg_per_100g REAL DEFAULT 0');
+        await db.execute('ALTER TABLE ingredients ADD COLUMN protein_g_per_100g REAL DEFAULT 0');
+        await db.execute('ALTER TABLE ingredients ADD COLUMN carbs_g_per_100g REAL DEFAULT 0');
+        await db.execute('ALTER TABLE ingredients ADD COLUMN fat_g_per_100g REAL DEFAULT 0');
+        await db.execute('ALTER TABLE ingredients ADD COLUMN unit_density_tbsp REAL DEFAULT 15');
+        await db.execute('ALTER TABLE ingredients ADD COLUMN unit_density_tsp REAL DEFAULT 5');
+        await db.execute('ALTER TABLE ingredients ADD COLUMN unit_density_cup REAL DEFAULT 240');
+        await db.execute('ALTER TABLE ingredients ADD COLUMN tags TEXT');
+      } catch (e) {}
+      await _insertCompleteSubstitutionData(db);
+    }
+    if (oldVersion < 18) {
+    db.execute('''
+      CREATE TABLE IF NOT EXISTS customized_meals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        original_meal_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        customized_name TEXT,
+        original_ingredients TEXT NOT NULL,
+        substituted_ingredients TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        is_active INTEGER DEFAULT 1,
+        FawaitOREIGN KEY (original_meal_id) REFERENCES meals(mealID),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    ''');
+  }
   }
 
   // ADD THIS NEW METHOD
@@ -112,7 +236,7 @@ class DatabaseHelper {
     );
 
     if (existingAdmin.isEmpty) {
-      final adminPassword = _hashPassword('admin123'); // Default admin password
+      final adminPassword = _hashPassword('admin123');
       
       await db.insert('users', {
         'firstName': 'System',
@@ -133,7 +257,7 @@ class DatabaseHelper {
         'city': null,
         'nationality': null,
         'createdAt': DateTime.now().toIso8601String(),
-        'isAdmin': 1, // Mark as admin
+        'isAdmin': 1,
       });
       
       print('Admin user created successfully');
@@ -240,15 +364,25 @@ class DatabaseHelper {
   Future<void> _createIngredientsTable(Database db) async {
     await db.execute('''
       CREATE TABLE ingredients (
-        ingredientID INTEGER PRIMARY KEY AUTOINCREMENT,
-        ingredientName TEXT NOT NULL,
-        price REAL NOT NULL,
-        calories INTEGER NOT NULL,
-        nutritionalValue TEXT NOT NULL,
-        ingredientPicture TEXT,
-        category TEXT,
-        additionalPictures TEXT
-      )
+      ingredientID INTEGER PRIMARY KEY AUTOINCREMENT,
+      ingredientName TEXT NOT NULL,
+      price REAL NOT NULL,
+      calories INTEGER NOT NULL,
+      nutritionalValue TEXT NOT NULL,
+      ingredientPicture TEXT,
+      category TEXT,
+      additionalPictures TEXT,
+      price_text TEXT,
+      unit TEXT,
+      sodium_mg_per_100g REAL DEFAULT 0,
+      protein_g_per_100g REAL DEFAULT 0,
+      carbs_g_per_100g REAL DEFAULT 0,
+      fat_g_per_100g REAL DEFAULT 0,
+      unit_density_tbsp REAL DEFAULT 15,
+      unit_density_tsp REAL DEFAULT 5,
+      unit_density_cup REAL DEFAULT 240,
+      tags TEXT
+    )
     ''');
 
     await db.execute('''
@@ -320,12 +454,12 @@ class DatabaseHelper {
     List<Map<String, dynamic>> initialFaqs = [
       {
         'question': '1. What is HealthTingi?',
-        'answer': 'HealthTingi is an Android app that helps you scan ingredients using your phone’s camera and suggests budget-friendly recipes you can cook with them—even without an internet connection.',
+        'answer': 'HealthTingi is an Android app that helps you scan ingredients using your phone\'s camera and suggests budget-friendly recipes you can cook with them—even without an internet connection.',
         'order_num': 1
       },
       {
         'question': '2. Who is the app for?',
-        'answer': 'It’s specially designed for low-income Filipino households, but anyone looking for affordable and nutritious meals can use it.',
+        'answer': 'It\'s specially designed for low-income Filipino households, but anyone looking for affordable and nutritious meals can use it.',
         'order_num': 2
       },
       {
@@ -339,7 +473,7 @@ class DatabaseHelper {
         'order_num': 4
       },
       {
-        'question': '5. Can I still get recipe suggestions if I don’t have a complete ingredient list?',
+        'question': '5. Can I still get recipe suggestions if I don\'t have a complete ingredient list?',
         'answer': 'Yes! HealthTingi shows substitution options and recommends recipes based on what you do have.',
         'order_num': 5
       },
@@ -365,7 +499,7 @@ class DatabaseHelper {
       },
       {
         'question': '10. Can I suggest a recipe or report a problem?',
-        'answer': 'Yes, you can suggest recipes or feedback through the app’s “Contact Us” feature (if included), or by email.',
+        'answer': 'Yes, you can suggest recipes or feedback through the app\'s "Contact Us" feature (if included), or by email.',
         'order_num': 10
       },
     ];
@@ -379,7 +513,7 @@ class DatabaseHelper {
     await db.insert('about_us', {
       'id': 1,
       'content': 'HealthTingi is a mobile application designed to promote affordable and nutritious eating for low-income Filipino households. Built with accessibility in mind, the app helps users identify ingredients using a simple photo and suggests budget-friendly recipes based on what they have and how much they can spend.\n\n'
-          'By combining real-time ingredient recognition, a local price-aware recipe engine, and offline access, HealthTingi empowers families to make the most of what’s available—whether in urban or rural communities. Our mission is to use simple technology to address food insecurity, improve nutrition, and support smarter meal planning across the Philippines.'
+          'By combining real-time ingredient recognition, a local price-aware recipe engine, and offline access, HealthTingi empowers families to make the most of what\'s available—whether in urban or rural communities. Our mission is to use simple technology to address food insecurity, improve nutrition, and support smarter meal planning across the Philippines.'
     });
   }
 
@@ -394,39 +528,94 @@ class DatabaseHelper {
     try {
       final String dataString = await rootBundle.loadString('assets/data/ingredients.json');
       final Map<String, dynamic> data = jsonDecode(dataString);
-      
-      for (var ingredient in data['ingredients']) {
-        await db.insert('ingredients', ingredient);
-      }
-      print('Ingredients loaded successfully from JSON');
+      final List<dynamic> ingredientsList = data['ingredients'];
+
+      await db.transaction((txn) async {
+        for (var ingredient in ingredientsList) {
+          await txn.insert(
+            'ingredients',
+            {
+              'ingredientName': ingredient['ingredientName'] as String,
+              'price': double.parse(ingredient['price'].toString()), // Parse string to double
+              'calories': ingredient['calories'] as int,
+              'nutritionalValue': ingredient['nutritionalValue'] as String,
+              'ingredientPicture': ingredient['ingredientPicture'] as String?,
+              'category': ingredient['category'] as String?,
+              'additionalPictures': ingredient['additionalPictures'] as String?,
+              'price_text': ingredient['price_text'] as String?,
+              'unit': ingredient['unit'] as String?,
+              'sodium_mg_per_100g': double.tryParse(ingredient['sodium_mg_per_100g'].toString()) ?? 0.0,
+              'protein_g_per_100g': double.tryParse(ingredient['protein_g_per_100g'].toString()) ?? 0.0,
+              'carbs_g_per_100g': double.tryParse(ingredient['carbs_g_per_100g'].toString()) ?? 0.0,
+              'fat_g_per_100g': double.tryParse(ingredient['fat_g_per_100g'].toString()) ?? 0.0,
+              'unit_density_tbsp': double.tryParse(ingredient['unit_density_tbsp'].toString()) ?? 15.0,
+              'unit_density_tsp': double.tryParse(ingredient['unit_density_tsp'].toString()) ?? 5.0,
+              'unit_density_cup': double.tryParse(ingredient['unit_density_cup'].toString()) ?? 240.0,
+              'tags': ingredient['tags'] as String?,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace, // Overwrite duplicates
+          );
+        }
+      });
+      print('Inserted ${ingredientsList.length} ingredients successfully from JSON');
     } catch (e) {
       print('Error loading ingredients from JSON: $e');
-      // Fallback to hardcoded ingredients if JSON fails
-      await _insertIngredients(db);
+      await _insertIngredients(db); // Fallback
     }
   }
 
   Future<void> _insertIngredients(Database db) async {
-    // Chicken
-    await db.insert('ingredients', {
-      'ingredientName': 'Chicken (neck/wings)',
-      'price': 30.0,
-      'calories': 239,
-      'nutritionalValue': 'Good source of protein, niacin, selenium, phosphorus, and vitamin B6.',
-      'ingredientPicture': 'assets/chicken_neck_wings.jpg',
-      'category': 'main dish'
-    });
+    final List<Map<String, dynamic>> fallbackIngredients = [
+      {
+        'ingredientName': 'Chicken (neck/wings)',
+        'price': 30.0,
+        'calories': 239,
+        'nutritionalValue': 'Good source of protein, niacin, selenium, phosphorus, and vitamin B6.',
+        'ingredientPicture': 'assets/chicken_neck_wings.jpg',
+        'category': 'main dish',
+        'additionalPictures': '',
+        'price_text': '30/kg',
+        'unit': 'kg',
+        'sodium_mg_per_100g': 0.0,
+        'protein_g_per_100g': 0.0,
+        'carbs_g_per_100g': 0.0,
+        'fat_g_per_100g': 0.0,
+        'unit_density_tbsp': 15.0,
+        'unit_density_tsp': 5.0,
+        'unit_density_cup': 240.0,
+        'tags': '["protein", "main"]',
+      },
+      {
+        'ingredientName': 'Sayote',
+        'price': 12.0,
+        'calories': 19,
+        'nutritionalValue': 'Rich in Vitamin C, Folate, Fiber, Potassium, Manganese.',
+        'ingredientPicture': 'assets/sayote.jpg',
+        'category': 'soup, main dish, appetizer',
+        'additionalPictures': '',
+        'price_text': '12/kg',
+        'unit': 'kg',
+        'sodium_mg_per_100g': 0.0,
+        'protein_g_per_100g': 0.0,
+        'carbs_g_per_100g': 0.0,
+        'fat_g_per_100g': 0.0,
+        'unit_density_tbsp': 15.0,
+        'unit_density_tsp': 5.0,
+        'unit_density_cup': 240.0,
+        'tags': '["vegetable", "soup"]',
+      },
+    ];
 
-    // Sayote
-    await db.insert('ingredients', {
-      'ingredientName': 'Sayote',
-      'price': 12.0,
-      'calories': 19,
-      'nutritionalValue': 'Rich in Vitamin C, Folate, Fiber, Potassium, Manganese.',
-      'ingredientPicture': 'assets/sayote.jpg',
-      'category': 'soup, main dish, appetizer'
+    await db.transaction((txn) async {
+      for (var ingredient in fallbackIngredients) {
+        await txn.insert(
+          'ingredients',
+          ingredient,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
     });
-
+    print('Inserted ${fallbackIngredients.length} fallback ingredients');
   }
 
   Future<void> _insertMeals(Database db) async {
@@ -507,12 +696,12 @@ Serve hot.
     });
     await db.insert('meal_ingredients', {
       'mealID': tinolangId,
-      'ingredientID': 7, // Cooking oil
+      'ingredientID': 237, // Cooking oil
       'quantity': '1 tbsp'
     });
     await db.insert('meal_ingredients', {
       'mealID': tinolangId,
-      'ingredientID': 3, // Malunggay
+      'ingredientID': 238, // Malunggay
       'quantity': '1 small bundle'
     });
 
@@ -586,12 +775,12 @@ Serve hot with steamed rice. Great with fried fish or just on its own!
     });
     await db.insert('meal_ingredients', {
       'mealID': ginisangId,
-      'ingredientID': 7, // Cooking oil
+      'ingredientID': 237, // Cooking oil
       'quantity': '1/8 cup'
     });
     await db.insert('meal_ingredients', {
       'mealID': ginisangId,
-      'ingredientID': 10, // Soy Sauce
+      'ingredientID': 239, // Soy Sauce
       'quantity': '1/4 cup'
     });
 
@@ -650,27 +839,27 @@ Pour the reduced sauce over the chicken before serving.
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongManokId,
-    'ingredientID': 12, // Bay leaf
+    'ingredientID': 234, // Bay leaf
     'quantity': '1 leaf'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongManokId,
-    'ingredientID': 13, // Peppercorns
+    'ingredientID': 235, // Peppercorns
     'quantity': '½ tsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongManokId,
-    'ingredientID': 10, // Soy sauce
+    'ingredientID': 239, // Soy sauce
     'quantity': '2 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongManokId,
-    'ingredientID': 14, // Vinegar
+    'ingredientID': 236, // Vinegar
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongManokId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '1 tsp'
   });
 
@@ -717,17 +906,17 @@ Allow the Biko to cool completely before slicing into squares or diamonds.
 
   await db.insert('meal_ingredients', {
     'mealID': bikoId,
-    'ingredientID': 15, // Glutinous rice
+    'ingredientID': 242, // Glutinous rice
     'quantity': '2 cups'
   });
   await db.insert('meal_ingredients', {
     'mealID': bikoId,
-    'ingredientID': 16, // Coconut milk
+    'ingredientID': 243, // Coconut milk
     'quantity': '2 cups'
   });
   await db.insert('meal_ingredients', {
     'mealID': bikoId,
-    'ingredientID': 17, // Brown sugar
+    'ingredientID': 241, // Brown sugar
     'quantity': '¾ cup'
   });
 
@@ -772,7 +961,7 @@ Serve warm or chilled.
 
   await db.insert('meal_ingredients', {
     'mealID': binignitId,
-    'ingredientID': 15, // Glutinous rice
+    'ingredientID': 215, // Glutinous rice
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
@@ -802,17 +991,17 @@ Serve warm or chilled.
   });
   await db.insert('meal_ingredients', {
     'mealID': binignitId,
-    'ingredientID': 23, // Tapioca pearls
+    'ingredientID': 8, // Tapioca pearls
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': binignitId,
-    'ingredientID': 16, // Coconut milk
+    'ingredientID': 216, // Coconut milk
     'quantity': '4 cups'
   });
   await db.insert('meal_ingredients', {
     'mealID': binignitId,
-    'ingredientID': 17, // Brown sugar
+    'ingredientID': 217, // Brown sugar
     'quantity': '½ cup'
   });
 
@@ -853,7 +1042,7 @@ Serve immediately with a long spoon. Instruct to mix all the ingredients togethe
 
   await db.insert('meal_ingredients', {
     'mealID': haloHaloId,
-    'ingredientID': 57, // Sweetened beans (mungo)
+    'ingredientID': 226, // Sweetened beans (mungo)
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
@@ -868,12 +1057,12 @@ Serve immediately with a long spoon. Instruct to mix all the ingredients togethe
   });
   await db.insert('meal_ingredients', {
     'mealID': haloHaloId,
-    'ingredientID': 21, // Saba banana
+    'ingredientID': 154, // Saba banana
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': haloHaloId,
-    'ingredientID': 22, // Jackfruit
+    'ingredientID': 175, // Jackfruit
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
@@ -893,7 +1082,7 @@ Serve immediately with a long spoon. Instruct to mix all the ingredients togethe
   });
   await db.insert('meal_ingredients', {
     'mealID': haloHaloId,
-    'ingredientID': 55, // Evaporated milk
+    'ingredientID': 253, // Evaporated milk
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
@@ -956,7 +1145,7 @@ Season with ground pepper to taste. Serve immediately.
 
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 11, // Chicken thigh
+    'ingredientID': 43, // Chicken thigh
     'quantity': '100g'
   });
   await db.insert('meal_ingredients', {
@@ -966,52 +1155,52 @@ Season with ground pepper to taste. Serve immediately.
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 53, // Broccoli
+    'ingredientID': 139, // Broccoli
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 54, // Cauliflower
+    'ingredientID': 115, // Cauliflower
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 55, // Bell pepper
+    'ingredientID': 133, // Bell pepper
     'quantity': '½ small'
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 56, // Cabbage
+    'ingredientID': 114, // Cabbage
     'quantity': '½ small'
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 57, // Mushrooms
+    'ingredientID': 6, // Mushrooms
     'quantity': '¼ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '3 cloves'
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '1 small'
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 10, // Soy sauce
+    'ingredientID': 239, // Soy sauce
     'quantity': '2 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 58, // Oyster sauce
+    'ingredientID': 247, // Oyster sauce
     'quantity': '2 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 59, // Cornstarch
+    'ingredientID': 248, // Cornstarch
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
@@ -1021,7 +1210,7 @@ Season with ground pepper to taste. Serve immediately.
   });
   await db.insert('meal_ingredients', {
     'mealID': chopsueyId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '1 tsp'
   });
 
@@ -1073,47 +1262,42 @@ Season with salt if needed. Serve hot.
   });
   await db.insert('meal_ingredients', {
     'mealID': laingId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '2 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': laingId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '4 cloves'
   });
   await db.insert('meal_ingredients', {
     'mealID': laingId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '1 medium'
   });
   await db.insert('meal_ingredients', {
     'mealID': laingId,
-    'ingredientID': 4, // Ginger
+    'ingredientID': 153, // Ginger
     'quantity': '1 thumb'
   });
   await db.insert('meal_ingredients', {
     'mealID': laingId,
-    'ingredientID': 24, // Pork belly
+    'ingredientID': 52, // Pork belly
     'quantity': '100g'
   });
   await db.insert('meal_ingredients', {
     'mealID': laingId,
-    'ingredientID': 25, // Shrimp paste
+    'ingredientID': 23, // Shrimp paste
     'quantity': '¼ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': laingId,
-    'ingredientID': 16, // Coconut milk
+    'ingredientID': 243, // Coconut milk
     'quantity': '3 cups'
   });
   await db.insert('meal_ingredients', {
     'mealID': laingId,
-    'ingredientID': 26, // Coconut cream
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': laingId,
-    'ingredientID': 27, // Thai chilies
+    'ingredientID': 250, // Thai chilies
     'quantity': '5–7 pieces'
   });
 
@@ -1163,48 +1347,48 @@ Let it cook for just another minute until the kangkong wilts. Serve hot.
 
   await db.insert('meal_ingredients', {
     'mealID': sinigangBaboyId,
-    'ingredientID': 24, // Pork belly
+    'ingredientID': 52, // Pork belly
     'quantity': '300g'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangBaboyId,
-    'ingredientID': 9, // Tomato
+    'ingredientID': 129, // Tomato
     'quantity': '1 medium'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangBaboyId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '½'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangBaboyId,
-    'ingredientID': 28, // Tamarind
-    'quantity': '2 tbsp mix or fresh'
+    'ingredientID': 245, // Tamarind
+    'quantity': '2 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangBaboyId,
-    'ingredientID': 29, // Kangkong
+    'ingredientID': 117, // Kangkong
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangBaboyId,
-    'ingredientID': 19, // Gabi (taro)
+    'ingredientID': 148, // Gabi (taro)
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangBaboyId,
-    'ingredientID': 30, // Radish
+    'ingredientID': 34, // Radish
     'quantity': '¼ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangBaboyId,
-    'ingredientID': 31, // Eggplant
+    'ingredientID': 122, // Eggplant
     'quantity': '¼ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangBaboyId,
-    'ingredientID': 32, // Fish sauce
-    'quantity': 'To taste'
+    'ingredientID': 246, // Fish sauce
+    'quantity': '1 tsp'
   });
 
   // Insert Ginataang Gulay
@@ -1249,47 +1433,42 @@ Season with salt and pepper to taste. Serve hot.
 
   await db.insert('meal_ingredients', {
     'mealID': ginataangGulayId,
-    'ingredientID': 33, // String beans
+    'ingredientID': 134, // String beans
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangGulayId,
-    'ingredientID': 34, // Squash
+    'ingredientID': 127, // Squash
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangGulayId,
-    'ingredientID': 31, // Eggplant
+    'ingredientID': 122, // Eggplant
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangGulayId,
-    'ingredientID': 16, // Coconut milk
+    'ingredientID': 243, // Coconut milk
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangGulayId,
-    'ingredientID': 26, // Coconut cream
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangGulayId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '1 small'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangGulayId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '3 cloves'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangGulayId,
-    'ingredientID': 4, // Ginger
+    'ingredientID': 153, // Ginger
     'quantity': '1 thumb'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangGulayId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '1 tbsp'
   });
 
@@ -1333,33 +1512,28 @@ Simmer for another 2-3 minutes. Serve hot.
 
   await db.insert('meal_ingredients', {
     'mealID': ginisangKalabasaId,
-    'ingredientID': 34, // Kalabasa (squash)
+    'ingredientID': 127, // Kalabasa (squash)
     'quantity': '2 cups'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginisangKalabasaId,
-    'ingredientID': 9, // Tomato
+    'ingredientID': 129, // Tomato
     'quantity': '1 small'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginisangKalabasaId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '½'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginisangKalabasaId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '3 cloves'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginisangKalabasaId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangKalabasaId,
-    'ingredientID': 35, // Ground pork or shrimp
-    'quantity': '½ cup (optional)'
   });
 
   // Insert Sinigang na Isda
@@ -1405,47 +1579,47 @@ Cook for just another minute until the kangkong wilts. Serve immediately.
 
   await db.insert('meal_ingredients', {
     'mealID': sinigangIsdaId,
-    'ingredientID': 36, // Bangus or tilapia
+    'ingredientID': 183, // Bangus or tilapia
     'quantity': '2 medium slices'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangIsdaId,
-    'ingredientID': 9, // Tomato
+    'ingredientID': 129, // Tomato
     'quantity': '1 small'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangIsdaId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '½'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangIsdaId,
-    'ingredientID': 28, // Tamarind paste
+    'ingredientID': 245, // Tamarind paste
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangIsdaId,
-    'ingredientID': 29, // Kangkong
+    'ingredientID': 117, // Kangkong
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangIsdaId,
-    'ingredientID': 30, // Radish
+    'ingredientID': 34, // Radish
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangIsdaId,
-    'ingredientID': 31, // Eggplant
+    'ingredientID': 122, // Eggplant
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangIsdaId,
-    'ingredientID': 27, // Green chili
+    'ingredientID': 132, // Green chili
     'quantity': '1 (optional)'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangIsdaId,
-    'ingredientID': 32, // Fish sauce
+    'ingredientID': 246, // Fish sauce
     'quantity': 'To taste'
   });
 
@@ -1492,52 +1666,52 @@ Let it cook for just another minute until the kangkong wilts. Serve hot.
 
   await db.insert('meal_ingredients', {
     'mealID': sinigangHiponId,
-    'ingredientID': 37, // Shrimp
+    'ingredientID': 206, // Shrimp
     'quantity': '250g'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangHiponId,
-    'ingredientID': 9, // Tomato
+    'ingredientID': 129, // Tomato
     'quantity': '1'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangHiponId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '½'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangHiponId,
-    'ingredientID': 29, // Kangkong
+    'ingredientID': 117, // Kangkong
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangHiponId,
-    'ingredientID': 33, // Sitaw
+    'ingredientID': 134, // Sitaw
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangHiponId,
-    'ingredientID': 30, // Radish
+    'ingredientID': 34, // Radish
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangHiponId,
-    'ingredientID': 31, // Eggplant
+    'ingredientID': 122, // Eggplant
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangHiponId,
-    'ingredientID': 28, // Tamarind paste
+    'ingredientID': 245, // Tamarind paste
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangHiponId,
-    'ingredientID': 27, // Green chili
+    'ingredientID': 132, // Green chili
     'quantity': '1 (optional)'
   });
   await db.insert('meal_ingredients', {
     'mealID': sinigangHiponId,
-    'ingredientID': 32, // Fish sauce
+    'ingredientID': 246, // Fish sauce
     'quantity': 'To taste'
   });
 
@@ -1562,7 +1736,7 @@ Add the squeezed grated sayote, minced garlic, chopped onion, and flour.
 Season with salt and pepper. Mix everything until well-combined.
 
 3. Heat the Pan (2 mins)
-Place a non-stick pan over medium heat and add enough cooking oil to coat the surface.
+Place a non-stick skillet over medium heat and add enough cooking oil to coat the surface.
 Let the oil get hot.
 
 4. Fry the Patties (10–12 mins)
@@ -1587,7 +1761,7 @@ Serve hot with ketchup or a vinegar and garlic dip.
   });
   await db.insert('meal_ingredients', {
     'mealID': tortangSayoteId,
-    'ingredientID': 177, // Eggs
+    'ingredientID': 178, // Eggs
     'quantity': '3'
   });
   await db.insert('meal_ingredients', {
@@ -1602,12 +1776,12 @@ Serve hot with ketchup or a vinegar and garlic dip.
   });
   await db.insert('meal_ingredients', {
     'mealID': tortangSayoteId,
-    'ingredientID': 39, // Flour
+    'ingredientID': 251, // Flour
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': tortangSayoteId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': 'For frying'
   });
 
@@ -1650,42 +1824,42 @@ Serve hot.
 
   await db.insert('meal_ingredients', {
     'mealID': adobongPusitId,
-    'ingredientID': 40, // Squid
+    'ingredientID': 207, // Squid
     'quantity': '300g'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongPusitId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '1 small'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongPusitId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '3 cloves'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongPusitId,
-    'ingredientID': 10, // Soy sauce
+    'ingredientID': 239, // Soy sauce
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongPusitId,
-    'ingredientID': 14, // Vinegar
+    'ingredientID': 236, // Vinegar
     'quantity': '2 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongPusitId,
-    'ingredientID': 13, // Black pepper
+    'ingredientID': 233, // Black pepper
     'quantity': '½ tsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongPusitId,
-    'ingredientID': 9, // Tomato
+    'ingredientID': 129, // Tomato
     'quantity': '1 small (optional)'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongPusitId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '1 tbsp'
   });
 
@@ -1728,37 +1902,37 @@ Serve the Adobong Baboy hot with its reduced sauce, alongside steamed rice.
 
   await db.insert('meal_ingredients', {
     'mealID': adobongBaboyId,
-    'ingredientID': 24, // Pork belly
+    'ingredientID': 52, // Pork belly
     'quantity': '500g'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongBaboyId,
-    'ingredientID': 10, // Soy sauce
+    'ingredientID': 239, // Soy sauce
     'quantity': '¼ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongBaboyId,
-    'ingredientID': 14, // Vinegar
+    'ingredientID': 236, // Vinegar
     'quantity': '3 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongBaboyId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '3 cloves'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongBaboyId,
-    'ingredientID': 12, // Bay leaves
+    'ingredientID': 234, // Bay leaves
     'quantity': '2'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongBaboyId,
-    'ingredientID': 13, // Peppercorns
+    'ingredientID': 235, // Peppercorns
     'quantity': '1 tsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': adobongBaboyId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '1 tbsp'
   });
 
@@ -1788,7 +1962,7 @@ Add the crab pieces to the pot.
 Sauté for 5-7 minutes until the shells start to turn orange-red.
 
 4. Simmer in Coconut Milk (15–20 mins)
-Pour in the coconut milk and bring to a gentle boil.
+Pour in the coconut milk and bring the mixture to a gentle boil.
 Lower the heat, cover, and simmer for 15-20 minutes to cook the crab through and infuse the flavor.
 
 5. Add Veggies and Cream (7–10 mins)
@@ -1804,37 +1978,32 @@ Simmer for another 5 minutes until the sauce is rich and creamy. Season with sal
 
   await db.insert('meal_ingredients', {
     'mealID': ginataangAlimangoId,
-    'ingredientID': 41, // Alimango/crab
+    'ingredientID': 202, // Alimango/crab
     'quantity': '2 pcs'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangAlimangoId,
-    'ingredientID': 16, // Coconut milk
+    'ingredientID': 243, // Coconut milk
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangAlimangoId,
-    'ingredientID': 26, // Coconut cream
+    'ingredientID': 127, // Squash
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangAlimangoId,
-    'ingredientID': 34, // Squash
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangAlimangoId,
-    'ingredientID': 33, // Sitaw
+    'ingredientID': 134, // Sitaw
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangAlimangoId,
-    'ingredientID': 42, // Red chili
+    'ingredientID': 131, // Red chili
     'quantity': '1'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangAlimangoId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '1'
   });
   await db.insert('meal_ingredients', {
@@ -1844,12 +2013,12 @@ Simmer for another 5 minutes until the sauce is rich and creamy. Season with sal
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangAlimangoId,
-    'ingredientID': 4, // Ginger
+    'ingredientID': 153, // Ginger
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangAlimangoId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '1 tbsp'
   });
 
@@ -1891,17 +2060,17 @@ Let them cool for a minute or two before serving, as the caramelized sugar will 
 
   await db.insert('meal_ingredients', {
     'mealID': sagingPritoId,
-    'ingredientID': 21, // Saba banana
+    'ingredientID': 154, // Saba banana
     'quantity': '4 pcs'
   });
   await db.insert('meal_ingredients', {
     'mealID': sagingPritoId,
-    'ingredientID': 17, // Brown sugar
+    'ingredientID': 252, // Brown sugar
     'quantity': '3 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': sagingPritoId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': 'For frying'
   });
 
@@ -1949,52 +2118,52 @@ Serve immediately.
 
   await db.insert('meal_ingredients', {
     'mealID': escabecheId,
-    'ingredientID': 36, // Tilapia or bangus
+    'ingredientID': 183, // Tilapia or bangus
     'quantity': '2 pcs'
   });
   await db.insert('meal_ingredients', {
     'mealID': escabecheId,
-    'ingredientID': 52, // Carrots
+    'ingredientID': 139, // Carrots
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': escabecheId,
-    'ingredientID': 55, // Bell pepper
+    'ingredientID': 133, // Bell pepper
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': escabecheId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '1'
   });
   await db.insert('meal_ingredients', {
     'mealID': escabecheId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '3 cloves'
   });
   await db.insert('meal_ingredients', {
     'mealID': escabecheId,
-    'ingredientID': 14, // Vinegar
+    'ingredientID': 236, // Vinegar
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': escabecheId,
-    'ingredientID': 10, // Soy sauce
+    'ingredientID': 239, // Soy sauce
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': escabecheId,
-    'ingredientID': 43, // Sugar
+    'ingredientID': 252, // Sugar
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': escabecheId,
-    'ingredientID': 59, // Cornstarch
+    'ingredientID': 248, // Cornstarch
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': escabecheId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': 'For frying'
   });
 
@@ -2037,37 +2206,37 @@ Season with salt or fish sauce to taste. Serve hot.
 
   await db.insert('meal_ingredients', {
     'mealID': ginataangKalabasaId,
-    'ingredientID': 34, // Kalabasa
+    'ingredientID': 127, // Kalabasa
     'quantity': '1½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangKalabasaId,
-    'ingredientID': 33, // Sitaw
+    'ingredientID': 134, // Sitaw
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangKalabasaId,
-    'ingredientID': 16, // Coconut milk
+    'ingredientID': 243, // Coconut milk
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangKalabasaId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '1'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangKalabasaId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '2 cloves'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangKalabasaId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '1 tbsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginataangKalabasaId,
-    'ingredientID': 37, // Shrimp
+    'ingredientID': 206, // Shrimp
     'quantity': '½ cup (optional)'
   });
 
@@ -2111,32 +2280,32 @@ Serve hot.
 
   await db.insert('meal_ingredients', {
     'mealID': ginisangUpoId,
-    'ingredientID': 44, // Upo
+    'ingredientID': 125, // Upo
     'quantity': '2 cups'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginisangUpoId,
-    'ingredientID': 9, // Tomato
+    'ingredientID': 129, // Tomato
     'quantity': '1 small'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginisangUpoId,
-    'ingredientID': 6, // Garlic
+    'ingredientID': 152, // Garlic
     'quantity': '2 cloves'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginisangUpoId,
-    'ingredientID': 5, // Onion
+    'ingredientID': 149, // Onion
     'quantity': '½ small'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginisangUpoId,
-    'ingredientID': 35, // Ground pork or shrimp
+    'ingredientID': 25, // Ground pork or shrimp
     'quantity': '½ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': ginisangUpoId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '1 tbsp'
   });
 
@@ -2185,17 +2354,17 @@ Serve immediately while hot, ideally with a side of rice.
   });
   await db.insert('meal_ingredients', {
     'mealID': friedEggMalunggayId,
-    'ingredientID': 3, // Malunggay
+    'ingredientID': 179, // Malunggay
     'quantity': '¼ cup'
   });
   await db.insert('meal_ingredients', {
     'mealID': friedEggMalunggayId,
-    'ingredientID': 7, // Cooking oil
+    'ingredientID': 237, // Cooking oil
     'quantity': '1 tsp'
   });
   await db.insert('meal_ingredients', {
     'mealID': friedEggMalunggayId,
-    'ingredientID': 6, // Garlic bits (optional)
+    'ingredientID': 152, // Garlic bits (optional)
     'quantity': 'Optional'
   });
   }
@@ -2280,10 +2449,17 @@ Serve immediately while hot, ideally with a side of rice.
   Future<List<Map<String, dynamic>>> getMealIngredients(int mealId) async {
     final db = await database;
     return await db.rawQuery('''
-      SELECT i.*, mi.quantity 
-      FROM ingredients i
-      JOIN meal_ingredients mi ON i.ingredientID = mi.ingredientID
-      WHERE mi.mealID = ?
+      SELECT 
+      i.ingredientID,
+      i.ingredientName,
+      i.price,  -- This fetches the per-unit price
+      i.category,
+      i.ingredientPicture,
+      -- Add other fields as needed
+      mi.quantity
+    FROM meal_ingredients mi
+    JOIN ingredients i ON mi.ingredientID = i.ingredientID
+    WHERE mi.mealID = ?
     ''', [mealId]);
   }
 
@@ -2625,4 +2801,586 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     }
   }
 
+  Map<String, dynamic> parsePriceString(String priceStr, String ingredientName, String category) {
+    priceStr = priceStr.trim().toLowerCase();
+    RegExp rangePat = RegExp(r'(\d+)-(\d+)');
+    RegExp qtyPat = RegExp(r'(\d+(?:\.\d+)?|1/4|1/2|3/4)');
+    RegExp unitPat = RegExp(r'(kg|g|ml|pack|piece|pcs|bottle|can|tray|tie|group|leaves|for|each|/pack|350ml bottle|500ml|250ml pack|10g cube|150g bottle|200g pack|370ml can|50g pack|1/4kg|1/4|100pcs/100 pesos|3 for 120|6 each|12-45/pack|20-25/pack|20-30/pack|70-80/pack)', caseSensitive: false);
+
+    // Densities (g/ml) by category
+    Map<String, double> densities = {
+      'dairy': 1.03, // Milk
+      'pantry': 1.1, // Sauces
+      'vegetable': 1.0,
+      'spice': 0.5, // Lighter for powders
+      'legume': 1.0,
+      'starch': 0.8, // For sago, etc.
+      'condiment': 1.05,
+    };
+    double density = densities[category.toLowerCase()] ?? 1.0;
+
+    // Unit to grams (refined with web averages)
+    Map<String, double> unitToGrams = {
+      'kg': 1000,
+      'g': 1,
+      'ml': density,
+      'piece': category.toLowerCase() == 'vegetable' ? 400 : 100, // Banana blossom ~400g, general 100g
+      'pcs': 100,
+      'bottle': 500,
+      'can': 370, // Evaporated milk ~370g
+      'tray': 1800,
+      'tie': 250,
+      'group': 500,
+      'leaves': 1,
+      'pack': category.toLowerCase().contains('vegetable') ? 250 : (category.toLowerCase().contains('spice') ? 100 : 500), // Celery 250g, spices 100g, sago 500g, kidney beans 225g ~250g
+      '1/4kg': 250,
+      '1/4': 250, // Assume kg
+      '350ml bottle': 350 * density,
+      '500ml': 500 * density,
+      '250ml pack': 250 * density,
+      '10g cube': 10,
+      '150g bottle': 150,
+      '200g pack': 200,
+      '370ml can': 370 * density,
+      '50g pack': 50,
+      'bundle': ingredientName.toLowerCase().contains('malunggay') ? 100.0 : 50.0, // Malunggay ~100g/bundle
+      'head': 500.0, // E.g., pork head ~500g average portion
+    };
+
+    // Handle multiple prices (e.g., "400/kg, 20-25/pack") - prefer kg if present, else last
+    List<String> parts = priceStr.split(',');
+    String selectedPart = parts.firstWhere((p) => p.contains('/kg'), orElse: () => parts.last.trim());
+
+    // Split by '/' for price/qtyunit
+    List<String> subParts = selectedPart.split('/');
+    String pricePart = subParts[0].trim();
+    String qtyUnitPart = subParts.length > 1 ? subParts[1].trim() : '';
+
+    // Extract avg price from pricePart
+    var rangeMatch = rangePat.firstMatch(pricePart);
+    double avgPrice = rangeMatch != null
+        ? (double.parse(rangeMatch.group(1)!) + double.parse(rangeMatch.group(2)!)) / 2
+        : (qtyPat.firstMatch(pricePart)?.group(1) != null ? double.parse(qtyPat.firstMatch(pricePart)!.group(1)!) : 0);
+
+    // Extract qty (handle fractions like 1/4)
+    var qtyMatch = qtyPat.firstMatch(qtyUnitPart) ?? qtyPat.firstMatch(pricePart);
+    double qty = 1.0;
+    if (qtyMatch != null) {
+      String qtyStr = qtyMatch.group(1)!;
+      if (qtyStr.contains('/')) {
+        var frac = qtyStr.split('/');
+        qty = double.parse(frac[0]) / double.parse(frac[1]);
+      } else {
+        qty = double.parse(qtyStr);
+      }
+    }
+
+    // Extract unit
+    var unitMatch = unitPat.firstMatch(qtyUnitPart) ?? unitPat.firstMatch(pricePart);
+    String unit = unitMatch?.group(1)?.toLowerCase() ?? 'unit';
+
+    // Special handling for "qty for total"
+    if (priceStr.contains('for')) {
+      var forMatch = RegExp(r'(\d+/\d+|\d+(?:\.\d+)?|1/4|1/2|3/4)\s*for\s*(\d+(?:\.\d+)?)').firstMatch(priceStr);
+      if (forMatch != null) {
+        String qtyStr = forMatch.group(1)!;
+        double total = double.parse(forMatch.group(2)!);
+        if (qtyStr.contains('/')) {
+          var frac = qtyStr.split('/');
+          qty = double.parse(frac[0]) / double.parse(frac[1]);
+        } else {
+          qty = double.parse(qtyStr);
+        }
+        avgPrice = total / qty; // Price per unit qty
+      }
+    }
+
+    // For ranges like "20-25/pack"
+    if (priceStr.contains('/pack') && rangeMatch != null) {
+      avgPrice = (double.parse(rangeMatch.group(1)!) + double.parse(rangeMatch.group(2)!)) / 2;
+      unit = 'pack';
+      qty = 1;
+    }
+
+    // For "100pcs/100 pesos"
+    if (priceStr.contains('pcs/')) {
+      var pcsMatch = RegExp(r'(\d+)pcs/(\d+)').firstMatch(priceStr);
+      if (pcsMatch != null) {
+        double count = double.parse(pcsMatch.group(1)!);
+        double total = double.parse(pcsMatch.group(2)!);
+        avgPrice = total / count;
+        qty = 1;
+        unit = 'pcs';
+      }
+    }
+
+    // Get grams
+    double gramsPerUnit = unitToGrams[unit] ?? 100; // Default 100g
+    double qtyGrams = qty * gramsPerUnit;
+
+    // Price per 100g
+    double pricePer100g = (qtyGrams > 0) ? (avgPrice / (qtyGrams / 100)) : 0;
+
+    return {
+      'price_per_100g': pricePer100g,
+      'unit': unit,
+      'price_text': priceStr,
+    };
+  }
+
+  // New: Insertion for complete substitution data
+  Future<void> _insertCompleteSubstitutionData(Database db) async {
+    await _insertUnitConversions(db);
+    await _insertFilipinoIngredients(db);
+    await _insertSubstitutionRules(db);
+  }
+
+  Future<void> _insertUnitConversions(Database db) async {
+    final units = [
+      {'unit_name': 'tbsp', 'grams_per_unit': 15.0},
+      {'unit_name': 'tsp', 'grams_per_unit': 5.0},
+      {'unit_name': 'cup', 'grams_per_unit': 240.0},
+      {'unit_name': 'ml', 'grams_per_unit': 1.0},
+      {'unit_name': 'piece', 'grams_per_unit': 100.0},
+      {'unit_name': 'clove', 'grams_per_unit': 5.0},
+      {'unit_name': 'kg', 'grams_per_unit': 1000.0},
+      {'unit_name': 'g', 'grams_per_unit': 1.0},
+      {'unit_name': 'bunch', 'grams_per_unit': 100.0},
+      {'unit_name': 'slice', 'grams_per_unit': 30.0},
+      {'unit_name': 'wedge', 'grams_per_unit': 75.0},
+      // Expanded for 29 units
+      {'unit_name': 'pack', 'grams_per_unit': 250.0}, // Average from searches
+      {'unit_name': 'pcs', 'grams_per_unit': 100.0},
+      {'unit_name': 'bottle', 'grams_per_unit': 500.0},
+      {'unit_name': 'tray', 'grams_per_unit': 1800.0},
+      {'unit_name': 'tie', 'grams_per_unit': 250.0},
+      {'unit_name': 'group', 'grams_per_unit': 500.0},
+      {'unit_name': 'can', 'grams_per_unit': 370.0},
+      {'unit_name': 'leaves', 'grams_per_unit': 1.0},
+      {'unit_name': '1/4kg', 'grams_per_unit': 250.0},
+      {'unit_name': '350ml bottle', 'grams_per_unit': 350.0},
+      {'unit_name': '500ml', 'grams_per_unit': 500.0},
+      {'unit_name': '250ml pack', 'grams_per_unit': 250.0},
+      {'unit_name': '10g cube', 'grams_per_unit': 10.0},
+      {'unit_name': '150g bottle', 'grams_per_unit': 150.0},
+      {'unit_name': '200g pack', 'grams_per_unit': 200.0},
+      {'unit_name': '370ml can', 'grams_per_unit': 370.0},
+      {'unit_name': '50g pack', 'grams_per_unit': 50.0},
+      {'unit_name': '1/4', 'grams_per_unit': 250.0}, // Assume kg
+      {'unit_name': '100pcs/100 pesos', 'grams_per_unit': 100.0},
+      {'unit_name': '3 for 120', 'grams_per_unit': 100.0},
+      {'unit_name': '6 each', 'grams_per_unit': 100.0},
+      {'unit_name': '12-45/pack', 'grams_per_unit': 250.0},
+      {'unit_name': '20-25/pack', 'grams_per_unit': 250.0},
+      {'unit_name': '20-30/pack', 'grams_per_unit': 250.0},
+      {'unit_name': '70-80/pack', 'grams_per_unit': 250.0},
+    ];
+    for (var unit in units) {
+      await db.insert('unit_conversions', unit, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+  }
+
+  Future<void> _insertFilipinoIngredients(Database db) async {
+    String jsonString = await rootBundle.loadString('assets/data/ingredients.json');
+    Map<String, dynamic> jsonData = json.decode(jsonString);
+    List<dynamic> ingredientsJson = jsonData['ingredients'] ?? [];
+
+    for (var ing in ingredientsJson) {
+      Map<String, dynamic> parsed = parsePriceString(ing['price_text'] ?? ing['price'] ?? '0', ing['ingredientName'] ?? '', ing['category'] ?? '');
+      await db.insert('ingredients', {
+        'ingredientID': ing['ingredientID'],
+        'ingredientName': ing['ingredientName'],
+        'price': parsed['price_per_100g'],
+        'calories': ing['calories'],
+        'nutritionalValue': ing['nutritionalValue'],
+        'ingredientPicture': ing['ingredientPicture'],
+        'category': ing['category'],
+        'sodium_mg_per_100g': ing['sodium_mg_per_100g'] ?? 0.0, // Preserve from JSON
+        'protein_g_per_100g': ing['protein_g_per_100g'] ?? 0.0,
+        'carbs_g_per_100g': ing['carbs_g_per_100g'] ?? 0.0,
+        'fat_g_per_100g': ing['fat_g_per_100g'] ?? 0.0,
+        'unit_density_tbsp': ing['unit_density_tbsp'] ?? 15.0, // Preserve
+        'unit_density_tsp': ing['unit_density_tsp'] ?? 5.0,
+        'unit_density_cup': ing['unit_density_cup'] ?? 240.0,
+        'tags': ing['tags'] ?? '[]',
+        'price_text': parsed['price_text'],
+        'unit': parsed['unit'] ?? ing['unit'],
+        'additionalPictures': ing['additionalPictures'] ?? '',
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+  }
+
+  Future<void> _insertSubstitutionRules(Database db) async {
+  try {
+    final String jsonString = await rootBundle.loadString('assets/data/substitutions.json');
+    final Map<String, dynamic> subData = jsonDecode(jsonString);
+    
+    for (var entry in subData.entries) {
+      final origName = entry.key;
+      final subs = entry.value as List<dynamic>;
+      
+      // Get original ID
+      final origResult = await db.query(
+        'ingredients',
+        where: 'ingredientName = ?',
+        whereArgs: [origName],
+      );
+      if (origResult.isEmpty) continue; // Skip if original not found
+      final origId = origResult.first['ingredientID'] as int;
+      
+      for (var subName in subs) {
+        final subResult = await db.query(
+          'ingredients',
+          where: 'ingredientName = ?',
+          whereArgs: [subName],
+        );
+        if (subResult.isEmpty) continue; // Skip if substitute not found
+        final subId = subResult.first['ingredientID'] as int;
+        
+        // Insert with defaults (you can adjust based on category)
+        await db.insert('substitutions', {
+          'original_ingredient_id': origId,
+          'substitute_ingredient_id': subId,
+          'equivalence_ratio': 1.0,
+          'flavor_similarity': 0.7, // Medium similarity
+          'notes': 'General substitute based on availability and similar use.',
+          'confidence': 'medium',
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      }
+    }
+    print('Inserted substitutions from JSON');
+  } catch (e) {
+    print('Error loading substitutions.json: $e');
+    // Optional: Fallback to hardcoded rules if JSON fails
+  }
+}
+
+  // SubstitutionCalculator class - FIXED: Moved outside DatabaseHelper
+  late final SubstitutionCalculator substitutionCalculator = SubstitutionCalculator(this);
+
+  // Enhanced alternatives method
+  Future<List<Map<String, dynamic>>> getEnhancedAlternatives(
+    String ingredientName, double amount, String unit) async {
+    final db = await database;
+    final ingredient = await getIngredientByName(ingredientName); // Assume this method exists or add it
+    if (ingredient == null) return [];
+    return await substitutionCalculator.getRankedSubstitutes(
+      originalIngredientId: ingredient['ingredientID'] as int,
+      originalAmount: amount,
+      originalUnit: unit,
+    );
+  }
+
+  // Log substitution
+  Future<void> logSubstitution({
+    required int mealId,
+    required int userId,
+    required int originalIngredientId,
+    required int substituteIngredientId,
+    required double originalAmountG,
+    required double substituteAmountG,
+    required double costDelta,
+    required double calorieDelta,
+  }) async {
+    final db = await database;
+    await db.insert('meal_substitution_log', {
+      'meal_id': mealId,
+      'user_id': userId,
+      'original_ingredient_id': originalIngredientId,
+      'substitute_ingredient_id': substituteIngredientId,
+      'original_amount_g': originalAmountG,
+      'substitute_amount_g': substituteAmountG,
+      'cost_delta': costDelta,
+      'calorie_delta': calorieDelta,
+      'substitution_date': DateTime.now().toIso8601String(),
+    });
+  }
+
+  // ========== CUSTOMIZED MEALS OPERATIONS ==========
+
+  Future<int> saveCustomizedMeal({
+    required int originalMealId,
+    required int userId,
+    required Map<String, String> originalIngredients,
+    required Map<String, String> substitutedIngredients,
+    String? customizedName,
+  }) async {
+    final db = await database;
+    
+    // Deactivate any existing active customization for this meal and user
+    await db.update(
+      'customized_meals',
+      {'is_active': 0},
+      where: 'original_meal_id = ? AND user_id = ? AND is_active = 1',
+      whereArgs: [originalMealId, userId],
+    );
+
+    return await db.insert('customized_meals', {
+      'original_meal_id': originalMealId,
+      'user_id': userId,
+      'customized_name': customizedName,
+      'original_ingredients': jsonEncode(originalIngredients),
+      'substituted_ingredients': jsonEncode(substitutedIngredients),
+      'created_at': DateTime.now().toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
+      'is_active': 1,
+    });
+  }
+
+  Future<Map<String, dynamic>?> getActiveCustomizedMeal(int originalMealId, int userId) async {
+    final db = await database;
+    final result = await db.query(
+      'customized_meals',
+      where: 'original_meal_id = ? AND user_id = ? AND is_active = 1',
+      whereArgs: [originalMealId, userId],
+    );
+    
+    if (result.isNotEmpty) {
+      final meal = result.first;
+      return {
+        ...meal,
+        'original_ingredients': jsonDecode(meal['original_ingredients'] as String),
+        'substituted_ingredients': jsonDecode(meal['substituted_ingredients'] as String),
+      };
+    }
+    return null;
+  }
+
+  Future<List<Map<String, dynamic>>> getUserCustomizedMeals(int userId) async {
+    final db = await database;
+    final result = await db.query(
+      'customized_meals',
+      where: 'user_id = ? AND is_active = 1',
+      whereArgs: [userId],
+    );
+    
+    return result.map((meal) {
+      return {
+        ...meal,
+        'original_ingredients': jsonDecode(meal['original_ingredients'] as String),
+        'substituted_ingredients': jsonDecode(meal['substituted_ingredients'] as String),
+      };
+    }).toList();
+  }
+
+  Future<int> updateCustomizedMeal({
+    required int customizedMealId,
+    required Map<String, String> substitutedIngredients,
+    String? customizedName,
+  }) async {
+    final db = await database;
+    return await db.update(
+      'customized_meals',
+      {
+        'substituted_ingredients': jsonEncode(substitutedIngredients),
+        'customized_name': customizedName,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [customizedMealId],
+    );
+  }
+
+  Future<int> deleteCustomizedMeal(int customizedMealId) async {
+    final db = await database;
+    return await db.delete(
+      'customized_meals',
+      where: 'id = ?',
+      whereArgs: [customizedMealId],
+    );
+  }
+
+}
+
+// ========== SUBSTITUTION CALCULATOR CLASS - MOVED OUTSIDE DatabaseHelper ==========
+class SubstitutionCalculator {
+  final DatabaseHelper dbHelper;
+
+  SubstitutionCalculator(this.dbHelper);
+
+  // Convert recipe amount to grams
+  Future<double> convertToGrams(double amount, String unit, Map<String, dynamic>? ingredient) async {
+    final db = await dbHelper.database;
+    final result = await db.query(
+      'unit_conversions',
+      where: 'unit_name = ?',
+      whereArgs: [unit.toLowerCase()],
+    );
+    
+    if (result.isEmpty) {
+      // Default to grams if unit not found
+      return amount;
+    }
+    
+    double gramsPerUnit = result.first['grams_per_unit'] as double;
+    
+    // Override with per-ingredient if available
+    if (ingredient != null) {
+      if (unit == 'cup') gramsPerUnit = ingredient['unit_density_cup'] as double? ?? gramsPerUnit;
+      if (unit == 'tbsp') gramsPerUnit = ingredient['unit_density_tbsp'] as double? ?? gramsPerUnit;
+      if (unit == 'tsp') gramsPerUnit = ingredient['unit_density_tsp'] as double? ?? gramsPerUnit;
+    }
+    
+    return amount * gramsPerUnit;
+  }
+
+  // Calculate substitution details
+  Future<Map<String, dynamic>> calculateSubstitution({
+    required int originalIngredientId,
+    required int substituteIngredientId,
+    required double originalAmount,
+    required String originalUnit,
+  }) async {
+    final db = await dbHelper.database;
+    
+    // Get original ingredient data
+    final originalIngredient = await db.query(
+      'ingredients',
+      where: 'ingredientID = ?',
+      whereArgs: [originalIngredientId],
+    );
+    
+    // Get substitute ingredient data  
+    final substituteIngredient = await db.query(
+      'ingredients',
+      where: 'ingredientID = ?',
+      whereArgs: [substituteIngredientId],
+    );
+    
+    // Get substitution rule
+    final substitutionRule = await db.query(
+      'substitutions',
+      where: 'original_ingredient_id = ? AND substitute_ingredient_id = ?',
+      whereArgs: [originalIngredientId, substituteIngredientId],
+    );
+    
+    if (originalIngredient.isEmpty || substituteIngredient.isEmpty) {
+      throw Exception('Ingredient not found');
+    }
+    
+    final orig = originalIngredient.first;
+    final sub = substituteIngredient.first;
+    final rule = substitutionRule.isNotEmpty ? substitutionRule.first : null;
+    
+    // Convert to grams (fixed: pass orig as the ingredient map)
+    final origGrams = await convertToGrams(originalAmount, originalUnit, orig);
+    
+    // Calculate substitute amount
+    final equivalenceRatio = rule?['equivalence_ratio'] as double? ?? 1.0;
+    final subGrams = origGrams * equivalenceRatio;
+    
+    // Calculate nutritional values (per 100g basis)
+    final origCalories = (orig['calories'] as int) * (origGrams / 100);
+    final subCalories = (sub['calories'] as int) * (subGrams / 100);
+    final calorieDelta = subCalories - origCalories;
+    
+    // Calculate cost
+    final origPricePer100g = orig['price'] as double;
+    final subPricePer100g = sub['price'] as double;
+    final origCost = origPricePer100g * (origGrams / 100);
+    final subCost = subPricePer100g * (subGrams / 100);
+    final costDelta = subCost - origCost;
+    
+    // Calculate sodium impact
+    final origSodium = (orig['sodium_mg_per_100g'] as double?) ?? 0 * (origGrams / 100);
+    final subSodium = (sub['sodium_mg_per_100g'] as double?) ?? 0 * (subGrams / 100);
+    final sodiumDelta = subSodium - origSodium;
+    
+    return {
+      'original': {
+        'ingredient': orig,
+        'amount_g': origGrams,
+        'calories': origCalories,
+        'cost': origCost,
+        'sodium_mg': origSodium,
+      },
+      'substitute': {
+        'ingredient': sub,
+        'amount_g': subGrams,
+        'calories': subCalories,
+        'cost': subCost,
+        'sodium_mg': subSodium,
+      },
+      'deltas': {
+        'calories': calorieDelta,
+        'cost': costDelta,
+        'sodium': sodiumDelta,
+      },
+      'rule': rule,
+      'equivalence_ratio': equivalenceRatio,
+    };
+  }
+
+  // Get ranked substitutes for an ingredient
+  Future<List<Map<String, dynamic>>> getRankedSubstitutes({
+    required int originalIngredientId,
+    required double originalAmount,
+    required String originalUnit,
+    Map<String, double> weights = const {
+      'cost': 0.3,
+      'calories': 0.3,
+      'flavor': 0.4,
+    },
+  }) async {
+    final db = await dbHelper.database;
+    
+    // Get all possible substitutes
+    final substitutes = await db.rawQuery('''
+      SELECT s.*, i.* 
+      FROM substitutions s
+      JOIN ingredients i ON s.substitute_ingredient_id = i.ingredientID
+      WHERE s.original_ingredient_id = ?
+    ''', [originalIngredientId]);
+    
+    List<Map<String, dynamic>> rankedSubstitutes = [];
+    
+    for (var sub in substitutes) {
+      final calculation = await calculateSubstitution(
+        originalIngredientId: originalIngredientId,
+        substituteIngredientId: sub['substitute_ingredient_id'] as int,
+        originalAmount: originalAmount,
+        originalUnit: originalUnit,
+      );
+      
+      // Calculate composite score
+      final costDelta = calculation['deltas']['cost'] as double;
+      final calorieDelta = calculation['deltas']['calories'] as double;
+      final flavorSimilarity = sub['flavor_similarity'] as double;
+      
+      // Normalize deltas (lower is better)
+      final normCost = costDelta.abs() / ((calculation['original']['cost'] as double) + 0.001);
+      final normCalories = calorieDelta.abs() / ((calculation['original']['calories'] as double) + 0.001);
+      
+      // Composite score (lower is better)
+      final score = 
+          weights['cost']! * normCost +
+          weights['calories']! * normCalories +
+          weights['flavor']! * (1 - flavorSimilarity);
+      
+      rankedSubstitutes.add({
+        ...calculation,
+        'score': score,
+        'display_amount': _formatAmountForDisplay(
+          calculation['substitute']['amount_g'] as double,
+          originalUnit,
+        ),
+      });
+    }
+    
+    // Sort by score (ascending - lower score is better)
+    rankedSubstitutes.sort((a, b) => (a['score'] as double).compareTo(b['score'] as double));
+    
+    return rankedSubstitutes;
+  }
+
+  String _formatAmountForDisplay(double grams, String originalUnit) {
+    // Simple conversion back to original units for display
+    if (originalUnit == 'tbsp') {
+      return '${(grams / 15).toStringAsFixed(1)} tbsp';
+    } else if (originalUnit == 'tsp') {
+      return '${(grams / 5).toStringAsFixed(1)} tsp';
+    } else {
+      return '${grams.toStringAsFixed(1)}g';
+    }
+  }
 }

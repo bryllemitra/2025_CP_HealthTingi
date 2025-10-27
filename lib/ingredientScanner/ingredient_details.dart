@@ -1,3 +1,4 @@
+// Modified ingredientScanner/ingredient_details.dart
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import '../pages/meal_details.dart';
@@ -531,7 +532,9 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
   }
 
   String _getCostEstimate(Map<String, dynamic>? ingredient) {
-    if (ingredient != null && ingredient['price'] != null) {
+    if (ingredient != null && ingredient['price_text'] != null) {
+      return ingredient['price_text'];
+    } else if (ingredient != null && ingredient['price'] != null) {
       return 'Php ${ingredient['price']} (per unit)';
     }
     return 'Price information not available';

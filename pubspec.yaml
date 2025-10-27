@@ -161,11 +161,6 @@ flutter:
     - assets/register-background.jpg
 
     - assets/fonts/
-    #- assets/models/best_float32.tflite
-    - assets/models/fruit_model.tflite
-    - assets/models/model.tflite
-    - assets/models/model2.tflite
-    - assets/models/model3.tflite
     - assets/models/labels.txt
     - assets/models/healthtingi_current.tflite
     - assets/models/ingredient_scanner.tflite
@@ -174,6 +169,7 @@ flutter:
     - assets/models/compatible_model_v2.tflite
     - assets/models/class_info.txt
     - assets/models/class_info.json
+    - assets/models/healthtingi_update2.tflite
   fonts:
     - family: Orbitron
       fonts:

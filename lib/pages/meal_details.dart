@@ -32,6 +32,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
   int _currentImageIndex = 0;
   Timer? _carouselTimer;
   List<String> _imagePaths = [];
+  Map<String, dynamic>? _customizedMeal;
+  bool _showCustomized = false;
 
   @override
   void initState() {
@@ -44,6 +46,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     });
     _loadData();
     _trackMealView();
+    _loadCustomizedMeal();
   }
 
   @override
@@ -72,6 +75,23 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _loadCustomizedMeal() async {
+    if (widget.userId == 0) return;
+    
+    try {
+      final dbHelper = DatabaseHelper();
+      final customized = await dbHelper.getActiveCustomizedMeal(widget.mealId, widget.userId);
+      
+      if (mounted) {
+        setState(() {
+          _customizedMeal = customized;
+        });
+      }
+    } catch (e) {
+      print('Error loading customized meal: $e');
     }
   }
 
@@ -265,6 +285,162 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     }
   }
 
+  List<Widget> _buildIngredientWidgets(
+    List<Map<String, dynamic>> ingredients, 
+    Map<String, dynamic>? substitutedIngredients
+  ) {
+    List<Widget> ingredientWidgets = [];
+    double totalPrice = 0.0;
+    
+    // First, process original meal ingredients
+    for (var ingredient in ingredients) {
+      final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown';
+      String displayName = ingredientName;
+      String quantity = ingredient['quantity']?.toString() ?? '';
+      
+      // Use substituted ingredient if available and showing customized
+      if (substitutedIngredients != null && substitutedIngredients.containsKey(ingredientName)) {
+        final substitute = substitutedIngredients[ingredientName];
+        if (substitute == 'REMOVED') {
+          // Skip removed ingredients
+          continue;
+        } else if (substitute != ingredientName) {
+          // Use substituted ingredient name
+          displayName = substitute;
+        }
+      }
+      
+      double? ingredientPrice = ingredient['price'] as double?;
+      final unit = ingredient['unit']?.toString() ?? 'kg';
+
+      // Compute calculatedCost
+      double calculatedCost = 0.0;
+      if (ingredientPrice != null && quantity.isNotEmpty) {
+        final qtyMatch = RegExp(r'(\d+\.?\d*)\s*(\w+)').firstMatch(quantity);
+        if (qtyMatch != null) {
+          double qtyValue = double.parse(qtyMatch.group(1)!);
+          String qtyUnit = qtyMatch.group(2)!.toLowerCase();
+
+          // Convert quantity to grams
+          double gramsPerQtyUnit = 1.0;
+          if (qtyUnit == 'kg') {
+            gramsPerQtyUnit = 1000.0;
+          } else if (qtyUnit == 'g') {
+            gramsPerQtyUnit = 1.0;
+          } else if (qtyUnit == 'tbsp') {
+            gramsPerQtyUnit = ingredient['unit_density_tbsp'] as double? ?? 15.0;
+          } else if (qtyUnit == 'tsp') {
+            gramsPerQtyUnit = ingredient['unit_density_tsp'] as double? ?? 5.0;
+          } else if (qtyUnit == 'cup') {
+            gramsPerQtyUnit = ingredient['unit_density_cup'] as double? ?? 240.0;
+          }
+
+          final qtyGrams = qtyValue * gramsPerQtyUnit;
+          calculatedCost = (qtyGrams / 100.0) * ingredientPrice;
+        }
+      }
+      totalPrice += calculatedCost;
+      final priceDisplay = calculatedCost.toStringAsFixed(2);
+
+      ingredientWidgets.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                flex: 3,
+                child: Text(
+                  '$quantity $displayName',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'Orbitron',
+                    color: Colors.black87,
+                    fontStyle: substitutedIngredients != null && 
+                              substitutedIngredients.containsKey(ingredientName) &&
+                              substitutedIngredients[ingredientName] != ingredientName
+                        ? FontStyle.italic 
+                        : FontStyle.normal,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Flexible(
+                flex: 1,
+                child: Text(
+                  'Php $priceDisplay',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Orbitron',
+                    color: Color(0xFF76C893),
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Now, add any NEW ingredients that were added in customization but don't exist in original meal
+    if (substitutedIngredients != null) {
+      for (final entry in substitutedIngredients.entries) {
+        final ingredientName = entry.key;
+        final substituteValue = entry.value as String;
+        
+        // Check if this is a NEW ingredient (not in original meal and not a substitution/removal)
+        final isNewIngredient = !ingredients.any((ing) => 
+            ing['ingredientName']?.toString() == ingredientName) && 
+            substituteValue != 'REMOVED' && 
+            substituteValue == ingredientName;
+        
+        if (isNewIngredient) {
+          // This is a newly added ingredient - display it
+          ingredientWidgets.add(
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    flex: 3,
+                    child: Text(
+                      '? $ingredientName', // Use "?" for quantity since we don't have quantity info for new ingredients
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Orbitron',
+                        color: Colors.black87,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Flexible(
+                    flex: 1,
+                    child: Text(
+                      'Php ?', // Unknown price for new ingredients
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Orbitron',
+                        color: Color(0xFF76C893),
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+      }
+    }
+    
+    return ingredientWidgets;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -442,8 +618,53 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     final userRestriction = mealData['userRestriction'] ?? '';
                     final mealRestrictions = mealData['mealRestrictions'] ?? '';
                     final ingredients = mealData['ingredients'] as List<Map<String, dynamic>>;
-                    final price = mealData['price'] ?? 0.0;
                     final categories = (mealData['category'] as String?)?.split(', ') ?? [];
+
+                    // Compute total price from ingredients
+                    double totalPrice = 0.0;
+                    for (var ingredient in ingredients) {
+                      final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown';
+                      
+                      // Skip removed ingredients in customized view
+                      if (_showCustomized && _customizedMeal != null) {
+                        final substituted = _customizedMeal!['substituted_ingredients'] as Map<String, dynamic>;
+                        if (substituted.containsKey(ingredientName) && substituted[ingredientName] == 'REMOVED') {
+                          continue;
+                        }
+                      }
+                      
+                      final quantity = ingredient['quantity']?.toString() ?? '';
+                      double? ingredientPrice = ingredient['price'] as double?;
+                      final unit = ingredient['unit']?.toString() ?? 'kg';
+
+                      // Compute calculatedCost (updated to use grams since price is per 100g)
+                      double calculatedCost = 0.0;
+                      if (ingredientPrice != null && quantity.isNotEmpty) {
+                        final qtyMatch = RegExp(r'(\d+\.?\d*)\s*(\w+)').firstMatch(quantity);
+                        if (qtyMatch != null) {
+                          double qtyValue = double.parse(qtyMatch.group(1)!);
+                          String qtyUnit = qtyMatch.group(2)!.toLowerCase();
+
+                          // Convert quantity to grams
+                          double gramsPerQtyUnit = 1.0; // Default for grams
+                          if (qtyUnit == 'kg') {
+                            gramsPerQtyUnit = 1000.0;
+                          } else if (qtyUnit == 'g') {
+                            gramsPerQtyUnit = 1.0;
+                          } else if (qtyUnit == 'tbsp') {
+                            gramsPerQtyUnit = ingredient['unit_density_tbsp'] as double? ?? 15.0;
+                          } else if (qtyUnit == 'tsp') {
+                            gramsPerQtyUnit = ingredient['unit_density_tsp'] as double? ?? 5.0;
+                          } else if (qtyUnit == 'cup') {
+                            gramsPerQtyUnit = ingredient['unit_density_cup'] as double? ?? 240.0;
+                          } // Add more units as needed (e.g., ml ≈ 1g, piece based on average)
+
+                          final qtyGrams = qtyValue * gramsPerQtyUnit;
+                          calculatedCost = (qtyGrams / 100.0) * ingredientPrice;
+                        }
+                      }
+                      totalPrice += calculatedCost;
+                    }
 
                     return Column(
                       children: [
@@ -511,7 +732,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                   const SizedBox(height: 8),
                                   Center(
                                     child: Text(
-                                      'Price: Php ${price.toStringAsFixed(2)}',
+                                      'Price: Php ${totalPrice.toStringAsFixed(2)}',
                                       style: const TextStyle(
                                         fontSize: 18,
                                         fontFamily: 'Orbitron',
@@ -600,6 +821,31 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 12),
+
+                                  // Add toggle for customized view if available
+                                  if (_customizedMeal != null)
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Show Customized Ingredients',
+                                          style: TextStyle(
+                                            fontFamily: 'Orbitron',
+                                            fontSize: 14,
+                                            color: Color(0xFF184E77),
+                                          ),
+                                        ),
+                                        Switch(
+                                          value: _showCustomized,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _showCustomized = value;
+                                            });
+                                          },
+                                          activeColor: const Color(0xFF76C893),
+                                        ),
+                                      ],
+                                    ),
+
                                   Card(
                                     elevation: 10,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -618,45 +864,10 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                               ),
                                             )
                                           : Column(
-                                              children: ingredients.map((ingredient) {
-                                                final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown';
-                                                final quantity = ingredient['quantity']?.toString() ?? '';
-                                                final price = ingredient['price']?.toString() ?? 'N/A';
-                                                
-                                                return Padding(
-                                                  padding: const EdgeInsets.symmetric(vertical: 6),
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      Flexible(
-                                                        flex: 3,
-                                                        child: Text(
-                                                          '$quantity $ingredientName',
-                                                          style: const TextStyle(
-                                                            fontSize: 14,
-                                                            fontFamily: 'Orbitron',
-                                                            color: Colors.black87,
-                                                          ),
-                                                          overflow: TextOverflow.ellipsis,
-                                                        ),
-                                                      ),
-                                                      Flexible(
-                                                        flex: 1,
-                                                        child: Text(
-                                                          'Php $price',
-                                                          style: const TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight: FontWeight.w500,
-                                                            fontFamily: 'Orbitron',
-                                                            color: Color(0xFF76C893),
-                                                          ),
-                                                          textAlign: TextAlign.right,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              }).toList(),
+                                              children: _buildIngredientWidgets(
+                                                ingredients, 
+                                                _showCustomized ? _customizedMeal!['substituted_ingredients'] : null
+                                              ),
                                             ),
                                     ),
                                   ),
@@ -664,9 +875,9 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                   Center(
                                     child: ElevatedButton.icon(
                                       icon: const Icon(Icons.edit, size: 20),
-                                      label: const Text(
-                                        'Change Ingredients',
-                                        style: TextStyle(
+                                      label: Text(
+                                        _customizedMeal != null ? 'Modify Customization' : 'Change Ingredients',
+                                        style: const TextStyle(
                                           fontFamily: 'Orbitron',
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
@@ -682,9 +893,16 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                             builder: (context) => ReverseIngredientPage(
                                               ingredients: ingredientNames,
                                               userId: widget.userId,
+                                              mealId: widget.mealId,
                                             ),
                                           ),
-                                        );
+                                        ).then((_) {
+                                          // Reload customized meal when returning from reverse ingredient page
+                                          _loadCustomizedMeal();
+                                          setState(() {
+                                            _showCustomized = false; // Reset to original view
+                                          });
+                                        });
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.white,

@@ -375,10 +375,10 @@ class _MealSearchPageState extends State<MealSearchPage> {
   Widget _buildIngredientCard(Map<String, dynamic> ingredient) {
     final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown Ingredient';
     final imagePath = ingredient['ingredientPicture']?.toString() ?? 'assets/default_ingredient.jpg';
-    final price = ingredient['price'] is double 
-        ? (ingredient['price'] as double).toStringAsFixed(2)
-        : ingredient['price']?.toString() ?? '0.00';
-    
+    final price = ingredient['price_text'] is double 
+        ? (ingredient['price_text'] as double).toStringAsFixed(2)
+        : ingredient['price_text']?.toString() ?? '0.00';
+
     return Container(
       width: 120,
       height: 165, // ADD FIXED HEIGHT TO PREVENT OVERFLOW
