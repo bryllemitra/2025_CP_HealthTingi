@@ -721,33 +721,31 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  // ONLY CHANGE: MORE WIDTH + REMOVED FIXED HEIGHT
-  Widget _buildTermsPage() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Step 4: Terms and Conditions',
-            style: TextStyle(
-              fontSize: 20,
-              fontFamily: 'Orbitron',
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              shadows: [
-                Shadow(
-                  color: Colors.black26,
-                  offset: Offset(2, 2),
-                  blurRadius: 6,
-                ),
-              ],
-            ),
-            textAlign: TextAlign.center,
+ Widget _buildTermsPage() {
+  return Padding(
+    padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05, vertical: 16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Step 4: Terms and Conditions',
+          style: TextStyle(
+            fontSize: 20,
+            fontFamily: 'Orbitron',
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: [
+              Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6),
+            ],
           ),
-          const SizedBox(height: 20),
-          Container(
-            width: double.infinity, // FULL WIDTH
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+
+        // TERMS CARD — FULL WIDTH, SCROLLABLE
+        Expanded(
+          child: Container(
+            width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.9),
               borderRadius: BorderRadius.circular(16),
@@ -780,33 +778,45 @@ This app is part of a student project and not intended for commercial use. There
 7. Changes to Terms
 We may update these terms as the app improves. Any changes will be reflected in this section.
 ''',
-                  style: TextStyle(fontSize: 12, color: Colors.black87), // Font 12
+                  style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.6),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          if (hasReadTerms) ...[
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Checkbox(
-                value: agreeToTerms,
-                onChanged: (!_isUnderage)
-                    ? (val) => setState(() => agreeToTerms = val!)
-                    : null,
-                activeColor: const Color(0xFF76C893),
-                checkColor: Colors.white,
-              ),
-              title: const Text(
-                'I agree to the terms and conditions',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-              ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // "I AGREE" CHECKBOX — ONLY AFTER SCROLLING
+        if (hasReadTerms)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: agreeToTerms,
+                  onChanged: _isUnderage ? null : (val) => setState(() => agreeToTerms = val!),
+                  activeColor: const Color(0xFF76C893),
+                  checkColor: Colors.white,
+                  side: const BorderSide(color: Colors.black54, width: 1.5),
+                ),
+                const Expanded(
+                  child: Text(
+                    'I agree to the terms and conditions',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ],
-      ),
-    );
-  }
+          ),
+      ],
+    ),
+  );
+}
 
   Widget _buildNavigationButtons() {
     return Padding(
@@ -938,9 +948,9 @@ We may update these terms as the app improves. Any changes will be reflected in 
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C),
-              Color(0xFF76C893),
-              Color(0xFF184E77),
+              Color(0xFFB5E48C), // soft lime green
+              Color(0xFF76C893), // muted forest green
+              Color(0xFF184E77), // deep slate blue
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
