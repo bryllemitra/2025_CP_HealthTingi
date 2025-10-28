@@ -968,53 +968,53 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _drawerButton(BuildContext context, IconData icon, String label) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white.withOpacity(0.9),
-        foregroundColor: const Color(0xFF184E77),
-        elevation: 10,
-        shadowColor: Colors.greenAccent,
-        minimumSize: const Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+  return ElevatedButton.icon(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.white.withOpacity(0.9),
+      foregroundColor: const Color(0xFF184E77),
+      elevation: 10,
+      shadowColor: Colors.greenAccent,
+      minimumSize: const Size(double.infinity, 50),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
       ),
-      onPressed: () {
-        Navigator.pop(context);
-        switch (label) {
-          case 'About Us':
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AboutUsPage()),
-            );
-            break;
-          case 'FAQs':
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FAQSPage()),
-            );
-            break;
-          case 'Exit Guest Mode':
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const IndexPage()),
-              (Route<dynamic> route) => false,
-            );
-            break;
-        }
-      },
-      icon: Icon(icon, size: 24),
-      label: Text(
-        label, 
-        style: const TextStyle(
-          fontFamily: 'Orbitron',
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+    ),
+    onPressed: () {
+      Navigator.pop(context);
+      switch (label) {
+        case 'About Us':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AboutUsPage(isAdmin: false)),
+        );
+        break;
+      case 'FAQs':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const FAQSPage(isAdmin: false)),
+        );
+  break;
+        case 'Exit Guest Mode':
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const IndexPage()),
+            (Route<dynamic> route) => false,
+          );
+          break;
+      }
+    },
+    icon: Icon(icon, size: 24),
+    label: Text(
+      label,
+      style: const TextStyle(
+        fontFamily: 'Orbitron',
+        fontWeight: FontWeight.bold,
+        fontSize: 16,
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

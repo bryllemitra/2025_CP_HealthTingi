@@ -13,7 +13,7 @@ class AboutUsPage extends StatefulWidget {
 
 class _AboutUsPageState extends State<AboutUsPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
-  String? _content;
+  String _content = '';          // <-- now non-nullable (will be set in _loadContent)
   bool _isLoading = true;
 
   @override
@@ -24,8 +24,12 @@ class _AboutUsPageState extends State<AboutUsPage> {
 
   Future<void> _loadContent() async {
     setState(() => _isLoading = true);
-    _content = await _dbHelper.getAboutUsContent();
-    setState(() => _isLoading = false);
+    final String? fetched = await _dbHelper.getAboutUsContent();
+    setState(() {
+      _content = fetched ??
+          'By combining real-time ingredient recognition, a local price-aware recipe engine, and offline access, HealthTingi empowers families to make the most of what’s available—whether in urban or rural communities. Our mission is to use simple technology to address food insecurity, improve nutrition, and support smarter meal planning across the Philippines.\n\nEat Smart. Live Better.';
+      _isLoading = false;
+    });
   }
 
   void _showEditDialog() {
@@ -49,7 +53,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
             onPressed: () async {
               await _dbHelper.updateAboutUsContent(controller.text);
               Navigator.pop(context);
-              _loadContent();
+              _loadContent();               // <-- refresh UI after save
             },
             child: const Text('Save'),
           ),
@@ -105,10 +109,12 @@ class _AboutUsPageState extends State<AboutUsPage> {
                         ),
                       ),
                     ),
+                    // ------------------- EDIT BUTTON (ADMIN ONLY) -------------------
                     if (widget.isAdmin)
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.white),
                         onPressed: _showEditDialog,
+                        tooltip: 'Edit About Us',
                       )
                     else
                       const SizedBox(width: 48), // Balance the layout with back button
@@ -141,7 +147,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
                                     ],
                                   ),
                                   child: Text(
-                                    _content ?? 'No content available',
+                                    _content,               // <-- now guaranteed non-null
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontFamily: 'Exo',

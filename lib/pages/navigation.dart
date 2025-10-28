@@ -9,17 +9,20 @@ class NavigationDrawerWidget extends StatelessWidget {
   final int userId;
   const NavigationDrawerWidget({super.key, required this.userId});
 
+  // CHANGE: Only userId == 1 is admin
+  bool get _isAdmin => userId == 1;
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: Colors.white.withOpacity(0.1), // Semi-transparent like register card
+      backgroundColor: Colors.white.withOpacity(0.1),
       child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -47,7 +50,7 @@ class NavigationDrawerWidget extends StatelessWidget {
                 ),
               ),
             ),
-            if (userId != 0) // Only show Profile for registered users
+            if (userId != 0)
               Column(
                 children: [
                   _drawerButton(context, Icons.person, 'Profile'),
@@ -59,9 +62,9 @@ class NavigationDrawerWidget extends StatelessWidget {
             _drawerButton(context, Icons.help_outline, 'FAQs'),
             const SizedBox(height: 8),
             _drawerButton(
-              context, 
-              Icons.logout, 
-              userId == 0 ? 'Exit Guest Mode' : 'Logout'
+              context,
+              Icons.logout,
+              userId == 0 ? 'Exit Guest Mode' : 'Logout',
             ),
           ],
         ),
@@ -83,7 +86,7 @@ class NavigationDrawerWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
       onPressed: () {
-        Navigator.pop(context); // Close drawer first
+        Navigator.pop(context);
         switch (label) {
           case 'Profile':
             Navigator.push(
@@ -94,18 +97,21 @@ class NavigationDrawerWidget extends StatelessWidget {
           case 'About Us':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AboutUsPage()),
+              MaterialPageRoute(
+                builder: (context) => AboutUsPage(isAdmin: _isAdmin), // ONLY ADMIN
+              ),
             );
             break;
           case 'FAQs':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const FAQSPage()),
+              MaterialPageRoute(
+                builder: (context) => FAQSPage(isAdmin: _isAdmin), // ONLY ADMIN
+              ),
             );
             break;
           case 'Logout':
           case 'Exit Guest Mode':
-            // Redirect to IndexPage and remove previous stack
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => const IndexPage()),
@@ -116,7 +122,7 @@ class NavigationDrawerWidget extends StatelessWidget {
       },
       icon: Icon(icon, size: 24),
       label: Text(
-        label, 
+        label,
         style: const TextStyle(
           fontFamily: 'Orbitron',
           fontWeight: FontWeight.bold,

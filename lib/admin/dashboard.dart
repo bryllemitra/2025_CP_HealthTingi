@@ -242,7 +242,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   
                   const SizedBox(height: 20),
                   
-                  // Quick Stats Section
+                  // Quick Stats Section – NOW CLICKABLE
                   Text(
                     'Quick Stats',
                     style: const TextStyle(
@@ -263,20 +263,30 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: _StatCard(
+                        child: _QuickStatButton(
                           title: 'Total Users',
                           value: totalUsersValue,
                           icon: Icons.people,
-                          color: Colors.blue,
+                          color: Colors.green,
+                          onTap: () => _showStatDetail(
+                            context,
+                            title: 'Total Users',
+                            description: 'The total number of registered users in the system.',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 15),
                       Expanded(
-                        child: _StatCard(
+                        child: _QuickStatButton(
                           title: 'Total Meals',
                           value: totalMealsValue,
                           icon: Icons.restaurant,
                           color: Colors.green,
+                          onTap: () => _showStatDetail(
+                            context,
+                            title: 'Total Meals',
+                            description: 'The total number of meals created by all users.',
+                          ),
                         ),
                       ),
                     ],
@@ -285,20 +295,30 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: _StatCard(
+                        child: _QuickStatButton(
                           title: 'Ingredients',
                           value: ingredientsValue,
                           icon: Icons.kitchen,
                           color: Colors.orange,
+                          onTap: () => _showStatDetail(
+                            context,
+                            title: 'Ingredients',
+                            description: 'The total number of unique ingredients stored in the database.',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 15),
                       Expanded(
-                        child: _StatCard(
+                        child: _QuickStatButton(
                           title: 'Active Today',
                           value: activeTodayValue,
                           icon: Icons.trending_up,
                           color: Colors.purple,
+                          onTap: () => _showStatDetail(
+                            context,
+                            title: 'Active Today',
+                            description: 'Users who signed up today (proxy for daily activity).',
+                          ),
                         ),
                       ),
                     ],
@@ -492,6 +512,23 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // NEW: Detail dialog for Quick Stats
+  // ------------------------------------------------------------
+  void _showStatDetail(BuildContext context, {required String title, required String description}) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF184E77))),
+        content: Text(description),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+        ],
       ),
     );
   }
@@ -729,7 +766,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           ),
                           child: const Center(
                             child: Text(
-                              '📈 Activity Chart Placeholder\n(Weekly User Activity)',
+                              'Activity Chart Placeholder\n(Weekly User Activity)',
                               textAlign: TextAlign.center,
                               style: TextStyle(color: Colors.grey),
                             ),
@@ -765,17 +802,22 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 }
 
-class _StatCard extends StatelessWidget {
+// -----------------------------------------------------------------
+// NEW: Clickable Quick Stat Card
+// -----------------------------------------------------------------
+class _QuickStatButton extends StatelessWidget {
   final String title;
   final String value;
   final IconData icon;
   final Color color;
+  final VoidCallback onTap;
 
-  const _StatCard({
+  const _QuickStatButton({
     required this.title,
     required this.value,
     required this.icon,
     required this.color,
+    required this.onTap,
   });
 
   @override
@@ -783,54 +825,65 @@ class _StatCard extends StatelessWidget {
     return Card(
       elevation: 8,
       color: Colors.white.withOpacity(0.85),
-      shape: RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: InkWell(
         borderRadius: BorderRadius.circular(15),
-      ),
-      shadowColor: Colors.black26,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: color, size: 24),
-                ),
-                const Spacer(),
-                Flexible(
-                  child: Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 24, // Slightly smaller to prevent overflow
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF184E77),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: color, size: 24),
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        value,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF184E77),
+                        ),
+                        textAlign: TextAlign.end,
+                        overflow: TextOverflow.visible,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+// -----------------------------------------------------------------
+// Keep the rest of your widgets exactly as they were
+// -----------------------------------------------------------------
 class _ManagementCard extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -905,30 +958,48 @@ class _AnalyticsItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(fontSize: 16, color: Colors.black87),
-      ),
-      trailing: Flexible(
-        child: Text(
-          value,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14, // Slightly smaller
-            color: color,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            margin: const EdgeInsets.only(top: 6),
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
           ),
-          overflow: TextOverflow.ellipsis,
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              textAlign: TextAlign.end,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
