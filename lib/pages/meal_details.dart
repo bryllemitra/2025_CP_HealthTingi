@@ -1,4 +1,3 @@
-// Modified: pages/meal_details.dart
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import 'dart:async';
@@ -298,7 +297,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       String displayName = ingredientName;
       String quantity = ingredient['quantity']?.toString() ?? '';
       
-      // Use substituted ingredient if available and showing customized
+     // Use substituted ingredient if available and showing customized
       if (substitutedIngredients != null && substitutedIngredients.containsKey(ingredientName)) {
         final substitute = substitutedIngredients[ingredientName];
         if (substitute == 'REMOVED') {

@@ -8,7 +8,7 @@ import 'budget_plan.dart';
 import 'meal_scan.dart';
 import 'meal_details.dart';
 import '../searchMeals/meal_search.dart';
-import '../searchMeals/favorites.dart';
+import '../searchMeals/user_custom.dart';
 import '../searchMeals/history.dart'; // Added import for history page
 import 'navigation.dart';
 import 'index.dart';
@@ -1054,10 +1054,11 @@ class _HomePageState extends State<HomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => FavoritesPage(userId: widget.userId),
+                    builder: (context) => UserCustomPage(userId: widget.userId),
                   ),
                 );
               },
+              tooltip: 'My Customized Meals',
             ),
           if (widget.userId != 0)
             IconButton(
@@ -1070,6 +1071,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 );
               },
+              tooltip: 'History',
             ),
           const SizedBox(width: 16),
         ],
