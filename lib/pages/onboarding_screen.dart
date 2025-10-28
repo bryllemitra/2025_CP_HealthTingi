@@ -14,6 +14,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentPage = 0;
 
+  // === UPDATED COLOR PALETTE ===
+  static const Color iconColor = Colors.white;                    // White icons
+  static const Color buttonColor = Color(0xFF10B981);             // Emerald Green (rich, non-overlapping)
+  static const Color activeDotColor = Color(0xFF10B981);          // Match button
+  static const Color inactiveDotColor = Color(0xFF6EE7B7);        // Lighter green for dots
+
   // List of onboarding pages
   final List<Widget> _onboardingPages = [
     const OnboardingPage(
@@ -67,6 +73,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: SafeArea(
           child: Column(
             children: [
+              // Page View
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
@@ -77,42 +84,52 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   itemBuilder: (context, index) => _onboardingPages[index],
                 ),
               ),
+
+              // Page Indicator Dots
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List<Widget>.generate(
                   _onboardingPages.length,
-                  (index) => Container(
-                    width: 8.0,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: _currentPage == index ? 12.0 : 8.0,
                     height: 8.0,
                     margin: const EdgeInsets.symmetric(horizontal: 4.0),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _currentPage == index
-                          ? Colors.yellowAccent
-                          : Colors.white,
+                          ? activeDotColor
+                          : inactiveDotColor.withOpacity(0.7),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              // Next Button
+
+              // Next / Get Started Button - RICH GREEN
               Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: ElevatedButton(
                   onPressed: _onNext,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.yellowAccent,
-                    foregroundColor: Colors.black,
+                    backgroundColor: buttonColor,           // Emerald Green
+                    foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
+                    elevation: 8,
+                    shadowColor: buttonColor.withOpacity(0.5),
                   ),
                   child: Text(
                     _currentPage == _onboardingPages.length - 1
                         ? 'Get Started'
                         : 'Next',
-                    style: const TextStyle(fontSize: 16, color: Colors.black),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -124,6 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
+// === ONBOARDING PAGE WITH WHITE ICONS ===
 class OnboardingPage extends StatelessWidget {
   final IconData image;
   final String title;
@@ -143,22 +161,28 @@ class OnboardingPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(image, size: 100, color: Colors.yellowAccent),
+          // WHITE ICON
+          Icon(
+            image,
+            size: 100,
+            color: _OnboardingScreenState.iconColor, // White
+          ),
           const SizedBox(height: 32),
           Text(
             title,
             style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Orbitron',
-                shadows: [
-                  Shadow(
-                    color: Colors.black26,
-                    offset: Offset(2, 2),
-                    blurRadius: 6,
-                  ),
-                ]),
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Orbitron',
+              shadows: [
+                Shadow(
+                  color: Colors.black26,
+                  offset: Offset(2, 2),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
