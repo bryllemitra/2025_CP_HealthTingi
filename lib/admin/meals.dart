@@ -18,6 +18,9 @@ class AdminMealsPage extends StatefulWidget {
 
 class _AdminMealsPageState extends State<AdminMealsPage> {
   List<Map<String, dynamic>> _meals = [];
+  List<Map<String, dynamic>> _filteredMeals = [];
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
   late int totalMeals = 0;
   late int availableMeals = 0;
@@ -27,6 +30,12 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
   void initState() {
     super.initState();
     _refreshMeals();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _refreshMeals() async {
@@ -50,6 +59,21 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
       availableMeals = avail;
       vegetarianMeals = veg;
       _isLoading = false;
+    });
+    _filterMeals();
+  }
+
+  void _filterMeals() {
+    setState(() {
+      if (_searchQuery.isEmpty) {
+        _filteredMeals = _meals;
+      } else {
+        _filteredMeals = _meals.where((meal) {
+          final name = meal['mealName']?.toString().toLowerCase() ?? '';
+          final category = meal['category']?.toString().toLowerCase() ?? '';
+          return name.contains(_searchQuery.toLowerCase()) || category.contains(_searchQuery.toLowerCase());
+        }).toList();
+      }
     });
   }
 
@@ -157,7 +181,47 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                   ],
                 ),
                 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
+                
+                // Search Bar
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.search, color: const Color(0xFF184E77)),
+                      hintText: 'Search meals by name or category...',
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(color: Colors.grey[600]),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: Color(0xFF184E77)),
+                              onPressed: () {
+                                _searchController.clear();
+                                _searchQuery = '';
+                                _filterMeals();
+                              },
+                            )
+                          : null,
+                    ),
+                    onChanged: (value) {
+                      _searchQuery = value;
+                      _filterMeals();
+                    },
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
                 
                 // Section Title
                 const Padding(
@@ -191,7 +255,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : _meals.isEmpty
+                      : _filteredMeals.isEmpty
                           ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -202,9 +266,9 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                                     color: Colors.white.withOpacity(0.7),
                                   ),
                                   const SizedBox(height: 16),
-                                  const Text(
-                                    'No meals found',
-                                    style: TextStyle(
+                                  Text(
+                                    _searchQuery.isEmpty ? 'No meals found' : 'No matching meals found',
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
                                       fontFamily: 'Orbitron',
@@ -212,7 +276,9 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Tap the + button to add your first meal',
+                                    _searchQuery.isEmpty
+                                        ? 'Tap the + button to add your first meal'
+                                        : 'Try adjusting your search terms',
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.7),
                                       fontSize: 14,
@@ -223,9 +289,9 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                               ),
                             )
                           : ListView.builder(
-                              itemCount: _meals.length,
+                              itemCount: _filteredMeals.length,
                               itemBuilder: (context, index) {
-                                final meal = _meals[index];
+                                final meal = _filteredMeals[index];
                                 final isAvailable = _isMealAvailable(meal);
                                 return _MealCard(
                                   meal: meal,

@@ -17,15 +17,40 @@ class AdminIngredientsPage extends StatefulWidget {
 
 class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
   List<Map<String, dynamic>> _ingredients = [];
+  List<Map<String, dynamic>> _filteredIngredients = [];
   bool _isLoading = true;
   late int totalIngredients = 0;
   late int availableIngredients = 0;
   late int vegetableIngredients = 0;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _refreshIngredients();
+    _searchController.addListener(_filterIngredients);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterIngredients() {
+    final query = _searchController.text.toLowerCase();
+    if (query.isEmpty) {
+      setState(() {
+        _filteredIngredients = _ingredients;
+      });
+    } else {
+      setState(() {
+        _filteredIngredients = _ingredients.where((ingredient) {
+          final name = ingredient['ingredientName']?.toString().toLowerCase() ?? '';
+          return name.contains(query);
+        }).toList();
+      });
+    }
   }
 
   Future<void> _refreshIngredients() async {
@@ -43,6 +68,7 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
 
     setState(() {
       _ingredients = ingredients;
+      _filteredIngredients = ingredients;
       totalIngredients = ingredients.length;
       availableIngredients = ingredients.length; // All ingredients are available by default
       vegetableIngredients = veg;
@@ -141,14 +167,68 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                 
                 const SizedBox(height: 24),
                 
-                // Section Title
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                    'All Ingredients',
-                    style: TextStyle(
+                // Search Bar
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search ingredients...',
+                      hintStyle: TextStyle(
+                        color: Colors.grey[600],
+                        fontFamily: 'Orbitron',
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: const Color(0xFF184E77),
+                      ),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: const Color(0xFF184E77),
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                _filterIngredients();
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                    ),
+                    style: const TextStyle(
                       fontFamily: 'Orbitron',
-                      fontSize: 20,
+                      color: Color(0xFF184E77),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Results count
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    _searchController.text.isEmpty
+                        ? 'All Ingredients ($totalIngredients)'
+                        : 'Search Results (${_filteredIngredients.length})',
+                    style: const TextStyle(
+                      fontFamily: 'Orbitron',
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       letterSpacing: 1.1,
@@ -173,28 +253,35 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : _ingredients.isEmpty
+                      : _filteredIngredients.isEmpty
                           ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    Icons.kitchen,
+                                    _searchController.text.isEmpty
+                                        ? Icons.kitchen
+                                        : Icons.search_off,
                                     size: 80,
                                     color: Colors.white.withOpacity(0.7),
                                   ),
                                   const SizedBox(height: 16),
-                                  const Text(
-                                    'No ingredients found',
-                                    style: TextStyle(
+                                  Text(
+                                    _searchController.text.isEmpty
+                                        ? 'No ingredients found'
+                                        : 'No ingredients found for "${_searchController.text}"',
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
                                       fontFamily: 'Orbitron',
                                     ),
+                                    textAlign: TextAlign.center,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Tap the + button to add your first ingredient',
+                                    _searchController.text.isEmpty
+                                        ? 'Tap the + button to add your first ingredient'
+                                        : 'Try a different search term',
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.7),
                                       fontSize: 14,
@@ -205,9 +292,9 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                               ),
                             )
                           : ListView.builder(
-                              itemCount: _ingredients.length,
+                              itemCount: _filteredIngredients.length,
                               itemBuilder: (context, index) {
-                                final ingredient = _ingredients[index];
+                                final ingredient = _filteredIngredients[index];
                                 return _IngredientCard(
                                   ingredient: ingredient,
                                   onRefresh: _refreshIngredients,
@@ -1286,16 +1373,6 @@ class _IngredientCard extends StatelessWidget {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () async {
-                            final updatedIngredient = {
-                              'ingredientID': ingredient['ingredientID'],
-                              'ingredientName': nameController.text,
-                              'category': categoryController.text,
-                              'price': double.tryParse(priceController.text) ?? 0.0,
-                              'calories': int.tryParse(caloriesController.text) ?? 0,
-                              'nutritionalValue': nutritionalController.text,
-                              'ingredientPicture': _selectedImagePath,
-                              'additionalPictures': _additionalImages.join(','),
-                            };
                             final dbHelper = DatabaseHelper();
                             await dbHelper.updateIngredient(
                               ingredient['ingredientID'], 
