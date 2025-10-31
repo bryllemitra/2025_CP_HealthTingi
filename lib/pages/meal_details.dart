@@ -284,10 +284,10 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     }
   }
 
-  List<Widget> _buildIngredientWidgets(
+  Future<List<Widget>> _buildIngredientWidgets(
     List<Map<String, dynamic>> ingredients, 
     Map<String, dynamic>? substitutedIngredients
-  ) {
+  ) async {
     List<Widget> ingredientWidgets = [];
     double totalPrice = 0.0;
     
@@ -297,15 +297,17 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       String displayName = ingredientName;
       String quantity = ingredient['quantity']?.toString() ?? '';
       
-     // Use substituted ingredient if available and showing customized
+      // Use substituted ingredient if available and showing customized
       if (substitutedIngredients != null && substitutedIngredients.containsKey(ingredientName)) {
-        final substitute = substitutedIngredients[ingredientName];
-        if (substitute == 'REMOVED') {
+        final substituteData = substitutedIngredients[ingredientName];
+        final substituteValue = substituteData is Map ? substituteData['value'] : substituteData;
+        
+        if (substituteValue == 'REMOVED') {
           // Skip removed ingredients
           continue;
-        } else if (substitute != ingredientName) {
+        } else if (substituteValue != ingredientName) {
           // Use substituted ingredient name
-          displayName = substitute;
+          displayName = substituteValue;
         }
       }
       
@@ -357,7 +359,9 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     color: Colors.black87,
                     fontStyle: substitutedIngredients != null && 
                               substitutedIngredients.containsKey(ingredientName) &&
-                              substitutedIngredients[ingredientName] != ingredientName
+                              (substitutedIngredients[ingredientName] is Map ? 
+                               substitutedIngredients[ingredientName]['value'] != ingredientName : 
+                               substitutedIngredients[ingredientName] != ingredientName)
                         ? FontStyle.italic 
                         : FontStyle.normal,
                   ),
@@ -387,16 +391,67 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     if (substitutedIngredients != null) {
       for (final entry in substitutedIngredients.entries) {
         final ingredientName = entry.key;
-        final substituteValue = entry.value as String;
+        final substituteData = entry.value;
         
-        // Check if this is a NEW ingredient (not in original meal and not a substitution/removal)
-        final isNewIngredient = !ingredients.any((ing) => 
-            ing['ingredientName']?.toString() == ingredientName) && 
-            substituteValue != 'REMOVED' && 
-            substituteValue == ingredientName;
+        // Check if this is a NEW ingredient using the new data structure
+        final isNewIngredient = substituteData is Map && 
+            substituteData['type'] == 'new' &&
+            !ingredients.any((ing) => ing['ingredientName']?.toString() == ingredientName);
         
         if (isNewIngredient) {
-          // This is a newly added ingredient - display it
+          final newIngredientData = substituteData;
+          final quantity = newIngredientData['quantity'] ?? '1 piece';
+          final dbHelper = DatabaseHelper();
+          final ingredientInfo = await dbHelper.getIngredientByName(ingredientName);
+          
+          String displayPrice = 'Php ?';
+          if (ingredientInfo != null) {
+            // Calculate price based on quantity
+            double? ingredientPrice = ingredientInfo['price'] as double?;
+            if (ingredientPrice != null) {
+              final unit = ingredientInfo['unit']?.toString()?.toLowerCase() ?? 'piece';
+              double gramsPerUnit = 100.0; // Default for pieces
+              
+              // Convert based on unit type
+              if (unit == 'kg') gramsPerUnit = 1000.0;
+              else if (unit == 'g') gramsPerUnit = 1.0;
+              else if (unit == 'tbsp') gramsPerUnit = ingredientInfo['unit_density_tbsp'] as double? ?? 15.0;
+              else if (unit == 'tsp') gramsPerUnit = ingredientInfo['unit_density_tsp'] as double? ?? 5.0;
+              else if (unit == 'cup') gramsPerUnit = ingredientInfo['unit_density_cup'] as double? ?? 240.0;
+              
+              // Parse quantity to get the numeric value
+              final qtyMatch = RegExp(r'(\d+\.?\d*)\s*(\w+)').firstMatch(quantity);
+              if (qtyMatch != null) {
+                double qtyValue = double.parse(qtyMatch.group(1)!);
+                String qtyUnit = qtyMatch.group(2)!.toLowerCase();
+                
+                // Convert quantity to grams
+                double gramsPerQtyUnit = 1.0;
+                if (qtyUnit == 'kg') {
+                  gramsPerQtyUnit = 1000.0;
+                } else if (qtyUnit == 'g') {
+                  gramsPerQtyUnit = 1.0;
+                } else if (qtyUnit == 'tbsp') {
+                  gramsPerQtyUnit = ingredientInfo['unit_density_tbsp'] as double? ?? 15.0;
+                } else if (qtyUnit == 'tsp') {
+                  gramsPerQtyUnit = ingredientInfo['unit_density_tsp'] as double? ?? 5.0;
+                } else if (qtyUnit == 'cup') {
+                  gramsPerQtyUnit = ingredientInfo['unit_density_cup'] as double? ?? 240.0;
+                } else if (qtyUnit == 'piece' || qtyUnit == 'pcs') {
+                  gramsPerQtyUnit = 100.0; // Default weight per piece
+                }
+                
+                final qtyGrams = qtyValue * gramsPerQtyUnit;
+                final calculatedCost = (qtyGrams / 100.0) * ingredientPrice;
+                displayPrice = 'Php ${calculatedCost.toStringAsFixed(2)}';
+              } else {
+                // If we can't parse the quantity, use default unit calculation
+                final calculatedCost = (gramsPerUnit / 100.0) * ingredientPrice;
+                displayPrice = 'Php ${calculatedCost.toStringAsFixed(2)}';
+              }
+            }
+          }
+          
           ingredientWidgets.add(
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
@@ -406,7 +461,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                   Flexible(
                     flex: 3,
                     child: Text(
-                      '? $ingredientName', // Use "?" for quantity since we don't have quantity info for new ingredients
+                      '$quantity $ingredientName',
                       style: TextStyle(
                         fontSize: 14,
                         fontFamily: 'Orbitron',
@@ -419,7 +474,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                   Flexible(
                     flex: 1,
                     child: Text(
-                      'Php ?', // Unknown price for new ingredients
+                      displayPrice,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -627,7 +682,9 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                       // Skip removed ingredients in customized view
                       if (_showCustomized && _customizedMeal != null) {
                         final substituted = _customizedMeal!['substituted_ingredients'] as Map<String, dynamic>;
-                        if (substituted.containsKey(ingredientName) && substituted[ingredientName] == 'REMOVED') {
+                        final substituteValue = substituted[ingredientName] is Map ? 
+                            substituted[ingredientName]['value'] : substituted[ingredientName];
+                        if (substituted.containsKey(ingredientName) && substituteValue == 'REMOVED') {
                           continue;
                         }
                       }
@@ -862,11 +919,32 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                                 ),
                                               ),
                                             )
-                                          : Column(
-                                              children: _buildIngredientWidgets(
+                                          : FutureBuilder<List<Widget>>(
+                                              future: _buildIngredientWidgets(
                                                 ingredients, 
                                                 _showCustomized ? _customizedMeal!['substituted_ingredients'] : null
                                               ),
+                                              builder: (context, snapshot) {
+                                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                                  return const Center(
+                                                    child: CircularProgressIndicator(),
+                                                  );
+                                                } else if (snapshot.hasError) {
+                                                  return Center(
+                                                    child: Text(
+                                                      'Error loading ingredients: ${snapshot.error}',
+                                                      style: const TextStyle(
+                                                        fontFamily: 'Orbitron',
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                                  );
+                                                } else {
+                                                  return Column(
+                                                    children: snapshot.data ?? [],
+                                                  );
+                                                }
+                                              },
                                             ),
                                     ),
                                   ),

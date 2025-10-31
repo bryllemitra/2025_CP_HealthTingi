@@ -3102,7 +3102,7 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     required int originalMealId,
     required int userId,
     required Map<String, String> originalIngredients,
-    required Map<String, String> substitutedIngredients,
+    required Map<String, Map<String, dynamic>> substitutedIngredients,
     String? customizedName,
   }) async {
     final db = await database;

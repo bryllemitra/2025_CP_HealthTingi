@@ -297,20 +297,30 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
           .where((name) => name.isNotEmpty)
           .toList();
       
-      // Create maps for original and substituted ingredients
+      // Create maps for original and substituted ingredients WITH QUANTITY INFO
       Map<String, String> originalIngredientsMap = {};
-      Map<String, String> substitutedIngredientsMap = {};
+      Map<String, Map<String, dynamic>> substitutedIngredientsMap = {}; // Changed to store more data
       
       // First, add all original meal ingredients with their current state
       for (final ingredientName in originalIngredientNames) {
         originalIngredientsMap[ingredientName] = ingredientName;
         
         if (selectedAlternatives.containsKey(ingredientName)) {
-          substitutedIngredientsMap[ingredientName] = selectedAlternatives[ingredientName]!;
+          substitutedIngredientsMap[ingredientName] = {
+            'type': 'substituted',
+            'value': selectedAlternatives[ingredientName]!,
+            'quantity': '1 piece' // Default quantity for substitutions
+          };
         } else if (crossedOutIngredients.contains(ingredientName)) {
-          substitutedIngredientsMap[ingredientName] = 'REMOVED';
+          substitutedIngredientsMap[ingredientName] = {
+            'type': 'removed',
+            'value': 'REMOVED'
+          };
         } else {
-          substitutedIngredientsMap[ingredientName] = ingredientName;
+          substitutedIngredientsMap[ingredientName] = {
+            'type': 'original',
+            'value': ingredientName
+          };
         }
       }
       
@@ -322,11 +332,22 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
           
           // Check if this newly added ingredient has been crossed out or substituted
           if (crossedOutIngredients.contains(ingredient)) {
-            substitutedIngredientsMap[ingredient] = 'REMOVED';
+            substitutedIngredientsMap[ingredient] = {
+              'type': 'removed',
+              'value': 'REMOVED'
+            };
           } else if (selectedAlternatives.containsKey(ingredient)) {
-            substitutedIngredientsMap[ingredient] = selectedAlternatives[ingredient]!;
+            substitutedIngredientsMap[ingredient] = {
+              'type': 'substituted',
+              'value': selectedAlternatives[ingredient]!,
+              'quantity': '1 piece'
+            };
           } else {
-            substitutedIngredientsMap[ingredient] = ingredient;
+            substitutedIngredientsMap[ingredient] = {
+              'type': 'new',
+              'value': ingredient,
+              'quantity': '1 piece' // Default quantity for new ingredients
+            };
           }
         }
       }
@@ -343,11 +364,10 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         const SnackBar(
           content: Text('Customized meal saved!', style: TextStyle(fontFamily: 'Orbitron')),
           backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
+          duration: Duration(seconds: 2),
         ),
       );
       
-      // Navigate back
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

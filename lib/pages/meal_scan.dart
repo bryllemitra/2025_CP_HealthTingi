@@ -82,7 +82,7 @@ class _MealScanPageState extends State<MealScanPage> {
     }
     setState(() => _isModelLoading = false); 
 
-      // In _loadModel() after creating interpreter:
+    // In _loadModel() after creating interpreter:
     debugPrint('Model input details:');
     for (int i = 0; i < _interpreter!.getInputTensors().length; i++) {
       final tensor = _interpreter!.getInputTensor(i);
@@ -94,7 +94,6 @@ class _MealScanPageState extends State<MealScanPage> {
       final tensor = _interpreter!.getOutputTensor(i);
       debugPrint('Output $i: shape=${tensor.shape}, type=${tensor.type}');
     }
-
   }
 
   Future<void> _initializeCamera() async {
@@ -108,7 +107,7 @@ class _MealScanPageState extends State<MealScanPage> {
 
       _controller = CameraController(
         camera,
-        ResolutionPreset.medium,
+        ResolutionPreset.high, // Changed to high for better quality
         enableAudio: false,
       );
       
@@ -145,9 +144,25 @@ class _MealScanPageState extends State<MealScanPage> {
   Future<void> _captureImage() async {
     try {
       await _initializeControllerFuture;
+      
+      // Ensure camera is ready and focused
+      if (_controller != null && _controller!.value.isInitialized) {
+        await _controller!.setFocusMode(FocusMode.auto);
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+      
       final image = await _controller!.takePicture();
 
       if (!mounted) return;
+
+      // Check image file size (rough quality indicator)
+      final file = File(image.path);
+      final fileSize = await file.length();
+      debugPrint('Captured image size: ${fileSize ~/ 1024} KB');
+      
+      if (fileSize < 50) { // Less than 50KB might be too low quality
+        debugPrint('Warning: Image file size is very small');
+      }
 
       // Show loading indicator while processing
       setState(() => _isModelLoading = true);
@@ -184,7 +199,7 @@ class _MealScanPageState extends State<MealScanPage> {
       final ImagePicker picker = ImagePicker();
       final XFile? pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85,
+        imageQuality: 90, // Increased quality
       );
 
       if (pickedFile != null && mounted) {
@@ -245,14 +260,19 @@ class _MealScanPageState extends State<MealScanPage> {
       debugPrint('Processing image with input size: $inputSize');
       debugPrint('Model input shape: $inputShape');
 
-      // Preprocess image
-      final resizedImage = img.copyResize(image, width: inputSize, height: inputSize);
-      final inputBuffer = _imageToByteListFloat32(resizedImage, inputSize, 127.5, 127.5);
+      // Preprocess image with better interpolation
+      final resizedImage = img.copyResize(
+        image, 
+        width: inputSize, 
+        height: inputSize,
+        interpolation: img.Interpolation.cubic
+      );
+      
+      // FIXED: Use preprocessing that matches training (simple [0,1] normalization)
+      final inputBuffer = _imageToByteListFloat32(resizedImage, inputSize);
 
-      // ****************** CRITICAL FIX ******************
       // Reshape the 1D buffer to match the model's 4D input shape [1, 224, 224, 3]
       final input = inputBuffer.reshape(inputShape); 
-      // **************************************************
 
       // Prepare output tensor - get its shape first
       final outputShape = _interpreter!.getOutputTensor(0).shape;
@@ -264,9 +284,7 @@ class _MealScanPageState extends State<MealScanPage> {
 
       debugPrint('Running inference...');
       
-      // ****************** ENHANCED ERROR HANDLING ******************
       // Use async inference to prevent UI blocking
-      // Now 'input' has the correct shape [1, 224, 224, 3]
       try {
         await _isolateInterpreter!.run(input, output);
       } catch (e) {
@@ -279,7 +297,6 @@ class _MealScanPageState extends State<MealScanPage> {
         }
         return; // Exit the function early since inference failed
       }
-      // *************************************************************
 
       debugPrint('Inference completed, processing results...');
 
@@ -287,19 +304,18 @@ class _MealScanPageState extends State<MealScanPage> {
       final results = _processOutput(output);
       setState(() => _recognitions = results);
       
-      // MODIFIED: Show all 5 top results instead of just the first one
-      if (results.isNotEmpty) 
-      {
+      // Show all 5 top results with confidence percentages
+      if (results.isNotEmpty) {
         debugPrint('All ${results.length} results:');
         for (int i = 0; i < results.length; i++) {
-          debugPrint('${i + 1}. ${results[i]}');
+          final result = results[i];
+          debugPrint('${i + 1}. ${result['label']}: ${(result['confidence'] * 100).toStringAsFixed(2)}%');
         }
       } else {
         debugPrint('No results found');
       }
       
     } catch (e) {
-      // This catches errors from image loading, decoding, preprocessing, etc.
       debugPrint('Error in _runModelOnImage: $e');
       debugPrint('Stack trace: ${StackTrace.current}');
       if (mounted) {
@@ -310,8 +326,8 @@ class _MealScanPageState extends State<MealScanPage> {
     }
   }
 
-  Float32List _imageToByteListFloat32(
-    img.Image image, int inputSize, double mean, double std) {
+  // FIXED: Preprocessing that matches your training (simple [0,1] normalization)
+  Float32List _imageToByteListFloat32(img.Image image, int inputSize) {
     final convertedBytes = Float32List(1 * inputSize * inputSize * 3);
     final buffer = Float32List.view(convertedBytes.buffer);
 
@@ -320,17 +336,21 @@ class _MealScanPageState extends State<MealScanPage> {
       for (var j = 0; j < inputSize; j++) {
         final pixel = image.getPixel(j, i);
         
-        // SIMPLE NORMALIZATION like your Python code
-        final red = pixel.r / 255.0;
-        final green = pixel.g / 255.0;
-        final blue = pixel.b / 255.0;
-        
-        // Remove ImageNet normalization - use simple [0,1] range
-        buffer[pixelIndex++] = (red - 0.5) / 0.5;
-        buffer[pixelIndex++] = (green - 0.5) / 0.5;
-        buffer[pixelIndex++] = (blue - 0.5) / 0.5;
+        // CORRECT: Simple normalization to [0, 1] range - MATCHES YOUR TRAINING
+        // Your Python training code: rescale=1./255
+        buffer[pixelIndex++] = pixel.r / 255.0;   // Red
+        buffer[pixelIndex++] = pixel.g / 255.0;   // Green  
+        buffer[pixelIndex++] = pixel.b / 255.0;   // Blue
       }
     }
+    
+    // Debug statistics to verify preprocessing
+    final minVal = buffer.reduce((a, b) => a < b ? a : b);
+    final maxVal = buffer.reduce((a, b) => a > b ? a : b);
+    final meanVal = buffer.reduce((a, b) => a + b) / buffer.length;
+    debugPrint('Input buffer stats - Min: $minVal, Max: $maxVal, Mean: $meanVal');
+    debugPrint('Expected range: 0.0 to 1.0 (matching training)');
+    
     return convertedBytes;
   }
 
@@ -365,7 +385,7 @@ class _MealScanPageState extends State<MealScanPage> {
       
       // Filter results with confidence > threshold (adjust as needed)
       final filteredResults = results.where((result) => 
-          (result['confidence'] as double) > 0.1).toList();
+          (result['confidence'] as double) > 0.01).toList(); // Lowered threshold to see more results
       
       // Return top 5 results or all filtered results if less than 5
       final finalResults = filteredResults.take(5).toList();
@@ -399,7 +419,6 @@ class _MealScanPageState extends State<MealScanPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF184E77), // Deep slate blue
         elevation: 10,
-        //shadowColor: Colors.greenAccent,
         centerTitle: true,
         title: const Text(
           'Scanner',
