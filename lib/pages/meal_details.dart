@@ -6,6 +6,7 @@ import '../searchMeals/history.dart'; // Import HistoryPage to access completed 
 import 'reverse_ingredient.dart'; // Add this import for navigation
 import 'dart:io';
 import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart'; // Added for gallery support
 import 'meal_steps.dart'; // Add this import for the new page
 
 class MealDetailsPage extends StatefulWidget {
@@ -1112,51 +1113,62 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
               itemCount: _imagePaths.length,
               itemBuilder: (context, index) {
                 String path = _imagePaths[index];
+                final isAsset = path.startsWith('assets/');
+                final imageProvider = isAsset ? AssetImage(path) : FileImage(File(path)) as ImageProvider;
+
                 return GestureDetector(
                   onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: PhotoView(
-                          imageProvider: path.startsWith('assets/') ? AssetImage(path) : FileImage(File(path)),
-                          backgroundDecoration: const BoxDecoration(color: Colors.black),
-                          minScale: PhotoViewComputedScale.contained,
-                          maxScale: PhotoViewComputedScale.covered * 4.0,
-                          heroAttributes: PhotoViewHeroAttributes(tag: path),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Scaffold(
+                          backgroundColor: Colors.black,
+                          appBar: AppBar(
+                            backgroundColor: Colors.transparent,
+                            elevation: 0,
+                            leading: IconButton(
+                              icon: const Icon(Icons.close, color: Colors.white),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ),
+                          body: PhotoViewGallery.builder(
+                            scrollPhysics: const BouncingScrollPhysics(),
+                            builder: (BuildContext context, int galleryIndex) {
+                              final galleryPath = _imagePaths[galleryIndex];
+                              final galleryIsAsset = galleryPath.startsWith('assets/');
+                              return PhotoViewGalleryPageOptions(
+                                imageProvider: galleryIsAsset 
+                                    ? AssetImage(galleryPath) 
+                                    : FileImage(File(galleryPath)) as ImageProvider,
+                                initialScale: PhotoViewComputedScale.contained,
+                                minScale: PhotoViewComputedScale.contained,
+                                maxScale: PhotoViewComputedScale.covered * 4.0,
+                                heroAttributes: PhotoViewHeroAttributes(tag: galleryPath),
+                              );
+                            },
+                            itemCount: _imagePaths.length,
+                            loadingBuilder: (context, event) => const Center(
+                              child: CircularProgressIndicator(color: Colors.white),
+                            ),
+                            pageController: PageController(initialPage: index),
+                            onPageChanged: (i) => setState(() => _currentImageIndex = i),
+                          ),
                         ),
                       ),
                     );
                   },
-                  child: path.startsWith('assets/') 
-                    ? Image.asset(
-                        path,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: 300,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.white.withOpacity(0.1),
-                            child: const Center(
-                              child: Icon(Icons.broken_image, size: 100, color: Colors.white70),
-                            ),
-                          );
-                        },
-                      )
-                    : Image.file(
-                        File(path),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: 300,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.white.withOpacity(0.1),
-                            child: const Center(
-                              child: Icon(Icons.broken_image, size: 100, color: Colors.white70),
-                            ),
-                          );
-                        },
+                  child: Image(
+                    image: imageProvider,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 300,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.white.withOpacity(0.1),
+                      child: const Center(
+                        child: Icon(Icons.broken_image, size: 100, color: Colors.white70),
                       ),
+                    ),
+                  ),
                 );
               },
             ),
