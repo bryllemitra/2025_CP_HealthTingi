@@ -218,6 +218,9 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final carouselHeight = screenHeight * 0.5; // Responsive height, at least 350-400 on most devices
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -419,6 +422,8 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                           fontWeight: FontWeight.w500,
                                           color: Color(0xFF184E77),
                                         ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                       subtitle: Text(
                                         '${ing['calories'] ?? 'N/A'} kcal',
@@ -534,6 +539,8 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                         fontWeight: FontWeight.w600,
                                         color: Color(0xFF184E77),
                                       ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                     subtitle: detail != null
                                         ? Text(
@@ -789,11 +796,14 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                   Row(
                                                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                     children: [
-                                                                      Text(
-                                                                        '${recipe['matchingIngredients']} matching ingredient${recipe['matchingIngredients'] == 1 ? '' : 's'}',
-                                                                        style: const TextStyle(
-                                                                          fontSize: 12,
-                                                                          color: Colors.grey,
+                                                                      Expanded(
+                                                                        child: Text(
+                                                                          '${recipe['matchingIngredients']} matching ingredient${recipe['matchingIngredients'] == 1 ? '' : 's'}',
+                                                                          style: const TextStyle(
+                                                                            fontSize: 12,
+                                                                            color: Colors.grey,
+                                                                          ),
+                                                                          overflow: TextOverflow.ellipsis,
                                                                         ),
                                                                       ),
                                                                       ElevatedButton(
@@ -835,7 +845,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                       );
                                                     },
                                                     options: CarouselOptions(
-                                                      height: 320,
+                                                      height: carouselHeight.clamp(350.0, 400.0), // Responsive, clamped for safety
                                                       enlargeCenterPage: true,
                                                       viewportFraction: 0.85,
                                                       enableInfiniteScroll: recipes.length > 1,

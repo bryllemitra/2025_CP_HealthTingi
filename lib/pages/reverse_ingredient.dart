@@ -51,12 +51,32 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       'Oil',
       'Soy Sauce',
     ];
+    
+    // Initialize display with default values first
+    for (final ingredient in allIngredients) {
+      ingredientDisplay[ingredient] = ingredient;
+    }
+    
     selectedAlternatives = {};
-    ingredientDisplay = {};
-    _loadIngredientAlternatives();
-    _loadSimilarMeals();
-    _loadAvailableIngredients(); // Load all available ingredients
-    _loadExistingCustomization(); // Load existing customization - this should be last
+    
+    // Load data in proper sequence
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    await _loadAvailableIngredients();
+    await _loadExistingCustomization(); // This should override the default initialization
+    await _loadIngredientAlternatives();
+    await _loadSimilarMeals();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when the page becomes visible again
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadExistingCustomization();
+    });
   }
 
   Future<void> _loadExistingCustomization() async {
@@ -67,47 +87,51 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       if (customized != null && mounted) {
         final substituted = customized['substituted_ingredients'] as Map<String, dynamic>;
         
-        setState(() {
-          // Clear existing data first
-          crossedOutIngredients.clear();
-          selectedAlternatives.clear();
-          ingredientDisplay.clear();
+        // Create temporary sets to build the state
+        final Set<String> newCrossedOut = {};
+        final Map<String, String?> newSelectedAlternatives = {};
+        final Map<String, String> newIngredientDisplay = {};
+        final List<String> newAllIngredients = List.from(widget.ingredients ?? []);
+        
+        // Process all entries in substituted_ingredients
+        for (final entry in substituted.entries) {
+          final original = entry.key;
+          final substituteData = entry.value as Map<String, dynamic>;
+          final substituteType = substituteData['type'] as String;
+          final substituteValue = substituteData['value'] as String;
           
-          // Get original meal ingredients to distinguish between substitutions and new additions
-          final originalIngredients = widget.ingredients ?? [];
+          // Check if this ingredient was in the original meal
+          final wasInOriginal = (widget.ingredients ?? []).contains(original);
           
-          // Process all entries in substituted_ingredients
-          for (final entry in substituted.entries) {
-            final original = entry.key;
-            final substitute = entry.value as String;
-            
-            // Check if this ingredient was in the original meal
-            final wasInOriginal = originalIngredients.contains(original);
-            
-            if (!wasInOriginal && substitute == original) {
-              // This is a newly added ingredient (not in original meal and not substituted/removed)
-              if (!allIngredients.contains(original)) {
-                allIngredients.add(original);
-              }
-              // Keep it as is in the display
-              ingredientDisplay[original] = original;
-            } else if (substitute == 'REMOVED') {
-              // Original ingredient was removed
-              crossedOutIngredients.add(original);
-            } else if (substitute != original) {
-              // Original ingredient was substituted
-              selectedAlternatives[original] = substitute;
-              ingredientDisplay[original] = substitute;
-            } else {
-              // Original ingredient kept as is
-              ingredientDisplay[original] = original;
+          if (!wasInOriginal && substituteType == 'new') {
+            // This is a newly added ingredient
+            if (!newAllIngredients.contains(original)) {
+              newAllIngredients.add(original);
             }
+            newIngredientDisplay[original] = original;
+          } else if (substituteType == 'removed') {
+            // Original ingredient was removed
+            newCrossedOut.add(original);
+            newIngredientDisplay[original] = original; // Still show it but crossed out
+          } else if (substituteType == 'substituted') {
+            // Original ingredient was substituted
+            newSelectedAlternatives[original] = substituteValue;
+            newIngredientDisplay[original] = substituteValue;
+          } else {
+            // Original ingredient kept as is
+            newIngredientDisplay[original] = original;
           }
+        }
+        
+        // Update state all at once
+        setState(() {
+          allIngredients = newAllIngredients;
+          crossedOutIngredients = newCrossedOut;
+          selectedAlternatives = newSelectedAlternatives;
+          ingredientDisplay = newIngredientDisplay;
           
           // Show alternatives if any ingredients are crossed out
-          if (crossedOutIngredients.isNotEmpty) {
-            showAlternatives = true;
-          }
+          showAlternatives = newCrossedOut.isNotEmpty;
         });
         
         // Reload similar meals with current state
@@ -115,9 +139,22 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         
         // Reload ingredient alternatives for the updated ingredient list
         _loadIngredientAlternatives();
+      } else {
+        // No customization found, initialize with default display
+        setState(() {
+          for (final ingredient in allIngredients) {
+            ingredientDisplay[ingredient] = ingredient;
+          }
+        });
       }
     } catch (e) {
       print('Error loading existing customization: $e');
+      // Fallback: initialize display with default values
+      setState(() {
+        for (final ingredient in allIngredients) {
+          ingredientDisplay[ingredient] = ingredient;
+        }
+      });
     }
   }
 
@@ -169,6 +206,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     if (!allIngredients.contains(ingredientName)) {
       setState(() {
         allIngredients.add(ingredientName);
+        ingredientDisplay[ingredientName] = ingredientName;
         _searchController.clear();
         showAddIngredient = false;
       });
@@ -190,6 +228,11 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     setState(() {
       crossedOutIngredients.add(ingredient);
       recentChanges.add({'type': 'remove', 'ingredient': ingredient});
+
+      // Ensure the ingredient stays in the display
+      if (!ingredientDisplay.containsKey(ingredient)) {
+        ingredientDisplay[ingredient] = ingredient;
+      }
 
       if (ingredientAlternatives.containsKey(ingredient)) {
         showAlternatives = true;
@@ -289,7 +332,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     try {
       final dbHelper = DatabaseHelper();
       
-      // Get the original meal ingredients to distinguish between substitutions and new additions
+      // Get the original meal ingredients
       final originalMeal = await dbHelper.getMealById(widget.mealId);
       final originalIngredients = await dbHelper.getMealIngredients(widget.mealId);
       final originalIngredientNames = originalIngredients
@@ -297,26 +340,36 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
           .where((name) => name.isNotEmpty)
           .toList();
       
-      // Create maps for original and substituted ingredients WITH QUANTITY INFO
+      // Create maps for original and substituted ingredients
       Map<String, String> originalIngredientsMap = {};
-      Map<String, Map<String, dynamic>> substitutedIngredientsMap = {}; // Changed to store more data
+      Map<String, Map<String, dynamic>> substitutedIngredientsMap = {};
       
-      // First, add all original meal ingredients with their current state
-      for (final ingredientName in originalIngredientNames) {
+      // Process ALL current ingredients (original + added)
+      for (final ingredientName in allIngredients) {
         originalIngredientsMap[ingredientName] = ingredientName;
         
         if (selectedAlternatives.containsKey(ingredientName)) {
+          // This ingredient was substituted
           substitutedIngredientsMap[ingredientName] = {
             'type': 'substituted',
             'value': selectedAlternatives[ingredientName]!,
-            'quantity': '1 piece' // Default quantity for substitutions
+            'quantity': '1 piece'
           };
         } else if (crossedOutIngredients.contains(ingredientName)) {
+          // This ingredient was removed
           substitutedIngredientsMap[ingredientName] = {
             'type': 'removed',
             'value': 'REMOVED'
           };
+        } else if (!originalIngredientNames.contains(ingredientName)) {
+          // This is a newly added ingredient that wasn't removed or substituted
+          substitutedIngredientsMap[ingredientName] = {
+            'type': 'new',
+            'value': ingredientName,
+            'quantity': '1 piece'
+          };
         } else {
+          // Original ingredient kept as is
           substitutedIngredientsMap[ingredientName] = {
             'type': 'original',
             'value': ingredientName
@@ -324,31 +377,14 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         }
       }
       
-      // Now, add any NEW ingredients that weren't in the original meal
-      for (final ingredient in allIngredients) {
-        if (!originalIngredientNames.contains(ingredient)) {
-          // This is a newly added ingredient
-          originalIngredientsMap[ingredient] = ingredient;
-          
-          // Check if this newly added ingredient has been crossed out or substituted
-          if (crossedOutIngredients.contains(ingredient)) {
-            substitutedIngredientsMap[ingredient] = {
-              'type': 'removed',
-              'value': 'REMOVED'
-            };
-          } else if (selectedAlternatives.containsKey(ingredient)) {
-            substitutedIngredientsMap[ingredient] = {
-              'type': 'substituted',
-              'value': selectedAlternatives[ingredient]!,
-              'quantity': '1 piece'
-            };
-          } else {
-            substitutedIngredientsMap[ingredient] = {
-              'type': 'new',
-              'value': ingredient,
-              'quantity': '1 piece' // Default quantity for new ingredients
-            };
-          }
+      // Also include original ingredients that might have been completely removed from the list
+      for (final originalName in originalIngredientNames) {
+        if (!allIngredients.contains(originalName)) {
+          originalIngredientsMap[originalName] = originalName;
+          substitutedIngredientsMap[originalName] = {
+            'type': 'removed',
+            'value': 'REMOVED'
+          };
         }
       }
       
@@ -357,7 +393,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         userId: widget.userId,
         originalIngredients: originalIngredientsMap,
         substitutedIngredients: substitutedIngredientsMap,
-        customizedName: '${widget.mealId}_customized_${DateTime.now().millisecondsSinceEpoch}',
+        customizedName: 'Customized ${originalMeal?['mealName'] ?? 'Meal'}',
       );
       
       ScaffoldMessenger.of(context).showSnackBar(
@@ -368,8 +404,8 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         ),
       );
       
-      Navigator.pop(context);
     } catch (e) {
+      print('Error saving customized meal: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving customized meal: $e', style: const TextStyle(fontFamily: 'Orbitron')),
@@ -632,15 +668,19 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     }
   }
 
-  // New: Apply substitution (from "sa-ReverseIngredientPage-enchance-mo-raw-alternative-selection.txt")
+  // Fixed: Apply substitution with better amount formatting
   void _applySubstitution(Map<String, dynamic> data) {
     final substitute = data['substitute']['ingredient'];
     final original = data['original']['ingredient'];
+    final originalIngredientName = original['ingredientName'];
+    
     setState(() {
-      ingredientDisplay[original['ingredientName']] = 
-          '${data['display_amount']} ${substitute['ingredientName']}';
-      selectedAlternatives[original['ingredientName']] = substitute['ingredientName'];
-      crossedOutIngredients.remove(original['ingredientName']);
+      // Format the amount more naturally instead of showing grams
+      final displayAmount = _formatSubstitutionAmount(data['display_amount']);
+      ingredientDisplay[originalIngredientName] = 
+          '$displayAmount ${substitute['ingredientName']}';
+      selectedAlternatives[originalIngredientName] = substitute['ingredientName'];
+      crossedOutIngredients.remove(originalIngredientName);
     });
     
     // Log the substitution
@@ -656,6 +696,29 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     );
     
     _loadSimilarMeals(); // Reload meals with new ingredients
+  }
+
+  // Helper method to format the amount more naturally
+  String _formatSubstitutionAmount(String displayAmount) {
+    // Remove the 'g' suffix and format more naturally
+    if (displayAmount.endsWith('g')) {
+      final amount = displayAmount.replaceAll('g', '').trim();
+      final amountNum = double.tryParse(amount) ?? 1.0;
+      
+      // Convert to more natural units
+      if (amountNum >= 1000) {
+        return '${(amountNum / 1000).toStringAsFixed(1)} kg';
+      } else if (amountNum >= 100) {
+        return '${(amountNum / 100).toStringAsFixed(1)} cups'; // Approximate
+      } else if (amountNum >= 15) {
+        return '${(amountNum / 15).toStringAsFixed(1)} tbsp'; // Approximate
+      } else if (amountNum >= 5) {
+        return '${(amountNum / 5).toStringAsFixed(1)} tsp'; // Approximate
+      } else {
+        return '1 piece'; // Default for small amounts
+      }
+    }
+    return displayAmount;
   }
 
   @override

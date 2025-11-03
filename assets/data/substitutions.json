@@ -1,22 +1,18 @@
 {
     "Celery": [
         "Bokchoy",
-        "French beans",
-        "Chicharo (Snow Peas)"
+        "French beans"
     ],
     "Banana blossom": [
-        "Camote Tops (Sweet Potato Leaves)",
-        "Dahon ng ampalaya (Bitter Melon Leaves)",
+        "Camote tops (Sweet Potato Leaves)",
         "Saluyot (Jute Leaves)"
     ],
     "Star (Star Anise)": [
         "Cinnamon",
-        "Cloves",
-        "Paprika"
+        "Cloves"
     ],
     "Atsuete (Annatto)": [
-        "Paprika",
-        "Cumin seeds"
+        "Paprika"
     ],
     "Cultured Mushroom": [
         "Oyster Mushroom",
@@ -36,7 +32,7 @@
     "Sago": [
         "Landang",
         "Baby potato",
-        "Sweet potato"
+        "Sweet Potato (Root)"
     ],
     "Kidney beans": [
         "Red beans",
@@ -84,9 +80,6 @@
         "Oregano"
     ],
     "Tofu": [
-        "Egg (Jumbo)",
-        "Egg (Medium)",
-        "Egg (Small)",
         "Chicken",
         "Shrimp"
     ],
@@ -95,31 +88,23 @@
         "Chinese pechay",
         "Mustard"
     ],
-    "Itlog ng pugo (Quail egg)": [
-        "Egg (Jumbo)",
-        "Egg (Medium)",
-        "Egg (Small)"
-    ],
+    "Itlog ng pugo (Quail egg)": [],
     "Tausi (Salted black beans)": [
-        "Bagoong (Shrimp Paste)",
-        "Ginamus (Bagoong Isda)"
+        "Bagoong (Shrimp Paste)"
     ],
     "Ginamus (Bagoong Isda)": [
-        "Tausi (Salted black beans)",
         "Bagoong (Shrimp Paste)"
     ],
     "Bagoong (Shrimp Paste)": [
         "Soy Sauce",
-        "Atchal",
         "Bagoong Isda",
         "Fish Sauce"
     ],
     "Tungkoy": [
         "Bokchoy",
-        "Camote Tops (Sweet Potato Leaves)"
+        "Camote tops (Sweet Potato Leaves)"
     ],
     "Kamaron (Shrimp)": [
-        "Itlog ng pugo (Quail egg)",
         "Tofu",
         "Tilapia",
         "Bangus",
@@ -140,7 +125,6 @@
         "Cilantro"
     ],
     "French beans": [
-        "Chicharo (Snow Peas)",
         "Celery"
     ],
     "Chicharo (Snow Peas)": [
@@ -152,12 +136,10 @@
         "Celery"
     ],
     "Beetroot": [
-        "Red cabbage",
-        "Raddish red"
+        "Red cabbage"
     ],
     "Red cabbage": [
-        "Beetroot",
-        "Raddish red"
+        "Beetroot"
     ],
     "Raddish red": [
         "Beetroot",
@@ -190,44 +172,34 @@
         "Chicken Wings"
     ],
     "Chicken Feet": [
-        "Pork Pata (Trotter/Hock)",
         "Chicken Neck"
     ],
     "Chicken Legs": [
-        "Chicken Thigh",
-        "Chicken Leg quarter"
+        "Chicken Thigh"
     ],
     "Chicken Thigh": [
-        "Chicken Legs",
-        "Chicken Leg quarter"
+        "Chicken Legs"
     ],
     "Chicken Heart": [
-        "Chicken Atay (Liver)",
-        "Chicken Batikulun (Gizzard)"
+        "Chicken Atay (Liver)"
     ],
-    "Chicken Intestines (Isaw)": [
-        "Pork Innards",
-        "Chicken Batikulun (Gizzard)"
-    ],
+    "Chicken Intestines (Isaw)": [],
     "Chicken Leg quarter": [
         "Chicken Legs",
         "Chicken Thigh"
     ],
     "Chicken Ulo (Head)": [
-        "Chicken Feet",
-        "Pork Head"
+        "Chicken Feet"
     ],
     "Chicken Batikulun (Gizzard)": [
-        "Chicken Heart",
-        "Chicken Intestines (Isaw)"
+        "Chicken Heart"
     ],
     "Pork Kasim (Shoulder)": [
         "Pork Liempo (Belly)",
         "Pork Tenderloin"
     ],
     "Pork Pata (Trotter/Hock)": [
-        "Chicken Feet",
-        "Pork Head"
+        "Chicken Feet"
     ],
     "Pork Tenderloin": [
         "Pork Kasim (Shoulder)",
@@ -248,16 +220,13 @@
         "Pork Kasim (Shoulder)"
     ],
     "Pork Head": [
-        "Chicken Ulo (Head)",
-        "Pork Pata (Trotter/Hock)"
+        "Chicken Ulo (Head)"
     ],
     "Pork Atay (Liver)": [
-        "Chicken Atay (Liver)",
-        "Pork Innards"
+        "Chicken Atay (Liver)"
     ],
     "Pork Innards": [
-        "Chicken Intestines (Isaw)",
-        "Pork Atay (Liver)"
+        "Chicken Intestines (Isaw)"
     ],
     "Beef Kadera (Chuck Rib)": [
         "Beef Pecho (Brisket)",
@@ -268,12 +237,10 @@
         "Chicken Breast"
     ],
     "Beef Pecho (Brisket)": [
-        "Beef Kadera (Chuck Rib)",
-        "Pork Pata (Trotter/Hock)"
+        "Beef Kadera (Chuck Rib)"
     ],
     "Beef Bulalo (Bone Marrow)": [
-        "Beef Pecho (Brisket)",
-        "Pork Pata (Trotter/Hock)"
+        "Beef Pecho (Brisket)"
     ],
     "Beef Kalitiran (Blade Clod)": [
         "Beef Tapandera (Sirloin)",
@@ -295,57 +262,40 @@
         "Beef Tapandera (Sirloin)",
         "Beef Kalitiran (Blade Clod)"
     ],
-    "Beef Head": [
-        "Pork Head",
-        "Chicken Ulo (Head)"
-    ],
+    "Beef Head": [],
     "Beef Tongue": [
-        "Beef Head",
-        "Chicken Heart"
+        "Beef Head"
     ],
     "Saluyot (Jute Leaves)": [
-        "Camote tops (Sweet Potato Leaves)",
-        "Dahon ng sili (Chili Leaves)"
+        "Camote tops (Sweet Potato Leaves)"
     ],
     "Pako (Fiddlehead Fern)": [
-        "Saluyot (Jute Leaves)",
-        "Dahon ng ampalaya (Bitter Melon Leaves)"
+        "Saluyot (Jute Leaves)"
     ],
     "Dahon ng sili (Chili Leaves)": [
         "Saluyot (Jute Leaves)",
         "Camote tops (Sweet Potato Leaves)"
     ],
     "Camote tops (Sweet Potato Leaves)": [
-        "Saluyot (Jute Leaves)",
-        "Dahon ng sili (Chili Leaves)"
+        "Saluyot (Jute Leaves)"
     ],
     "Dahon ng ampalaya (Bitter Melon Leaves)": [
         "Pako (Fiddlehead Fern)",
         "Saluyot (Jute Leaves)"
     ],
     "White squid": [
-        "Dilis (Anchovies)",
-        "Oyster"
+        "Dilis (Anchovies)"
     ],
     "Dilis (Anchovies)": [
-        "White squid",
-        "Clams"
-    ],
-    "Lato (Sea Grapes)": [
-        "Agar-agar",
-        "Clams"
-    ],
-    "Agar-agar": [
-        "Lato (Sea Grapes)",
-        "Clams"
-    ],
-    "Oyster": [
-        "Clams",
         "White squid"
     ],
+    "Lato (Sea Grapes)": [],
+    "Agar-agar": [],
+    "Oyster": [
+        "Clams"
+    ],
     "Clams": [
-        "Oyster",
-        "Dilis (Anchovies)"
+        "Oyster"
     ],
     "Tambayangan/Shell black": [
         "Clams",
@@ -356,11 +306,9 @@
         "Clams"
     ],
     "Sikad sikad": [
-        "Chupa kulo",
         "Shell water"
     ],
     "Five fingers (Starfish)": [
-        "Chupa kulo",
         "Sikad sikad"
     ],
     "Chupa kulo": [
@@ -368,20 +316,15 @@
         "Shell water"
     ],
     "Danggit (Rabbitfish) - small": [
-        "Dilis (Dried Anchovies)",
-        "Pencil"
+        "Dilis (Dried Anchovies)"
     ],
     "Danggit (Rabbitfish) - medium": [
         "Danggit (Rabbitfish) - small",
         "Dilis (Dried Anchovies)"
     ],
-    "Lupoy": [
-        "Katambak",
-        "Endong"
-    ],
+    "Lupoy": [],
     "Dilis (Dried Anchovies)": [
-        "Danggit (Rabbitfish) - small",
-        "Pencil"
+        "Danggit (Rabbitfish) - small"
     ],
     "Pencil": [
         "Danggit (Rabbitfish) - small",
@@ -391,10 +334,7 @@
         "Danggit (Rabbitfish) - medium",
         "White squid"
     ],
-    "Katambak": [
-        "Lupoy",
-        "Endong"
-    ],
+    "Katambak": [],
     "Lapu-Lapu (Grouper) - Dried": [
         "Mulmul (Parrotfish) - Dried",
         "Dalagang bukid (Yellowtail Fusilier) - Dried"
@@ -407,25 +347,14 @@
         "Lapu-Lapu (Grouper) - Dried",
         "Dalagang bukid (Yellowtail Fusilier) - Dried"
     ],
-    "Lambana": [
-        "Endong",
-        "Kabalyas"
-    ],
-    "Endong": [
-        "Lambana",
-        "Kabalyas"
-    ],
-    "Kabalyas": [
-        "Endong",
-        "Lambana"
-    ],
+    "Lambana": [],
+    "Endong": [],
+    "Kabalyas": [],
     "Galunggong (Round Scad) - Dried": [
-        "Tamban (Sardines) - Dried",
-        "Sapsap (Ponyfish) - Dried"
+        "Tamban (Sardines) - Dried"
     ],
     "Tamban (Sardines) - Dried": [
-        "Galunggong (Round Scad) - Dried",
-        "Sapsap (Ponyfish) - Dried"
+        "Galunggong (Round Scad) - Dried"
     ],
     "Sapsap (Ponyfish) - Dried": [
         "Galunggong (Round Scad) - Dried",
@@ -436,20 +365,17 @@
         "Sotanghon (Bean Thread/Glass Noodles)"
     ],
     "Fresh pancit": [
-        "Pancit bihon",
-        "Hobe Noodles"
+        "Pancit bihon"
     ],
     "Lauriat Noodles": [
-        "Hobe Noodles",
-        "Odong Noodles"
+        "Hobe Noodles"
     ],
     "Sotanghon (Bean Thread/Glass Noodles)": [
         "Pancit bihon",
         "Fresh pancit"
     ],
     "Hobe Noodles": [
-        "Lauriat Noodles",
-        "Odong Noodles"
+        "Lauriat Noodles"
     ],
     "Odong Noodles": [
         "Hobe Noodles",
@@ -481,44 +407,35 @@
     ],
     "Manumbok (Blue Marlin)": [
         "Tulingan",
-        "Lapu-Lapu"
+        "Lapu-Lapu (Fresh)"
     ],
     "Matang baka (Big-eyed Scad)": [
-        "Samaral",
-        "Galunggong"
+        "Galunggong (Fresh)"
     ],
     "Maya-maya (Snapper)": [
-        "Lapu-Lapu",
-        "Mulmul"
+        "Lapu-Lapu (Fresh)"
     ],
     "Mulmul (Parrotfish)": [
-        "Culisi",
         "Maya-maya"
     ],
     "Samaral (Siganid)": [
-        "Matang Baka",
-        "Mulmul"
+        "Matangbaka"
     ],
     "Talakitok (Crevalle Jack)": [
         "Alumahan",
-        "Tanguinge"
+        "Tanigue"
     ],
     "Tamban (Indian Sardines)": [
-        "Galunggong",
+        "Galunggong (Fresh)",
         "Alumahan"
     ],
     "Tanguinge (Frigate Tuna)": [
-        "Barilete",
         "Talakitok"
     ],
     "Tulingan (Big eyed Tuna)": [
-        "Gulyasan/Puyan",
         "Manumbok"
     ],
-    "Sulig": [
-        "Culisi",
-        "Mulmul"
-    ],
+    "Sulig": [],
     "Shark meat": [
         "Manumbok",
         "Tulingan"
@@ -528,8 +445,7 @@
         "Manumbok"
     ],
     "Blue crabs": [
-        "Mud crabs",
-        "Curacha"
+        "Mud crabs"
     ],
     "Curacha": [
         "Mud crabs",
@@ -556,12 +472,10 @@
         "Shrimps"
     ],
     "Chinese pomelo": [
-        "Sweet gold pomelo",
-        "Menzi pomelo"
+        "Sweet gold pomelo"
     ],
     "Sweet gold pomelo": [
-        "Chinese pomelo",
-        "Menzi pomelo"
+        "Chinese pomelo"
     ],
     "Menzi pomelo": [
         "Chinese pomelo",
@@ -576,24 +490,20 @@
         "Papaya"
     ],
     "Tundan Banana": [
-        "Saba Banana",
-        "Mango (Green)"
+        "Saba Banana"
     ],
     "Ponkan (Mandarin Orange)": [
         "Orange",
         "Lemon"
     ],
     "Dragon fruit": [
-        "Papaya",
-        "Mango (Green)"
+        "Papaya"
     ],
     "Mango (Yellow)": [
-        "Mango (Carabao)",
-        "Mango (Green)"
+        "Mango (Carabao)"
     ],
     "Young corn": [
-        "Corn (Maize)",
-        "Broccoli"
+        "Corn (Maize)"
     ],
     "Broccoli": [
         "Cauliflower",
@@ -612,15 +522,14 @@
         "Tambo paklay"
     ],
     "Mustasa (Mustard Greens)": [
-        "Malunggay Leaves",
+        "Malunggay (Moringa) Leaves",
         "Tambo paklay"
     ],
     "Tanglad (Lemongrass)": [
-        "Bay Leaf",
-        "Atchal"
+        "Bay Leaf"
     ],
     "Atchal": [
-        "Bagoong",
+        "Bagoong (Shrimp Paste)",
         "Soy Sauce"
     ],
     "Dried green peas": [
@@ -653,7 +562,7 @@
     ],
     "Salt": [
         "Soy Sauce",
-        "Bagoong"
+        "Bagoong (Shrimp Paste)"
     ],
     "Ground black pepper": [
         "Whole Peppercorns",
@@ -668,23 +577,18 @@
         "Bay Leaf"
     ],
     "Cane Vinegar (Suka)": [
-        "Soy Sauce",
-        "Atchal"
+        "Soy Sauce"
     ],
-    "Cooking Oil (Vegetable)": [
-        "Butter",
-        "Olive Oil"
-    ],
+    "Cooking Oil (Vegetable)": [],
     "Malunggay (Moringa) Leaves": [
         "Mustasa",
         "Tambo paklay",
         "Kangkong",
-        "Pechay",
-        "Spinach"
+        "Pechay"
     ],
     "Soy Sauce (Toyo)": [
         "Cane Vinegar",
-        "Bagoong",
+        "Bagoong (Shrimp Paste)",
         "Oyster Sauce",
         "Fish Sauce"
     ],
@@ -692,8 +596,7 @@
         "White Sugar"
     ],
     "Glutinous Rice (Malagkit)": [
-        "All-Purpose Flour",
-        "White Rice"
+        "All-Purpose Flour"
     ],
     "Coconut Milk (Gata)": [
         "Coconut Cream",
@@ -709,7 +612,7 @@
     ],
     "Fish Sauce (Patis)": [
         "Soy Sauce",
-        "Bagoong"
+        "Bagoong (Shrimp Paste)"
     ],
     "Oyster Sauce": [
         "Soy Sauce",
@@ -719,7 +622,6 @@
         "All-Purpose Flour"
     ],
     "Chicken Broth/Stock": [
-        "Vegetable Broth",
         "Soy Sauce"
     ],
     "Thai Chili (Siling Labuyo)": [
@@ -727,7 +629,7 @@
         "Whole Peppercorns"
     ],
     "All-Purpose Flour": [
-        "Glutinous Rice",
+        "Glutinous Rice (Malagkit)",
         "Cornstarch"
     ],
     "White Sugar": [
@@ -798,7 +700,7 @@
     ],
     "Fish Sauce": [
         "Soy Sauce",
-        "Bagoong"
+        "Bagoong (Shrimp Paste)"
     ],
     "Bagoong Isda": [
         "Bagoong (Shrimp Paste)",
