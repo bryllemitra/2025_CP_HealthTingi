@@ -157,8 +157,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     await _toggleFavorite(recipe['mealID'], true);
                   },
                   child: const Icon(
-                    Icons.star,
-                    color: Colors.yellow,
+                    Icons.favorite,
+                    color: Colors.red,
                     size: 22,
                   ),
                 ),
