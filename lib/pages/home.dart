@@ -341,8 +341,8 @@ class _HomePageState extends State<HomePage> {
                     child: GestureDetector(
                       onTap: () => _toggleFavorite(recipe['id']),
                       child: Icon(
-                        isFavorite ? Icons.star : Icons.star_border,
-                        color: isFavorite ? Colors.yellow : Colors.white,
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? Colors.red : Colors.white,
                         size: 22,
                       ),
                     ),

@@ -545,8 +545,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                             child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
                           )
                         : Icon(
-                            _isFavorite ? Icons.star : Icons.star_border,
-                            color: _isFavorite ? Colors.yellow : Colors.white,
+                            _isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: _isFavorite ? Colors.red : Colors.white,
                             shadows: const [
                               Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6),
                             ],
@@ -722,40 +722,28 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                       totalPrice += calculatedCost;
                     }
 
-                    return Column(
+                    return Stack(
                       children: [
-                        SizedBox(
-                          height: 300,
-                          child: Stack(
-                            children: [
-                              _buildMealImages(mealData),
-                              Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
-                                  ),
+                        _buildMealImages(mealData),
+                        Positioned(
+                          top: 250,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 25,
+                                  offset: Offset(0, -10),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 25,
-                                    offset: Offset(0, -10),
-                                  ),
-                                ],
-                              ),
-                              padding: const EdgeInsets.all(24),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(24),
+                            child: SingleChildScrollView(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1104,6 +1092,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     }
 
     return Container(
+      height: 300,
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
         boxShadow: [
@@ -1199,6 +1188,21 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                   }),
                 ),
               ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 50,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
