@@ -45,7 +45,11 @@ class _CategoryPageState extends State<CategoryPage> {
     if (user != null && user['favorites'] != null) {
       final favorites = user['favorites'].toString();
       setState(() {
-        favoriteMealIds = favorites.split(',').where((id) => id.isNotEmpty).map(int.parse).toSet();
+        favoriteMealIds = favorites
+            .split(',')
+            .where((id) => id.isNotEmpty)
+            .map(int.parse)
+            .toSet();
       });
     }
   }
@@ -54,7 +58,7 @@ class _CategoryPageState extends State<CategoryPage> {
     try {
       final dbHelper = DatabaseHelper();
       final allMeals = await dbHelper.getAllMeals();
-      
+
       setState(() {
         meals = allMeals.where((meal) {
           final categories = (meal['category'] as String?)?.split(', ') ?? [];
@@ -107,7 +111,10 @@ class _CategoryPageState extends State<CategoryPage> {
         filteredMeals = List.from(meals);
       } else {
         filteredMeals = meals.where((meal) {
-          return meal['mealName'].toString().toLowerCase().contains(_searchQuery);
+          return meal['mealName']
+              .toString()
+              .toLowerCase()
+              .contains(_searchQuery);
         }).toList();
       }
     });
@@ -115,7 +122,7 @@ class _CategoryPageState extends State<CategoryPage> {
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
     final isFavorite = favoriteMealIds.contains(meal['mealID']);
-    final price = meal['price'] is double 
+    final price = meal['price'] is double
         ? (meal['price'] as double).toStringAsFixed(2)
         : meal['price']?.toString() ?? '0.00';
 
@@ -140,7 +147,8 @@ class _CategoryPageState extends State<CategoryPage> {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
                 child: SizedBox(
                   height: 100,
                   width: double.infinity,
@@ -149,20 +157,22 @@ class _CategoryPageState extends State<CategoryPage> {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
                       color: Colors.grey[200],
-                      child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                      child: const Icon(Icons.fastfood,
+                          size: 40, color: Colors.grey),
                     ),
                   ),
                 ),
               ),
+              // HEART — 100% IDENTICAL TO ALL OTHER PAGES
               Positioned(
                 top: 6,
                 right: 6,
                 child: GestureDetector(
                   onTap: () => _toggleFavorite(meal['mealID']),
                   child: Icon(
-                    isFavorite ? Icons.star : Icons.star_border,
-                    color: isFavorite ? Colors.yellow : Colors.white,
-                    size: 22,
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorite ? Colors.red : Colors.white70,
+                    size: 20, // EXACT SIZE
                   ),
                 ),
               ),
@@ -178,7 +188,7 @@ class _CategoryPageState extends State<CategoryPage> {
                     child: Text(
                       meal['mealName'],
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color(0xFF184E77),
                       ),
@@ -189,12 +199,14 @@ class _CategoryPageState extends State<CategoryPage> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.access_time, size: 12, color: Color(0xFF184E77)),
+                      const Icon(Icons.access_time,
+                          size: 12, color: Color(0xFF184E77)),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           "Est. ${meal['cookingTime']}",
-                          style: const TextStyle(fontSize: 10, color: Colors.black54),
+                          style: const TextStyle(
+                              fontSize: 10, color: Colors.black54),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -278,7 +290,8 @@ class _CategoryPageState extends State<CategoryPage> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back_ios_new,
+                          color: Colors.white),
                       onPressed: () => Navigator.pop(context),
                     ),
                     Expanded(
@@ -298,16 +311,20 @@ class _CategoryPageState extends State<CategoryPage> {
                         child: TextField(
                           controller: searchController,
                           decoration: InputDecoration(
-                            hintText: 'Search ${widget.category.toLowerCase()} meals',
-                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54),
+                            hintText:
+                                'Search ${widget.category.toLowerCase()} meals',
+                            hintStyle: const TextStyle(
+                                fontSize: 14, color: Colors.black54),
                             suffixIcon: searchController.text.isNotEmpty
                                 ? IconButton(
-                                    icon: const Icon(Icons.clear, color: Color(0xFF184E77)),
+                                    icon: const Icon(Icons.clear,
+                                        color: Color(0xFF184E77)),
                                     onPressed: () {
                                       searchController.clear();
                                     },
                                   )
-                                : const Icon(Icons.search, color: Color(0xFF184E77)),
+                                : const Icon(Icons.search,
+                                    color: Color(0xFF184E77)),
                             border: InputBorder.none,
                           ),
                         ),
@@ -338,7 +355,8 @@ class _CategoryPageState extends State<CategoryPage> {
                             : GridView.builder(
                                 padding: const EdgeInsets.all(12.0),
                                 itemCount: filteredMeals.length,
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2,
                                   mainAxisExtent: 260,
                                   mainAxisSpacing: 12,
