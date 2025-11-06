@@ -980,7 +980,7 @@ class _MealCard extends StatelessWidget {
                         foregroundColor: const Color(0xFF184E77),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: Color(0xFF184E77)),
+                          side: const BorderSide(color: Color(0xFF76C893)),
                         ),
                       ),
                       child: const Text('Cancel'),
@@ -1421,11 +1421,11 @@ class _MealCard extends StatelessWidget {
                         child: TextButton(
                           onPressed: () => Navigator.pop(dialogContext),
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFF184E77),
+                            foregroundColor: const Color(0xFF76C893),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
-                              side: const BorderSide(color: Color(0xFF184E77)),
+                              side: const BorderSide(color: Color(0xFF76C893)),
                             ),
                           ),
                           child: const Text('Cancel'),
