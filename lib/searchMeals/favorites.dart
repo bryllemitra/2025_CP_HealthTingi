@@ -149,6 +149,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                   ),
                 ),
               ),
+              // NEW HEART — EXACTLY LIKE POPULAR RECIPES
               Positioned(
                 top: 6,
                 right: 6,
@@ -159,7 +160,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                   child: const Icon(
                     Icons.favorite,
                     color: Colors.red,
-                    size: 22,
+                    size: 20,  // Smaller to match Popular Recipes
                   ),
                 ),
               ),

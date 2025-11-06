@@ -7,7 +7,7 @@ class MealSearch2Page extends StatefulWidget {
   final String timeFilter;
 
   const MealSearch2Page({
-    super.key, 
+    super.key,
     required this.userId,
     required this.timeFilter,
   });
@@ -62,7 +62,7 @@ class _MealSearch2PageState extends State<MealSearch2Page> {
 
   Future<void> _toggleFavorite(int mealId) async {
     if (widget.userId == 0) return;
-    
+
     try {
       final user = await _dbHelper.getUserById(widget.userId);
       if (user == null) return;
@@ -96,7 +96,7 @@ class _MealSearch2PageState extends State<MealSearch2Page> {
       try {
         final fromHour = int.parse(meal['availableFrom']?.split(':')[0] ?? '0');
         final toHour = int.parse(meal['availableTo']?.split(':')[0] ?? '24');
-        
+
         if (time == "Current") {
           return _isCurrentTime(fromHour, toHour);
         } else if (time == "Breakfast") {
@@ -151,7 +151,7 @@ class _MealSearch2PageState extends State<MealSearch2Page> {
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
     final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
-    final price = meal['price'] is double 
+    final price = meal['price'] is double
         ? (meal['price'] as double).toStringAsFixed(2)
         : meal['price']?.toString() ?? '0.00';
 
@@ -190,6 +190,7 @@ class _MealSearch2PageState extends State<MealSearch2Page> {
                   ),
                 ),
               ),
+              // NEW HEART — EXACTLY LIKE POPULAR RECIPES
               if (widget.userId != 0)
                 Positioned(
                   top: 6,
@@ -197,9 +198,9 @@ class _MealSearch2PageState extends State<MealSearch2Page> {
                   child: GestureDetector(
                     onTap: () => _toggleFavorite(meal['mealID']),
                     child: Icon(
-                      isFavorite ? Icons.star : Icons.star_border,
-                      color: isFavorite ? Colors.yellow : Colors.white,
-                      size: 22,
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? Colors.red : Colors.white70,
+                      size: 20,
                     ),
                   ),
                 ),
@@ -215,7 +216,7 @@ class _MealSearch2PageState extends State<MealSearch2Page> {
                     child: Text(
                       meal['mealName'],
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color(0xFF184E77),
                       ),

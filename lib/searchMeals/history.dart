@@ -55,7 +55,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> _toggleFavorite(int mealId) async {
     if (widget.userId == 0) return;
-    
+
     try {
       final user = await _dbHelper.getUserById(widget.userId);
       if (user == null) return;
@@ -108,7 +108,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Widget _buildMealCard(Map<String, dynamic> recipe) {
     final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(recipe['mealID']);
-    final price = recipe['price'] is double 
+    final price = recipe['price'] is double
         ? (recipe['price'] as double).toStringAsFixed(2)
         : recipe['price']?.toString() ?? '0.00';
     final completedAt = recipe['completedAt'] != null
@@ -150,6 +150,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   ),
                 ),
               ),
+              // NEW HEART — EXACTLY LIKE POPULAR RECIPES
               if (widget.userId != 0)
                 Positioned(
                   top: 6,
@@ -157,9 +158,9 @@ class _HistoryPageState extends State<HistoryPage> {
                   child: GestureDetector(
                     onTap: () => _toggleFavorite(recipe['mealID']),
                     child: Icon(
-                      isFavorite ? Icons.star : Icons.star_border,
-                      color: isFavorite ? Colors.yellow : Colors.white,
-                      size: 22,
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? Colors.red : Colors.white70,
+                      size: 20,
                     ),
                   ),
                 ),
@@ -175,7 +176,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     child: Text(
                       recipe['mealName'],
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color(0xFF184E77),
                       ),

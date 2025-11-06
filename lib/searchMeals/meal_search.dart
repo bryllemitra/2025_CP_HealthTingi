@@ -18,7 +18,7 @@ class MealSearchPage extends StatefulWidget {
 
 class _MealSearchPageState extends State<MealSearchPage> {
   late Future<List<Map<String, dynamic>>> _mealsFuture;
-  late Future<List<Map<String, dynamic>>> _ingredientsFuture; // ADD THIS
+  late Future<List<Map<String, dynamic>>> _ingredientsFuture;
   final DatabaseHelper _dbHelper = DatabaseHelper();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -28,9 +28,9 @@ class _MealSearchPageState extends State<MealSearchPage> {
   void initState() {
     super.initState();
     _mealsFuture = _fetchMeals();
-    _ingredientsFuture = _fetchIngredients(); // ADD THIS
+    _ingredientsFuture = _fetchIngredients();
     _searchController.addListener(_onSearchChanged);
-    if (widget.userId != 0) { // Only load favorites for registered users
+    if (widget.userId != 0) {
       _loadUserFavorites();
     }
   }
@@ -41,7 +41,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
     super.dispose();
   }
 
-  // ADD THIS METHOD
   Future<List<Map<String, dynamic>>> _fetchIngredients() async {
     final ingredients = await _dbHelper.getAllIngredients();
     return ingredients;
@@ -69,8 +68,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
   }
 
   Future<void> _toggleFavorite(int mealId) async {
-    if (widget.userId == 0) return; // Skip for guests
-    
+    if (widget.userId == 0) return;
+
     try {
       final user = await _dbHelper.getUserById(widget.userId);
       if (user == null) return;
@@ -152,7 +151,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
     }).toList();
   }
 
-  // ADD THIS METHOD
   List<Map<String, dynamic>> _filterIngredientsByName(List<Map<String, dynamic>> ingredients, String query) {
     if (query.isEmpty) return [];
     return ingredients.where((ingredient) {
@@ -230,158 +228,158 @@ class _MealSearchPageState extends State<MealSearchPage> {
   }
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
-  final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
-  final price = meal['price'] is double 
-      ? (meal['price'] as double).toStringAsFixed(2)
-      : meal['price']?.toString() ?? '0.00';
-  
-  return Container(
-    width: 160,
-    height: 240,
-    margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-    decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.9),
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 8,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Stack(
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              child: SizedBox(
-                height: 100,
-                width: double.infinity,
-                child: Image.asset(
-                  meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+    final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
+    final price = meal['price'] is double
+        ? (meal['price'] as double).toStringAsFixed(2)
+        : meal['price']?.toString() ?? '0.00';
+
+    return Container(
+      width: 160,
+      height: 240,
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                child: SizedBox(
+                  height: 100,
+                  width: double.infinity,
+                  child: Image.asset(
+                    meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
+                    ),
                   ),
                 ),
               ),
-            ),
-            if (widget.userId != 0)
-              Positioned(
-                top: 6,
-                right: 6,
-                child: GestureDetector(
-                  onTap: () => _toggleFavorite(meal['mealID']),
-                  child: Icon(
-                    isFavorite ? Icons.star : Icons.star_border,
-                    color: isFavorite ? Colors.yellow : Colors.white,
-                    size: 22,
+              // NEW HEART — MATCHES POPULAR RECIPES
+              if (widget.userId != 0)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(meal['mealID']),
+                    child: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? Colors.red : Colors.white70,
+                      size: 20,
+                    ),
                   ),
                 ),
+            ],
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    child: Text(
+                      meal['mealName'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Color(0xFF184E77),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 12, color: Color(0xFF184E77)),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          "Est. ${meal['cookingTime']}",
+                          style: const TextStyle(fontSize: 10, color: Colors.black54),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          "Php $price",
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black54,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFB5E48C),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      minimumSize: const Size.fromHeight(30),
+                      textStyle: const TextStyle(fontSize: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MealDetailsPage(
+                            mealId: meal['mealID'],
+                            userId: widget.userId,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("VIEW INSTRUCTIONS"),
+                  ),
+                ],
               ),
-          ],
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Flexible(
-                  child: Text(
-                    meal['mealName'],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold, 
-                      fontSize: 14,
-                      color: Color(0xFF184E77),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.access_time, size: 12, color: Color(0xFF184E77)),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        "Est. ${meal['cookingTime']}",
-                        style: const TextStyle(fontSize: 10, color: Colors.black54),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        "Php $price",
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black54,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFB5E48C),
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    minimumSize: const Size.fromHeight(30),
-                    textStyle: const TextStyle(fontSize: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MealDetailsPage(
-                          mealId: meal['mealID'],
-                          userId: widget.userId,
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text("VIEW INSTRUCTIONS"),
-                ),
-              ],
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
-  // ADD THIS METHOD
   Widget _buildIngredientCard(Map<String, dynamic> ingredient) {
     final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown Ingredient';
     final imagePath = ingredient['ingredientPicture']?.toString() ?? 'assets/default_ingredient.jpg';
-    final price = ingredient['price_text'] is double 
+    final price = ingredient['price_text'] is double
         ? (ingredient['price_text'] as double).toStringAsFixed(2)
         : ingredient['price_text']?.toString() ?? '0.00';
 
     return Container(
       width: 120,
-      height: 165, // ADD FIXED HEIGHT TO PREVENT OVERFLOW
+      height: 165,
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
@@ -397,9 +395,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Ingredient Image
           Container(
-            height: 60, // REDUCED HEIGHT TO FIT BETTER
+            height: 60,
             width: 60,
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -420,16 +417,14 @@ class _MealSearchPageState extends State<MealSearchPage> {
               ),
             ),
           ),
-          
-          // Ingredient Name
-          Flexible( // ALLOW TEXT TO ADAPT
+          Flexible(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 ingredientName,
                 style: const TextStyle(
-                  fontWeight: FontWeight.bold, 
-                  fontSize: 11, // SLIGHTLY SMALLER FONT
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
                   color: Color(0xFF184E77),
                 ),
                 textAlign: TextAlign.center,
@@ -438,30 +433,26 @@ class _MealSearchPageState extends State<MealSearchPage> {
               ),
             ),
           ),
-          
-          // Price
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // REDUCED PADDING
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             child: Text(
               'Php $price',
               style: TextStyle(
-                fontSize: 10, // SMALLER FONT
+                fontSize: 10,
                 color: Colors.grey[700],
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          
-          // View Details Button
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // REDUCED PADDING
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFB5E48C),
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // REDUCED PADDING
-                minimumSize: const Size.fromHeight(24), // SMALLER BUTTON
-                textStyle: const TextStyle(fontSize: 9), // SMALLER TEXT
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                minimumSize: const Size.fromHeight(24),
+                textStyle: const TextStyle(fontSize: 9),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -488,7 +479,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
 
   Widget _buildSection(String title, List<Map<String, dynamic>> meals, String timeFilter) {
     if (meals.isEmpty) return const SizedBox.shrink();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -501,7 +492,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
               Text(
                 title,
                 style: const TextStyle(
-                  fontWeight: FontWeight.bold, 
+                  fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: Colors.white,
                   shadows: [
@@ -534,7 +525,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
           ),
         ),
         SizedBox(
-          height: 260, // INCREASED HEIGHT TO ACCOMMODATE FIXED CARD HEIGHT
+          height: 260,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -545,10 +536,9 @@ class _MealSearchPageState extends State<MealSearchPage> {
     );
   }
 
-  // ADD THIS METHOD
   Widget _buildIngredientsSection(List<Map<String, dynamic>> ingredients) {
     if (ingredients.isEmpty) return const SizedBox.shrink();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -558,7 +548,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
           child: Text(
             "Ingredients",
             style: TextStyle(
-              fontWeight: FontWeight.bold, 
+              fontWeight: FontWeight.bold,
               fontSize: 18,
               color: Colors.white,
               shadows: [
@@ -572,7 +562,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
           ),
         ),
         SizedBox(
-          height: 190, // INCREASED HEIGHT TO ACCOMMODATE FIXED CARD HEIGHT
+          height: 190,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -591,9 +581,9 @@ class _MealSearchPageState extends State<MealSearchPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -620,7 +610,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   child: TextField(
                     controller: _searchController,
                     decoration: const InputDecoration(
-                      hintText: 'Search meals or ingredients...', // UPDATED TEXT
+                      hintText: 'Search meals or ingredients...',
                       suffixIcon: Icon(Icons.search, color: Color(0xFF184E77)),
                       border: InputBorder.none,
                     ),
@@ -648,25 +638,21 @@ class _MealSearchPageState extends State<MealSearchPage> {
 
                         final allMeals = mealsSnapshot.data ?? [];
                         final allIngredients = ingredientsSnapshot.data ?? [];
-                        
-                        // Filter by search query
+
                         var filteredMeals = _filterMealsByName(allMeals, _searchQuery);
                         var filteredIngredients = _filterIngredientsByName(allIngredients, _searchQuery);
-                        
-                        // Then filter by time
+
                         final currentTime = _getCurrentMealTime();
                         final timeBasedSections = _getTimeBasedSections(currentTime);
-                        
+
                         final currentMeals = _filterMealsByTime(filteredMeals, "Current");
                         final otherMeals = filteredMeals
                             .where((meal) => !currentMeals.contains(meal))
                             .toList();
 
-                        // Sort alphabetically
                         final sortedCurrentMeals = _sortMeals(currentMeals);
                         final sortedOtherMeals = _sortMeals(otherMeals);
 
-                        // Build time-based sections
                         final timeSections = timeBasedSections.map((section) {
                           final timeMeals = _filterMealsByTime(filteredMeals, section['time']!);
                           return _buildSection(
@@ -678,21 +664,19 @@ class _MealSearchPageState extends State<MealSearchPage> {
 
                         return ListView(
                           children: [
-                            // Show ingredients section when searching
                             if (_searchQuery.isNotEmpty && filteredIngredients.isNotEmpty)
                               _buildIngredientsSection(filteredIngredients),
-                            
+
                             if (sortedCurrentMeals.isNotEmpty)
                               _buildSection(
-                                _getMealTimeGreeting(currentTime), 
+                                _getMealTimeGreeting(currentTime),
                                 sortedCurrentMeals,
                                 "Current"
                               ),
                             ...timeSections,
                             if (sortedOtherMeals.isNotEmpty)
                               _buildSection("Other Meal Options", sortedOtherMeals, "All"),
-                            
-                            // Show message if no results found
+
                             if (filteredMeals.isEmpty && filteredIngredients.isEmpty && _searchQuery.isNotEmpty)
                               const Center(
                                 child: Padding(
@@ -700,8 +684,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                                   child: Text("No meals or ingredients found matching your search", style: TextStyle(color: Colors.white)),
                                 ),
                               ),
-                            
-                            // Show ingredients section when not searching (at the end)
+
                             if (_searchQuery.isEmpty && allIngredients.isNotEmpty)
                               _buildIngredientsSection(allIngredients.take(10).toList()),
                           ],
@@ -716,7 +699,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF184E77), // Deep slate blue
+        backgroundColor: const Color(0xFF184E77),
         selectedItemColor: const Color(0xFF184E77),
         unselectedItemColor: const Color(0xFF184E77).withOpacity(0.7),
         currentIndex: 2,
@@ -759,7 +742,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Recipes'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.currency_ruble), 
+            icon: Icon(Icons.currency_ruble),
             label: 'Budget'
           ),
         ],

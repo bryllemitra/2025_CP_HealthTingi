@@ -537,23 +537,24 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
               ),
               centerTitle: true,
               actions: [
-                if (widget.userId != 0)
-                  IconButton(
-                    icon: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                          )
-                        : Icon(
-                            _isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: _isFavorite ? Colors.red : Colors.white,
-                            shadows: const [
-                              Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6),
-                            ],
-                          ),
-                    onPressed: _isLoading ? null : _toggleFavorite,
-                  ),
+               if (widget.userId != 0)
+              IconButton(
+                icon: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Icon(
+                        _isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: _isFavorite ? Colors.red : Colors.white70,
+                        size: 20, // Consistent size
+                      ),
+                onPressed: _isLoading ? null : _toggleFavorite,
+              ),
               ],
             ),
             if (_errorMessage != null)

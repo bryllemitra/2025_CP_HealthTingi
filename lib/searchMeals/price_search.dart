@@ -67,7 +67,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
 
   Future<void> _toggleFavorite(int mealId) async {
     if (widget.userId == 0) return;
-    
+
     try {
       final user = await _dbHelper.getUserById(widget.userId);
       if (user == null) return;
@@ -162,7 +162,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
     final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
-    final price = meal['price'] is double 
+    final price = meal['price'] is double
         ? (meal['price'] as double).toStringAsFixed(2)
         : meal['price']?.toString() ?? '0.00';
 
@@ -201,6 +201,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                   ),
                 ),
               ),
+              // NEW HEART — EXACTLY LIKE POPULAR RECIPES
               if (widget.userId != 0)
                 Positioned(
                   top: 6,
@@ -208,9 +209,9 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                   child: GestureDetector(
                     onTap: () => _toggleFavorite(meal['mealID']),
                     child: Icon(
-                      isFavorite ? Icons.star : Icons.star_border,
-                      color: isFavorite ? Colors.yellow : Colors.white,
-                      size: 22,
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? Colors.red : Colors.white70,
+                      size: 20,
                     ),
                   ),
                 ),
@@ -226,7 +227,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                     child: Text(
                       meal['mealName'],
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color(0xFF184E77),
                       ),

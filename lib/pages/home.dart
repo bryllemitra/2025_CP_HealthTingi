@@ -296,75 +296,75 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPopularRecipeCard(Map<String, dynamic> recipe) {
-    final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(recipe['id']);
-    
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MealDetailsPage(
-              mealId: recipe['id'],
-              userId: widget.userId,
-            ),
+ Widget _buildPopularRecipeCard(Map<String, dynamic> recipe) {
+  final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(recipe['id']);
+
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MealDetailsPage(
+            mealId: recipe['id'],
+            userId: widget.userId,
           ),
-        );
-      },
-      child: Container(
-        width: 160,
-        margin: const EdgeInsets.only(right: 16),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  child: _buildMealImage(recipe['image']),
-                ),
-                if (widget.userId != 0)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: GestureDetector(
-                      onTap: () => _toggleFavorite(recipe['id']),
-                      child: Icon(
-                        isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite ? Colors.red : Colors.white,
-                        size: 22,
-                      ),
+      );
+    },
+    child: Container(
+      width: 160,
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                child: _buildMealImage(recipe['image']),
+              ),
+              if (widget.userId != 0)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(recipe['id']),
+                    child: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? Colors.red : Colors.white70,
+                      size: 20, // Smaller & consistent
                     ),
                   ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(
-                recipe['name'],
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold, 
-                  fontSize: 14,
-                  color: Color(0xFF184E77),
                 ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              recipe['name'],
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Color(0xFF184E77),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildIngredientCard(Map<String, dynamic> ingredient) {
     final ingredientName = ingredient['ingredientName']?.toString() ?? 'Unknown Ingredient';
