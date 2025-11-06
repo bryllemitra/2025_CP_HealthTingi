@@ -216,12 +216,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         onPressed: () {
           _showAddUserDialog(context);
         },
-        backgroundColor: const Color(0xFFB5E48C),
+        backgroundColor: const Color(0xFFFFFFFF),
         elevation: 10,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        child: const Icon(Icons.person_add, color: Color(0xFF184E77)),
+        child: const Icon(Icons.person_add, color: Color(0xFF76C893)),
       ),
     );
   }

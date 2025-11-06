@@ -321,7 +321,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
             _showAddMealDialog(context);
           },
           backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF184E77),
+          foregroundColor: const Color(0xFF76C893),
           elevation: 10,
           child: const Icon(Icons.add, size: 28),
         ),
@@ -452,7 +452,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                       icon: const Icon(Icons.image),
                       label: const Text('Add Default Image'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF184E77),
+                        backgroundColor: const Color(0xFF76C893),
                         foregroundColor: Colors.white,
                         elevation: 8,
                         shape: RoundedRectangleBorder(
@@ -579,11 +579,11 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                         child: TextButton(
                           onPressed: () => Navigator.pop(dialogContext),
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFF184E77),
+                            foregroundColor: const Color(0xFF76C893),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
-                              side: const BorderSide(color: Color(0xFF184E77)),
+                              side: const BorderSide(color: Color(0xFF76C893)),
                             ),
                           ),
                           child: const Text('Cancel'),
@@ -624,7 +624,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                             _refreshMeals();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF184E77),
+                            backgroundColor: const Color(0xFF76C893),
                             foregroundColor: Colors.white,
                             elevation: 8,
                             shape: RoundedRectangleBorder(
@@ -665,14 +665,14 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: const Color(0xFF184E77)),
+          prefixIcon: Icon(icon, color: const Color(0xFF76C893)),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF184E77)),
+            borderSide: const BorderSide(color: Color(0xFF76C893)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF184E77), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF76C893), width: 2),
           ),
         ),
       ),
@@ -846,7 +846,7 @@ class _MealCard extends StatelessWidget {
                   ),
                 ),
                 PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, color: const Color(0xFF184E77)),
+                  icon: Icon(Icons.more_vert, color: const Color(0xFF76C893)),
                   onSelected: (value) {
                     if (value == 'view') {
                       _showMealDetails(context);
@@ -902,7 +902,7 @@ class _MealCard extends StatelessWidget {
                     icon: const Icon(Icons.visibility, size: 16),
                     label: const Text('View Details'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF184E77),
+                      backgroundColor: const Color(0xFF76C893),
                       foregroundColor: Colors.white,
                       elevation: 4,
                       shape: RoundedRectangleBorder(
@@ -922,11 +922,11 @@ class _MealCard extends StatelessWidget {
                     label: const Text('Edit'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF184E77),
+                      foregroundColor: const Color(0xFF76C893),
                       elevation: 4,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: Color(0xFF184E77)),
+                        side: const BorderSide(color: Color(0xFF76C893)),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
@@ -1135,7 +1135,7 @@ class _MealCard extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF184E77),
+                      backgroundColor: const Color(0xFF76C893),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -1272,7 +1272,7 @@ class _MealCard extends StatelessWidget {
                     'Default Meal Image',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF184E77),
+                      color: Color(0xFF76C893),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1297,7 +1297,7 @@ class _MealCard extends StatelessWidget {
                       icon: const Icon(Icons.image),
                       label: Text(_selectedImagePath == null ? 'Add Default Image' : 'Change Default Image'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF184E77),
+                        backgroundColor: const Color(0xFF76C893),
                         foregroundColor: Colors.white,
                         elevation: 8,
                         shape: RoundedRectangleBorder(
@@ -1462,7 +1462,7 @@ class _MealCard extends StatelessWidget {
                             onRefresh();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF184E77),
+                            backgroundColor: const Color(0xFF76C893),
                             foregroundColor: Colors.white,
                             elevation: 8,
                             shape: RoundedRectangleBorder(
@@ -1503,14 +1503,14 @@ class _MealCard extends StatelessWidget {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: const Color(0xFF184E77)),
+          prefixIcon: Icon(icon, color: const Color(0xFF76C893)),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF184E77)),
+            borderSide: const BorderSide(color: Color(0xFF76C893)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF184E77), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF76C893), width: 2),
           ),
         ),
       ),

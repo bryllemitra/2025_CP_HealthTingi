@@ -271,7 +271,7 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                                         ? 'No ingredients found'
                                         : 'No ingredients found for "${_searchController.text}"',
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: Colors.green,
                                       fontSize: 18,
                                       fontFamily: 'Orbitron',
                                     ),
@@ -283,7 +283,7 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                                         ? 'Tap the + button to add your first ingredient'
                                         : 'Try a different search term',
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
+                                      color: Colors.green.withOpacity(0.7),
                                       fontSize: 14,
                                     ),
                                     textAlign: TextAlign.center,
@@ -322,7 +322,7 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
             _showAddIngredientDialog(context);
           },
           backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF184E77),
+          foregroundColor: const Color(0xFF76C893),
           elevation: 10,
           child: const Icon(Icons.add, size: 28),
         ),
@@ -432,7 +432,7 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                       icon: const Icon(Icons.image),
                       label: const Text('Add Default Image'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF184E77),
+                        backgroundColor: const Color(0xFF76C893),
                         foregroundColor: Colors.white,
                         elevation: 8,
                         shape: RoundedRectangleBorder(
@@ -559,11 +559,11 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                         child: TextButton(
                           onPressed: () => Navigator.pop(dialogContext),
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFF184E77),
+                            foregroundColor: const Color(0xFF76C893),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
-                              side: const BorderSide(color: Color(0xFF184E77)),
+                              side: const BorderSide(color: Color(0xFF76C893)),
                             ),
                           ),
                           child: const Text('Cancel'),
@@ -598,7 +598,7 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                             _refreshIngredients();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF184E77),
+                            backgroundColor: const Color(0xFF76C893),
                             foregroundColor: Colors.white,
                             elevation: 8,
                             shape: RoundedRectangleBorder(
@@ -639,14 +639,14 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: const Color(0xFF184E77)),
+          prefixIcon: Icon(icon, color: const Color(0xFF76C893)),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF184E77)),
+            borderSide: const BorderSide(color: Color(0xFF76C893)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF184E77), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF76C893), width: 2),
           ),
         ),
       ),
@@ -828,7 +828,7 @@ class _IngredientCard extends StatelessWidget {
                   ),
                 ),
                 PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, color: const Color(0xFF184E77)),
+                  icon: Icon(Icons.more_vert, color: const Color(0xFF76C893)),
                   onSelected: (value) {
                     if (value == 'view') {
                       _showIngredientDetails(context);
@@ -884,7 +884,7 @@ class _IngredientCard extends StatelessWidget {
                     icon: const Icon(Icons.visibility, size: 16),
                     label: const Text('View Details'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF184E77),
+                      backgroundColor: const Color(0xFF76C893),
                       foregroundColor: Colors.white,
                       elevation: 4,
                       shape: RoundedRectangleBorder(
@@ -904,11 +904,11 @@ class _IngredientCard extends StatelessWidget {
                     label: const Text('Edit'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF184E77),
+                      foregroundColor: const Color(0xFF76C893),
                       elevation: 4,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: Color(0xFF184E77)),
+                        side: const BorderSide(color: Color(0xFF76C893)),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 8),
                     ),
@@ -1094,7 +1094,7 @@ class _IngredientCard extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF184E77),
+                      backgroundColor: const Color(0xFF76C893),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -1235,7 +1235,7 @@ class _IngredientCard extends StatelessWidget {
                       icon: const Icon(Icons.image),
                       label: Text(_selectedImagePath == null ? 'Add Default Image' : 'Change Default Image'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF184E77),
+                        backgroundColor: const Color(0xFF76C893),
                         foregroundColor: Colors.white,
                         elevation: 8,
                         shape: RoundedRectangleBorder(
@@ -1359,11 +1359,11 @@ class _IngredientCard extends StatelessWidget {
                         child: TextButton(
                           onPressed: () => Navigator.pop(dialogContext),
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFF184E77),
+                            foregroundColor: const Color(0xFF76C893),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
-                              side: const BorderSide(color: Color(0xFF184E77)),
+                              side: const BorderSide(color: Color(0xFF76C893)),
                             ),
                           ),
                           child: const Text('Cancel'),
@@ -1400,7 +1400,7 @@ class _IngredientCard extends StatelessWidget {
                             onRefresh();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF184E77),
+                            backgroundColor: const Color(0xFF76C893),
                             foregroundColor: Colors.white,
                             elevation: 8,
                             shape: RoundedRectangleBorder(
@@ -1441,14 +1441,14 @@ class _IngredientCard extends StatelessWidget {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: const Color(0xFF184E77)),
+          prefixIcon: Icon(icon, color: const Color(0xFF76C893)),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF184E77)),
+            borderSide: const BorderSide(color: Color(0xFF76C893)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF184E77), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF76C893), width: 2),
           ),
         ),
       ),

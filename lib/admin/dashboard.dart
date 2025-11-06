@@ -242,167 +242,87 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   
                   const SizedBox(height: 20),
                   
-                  // Quick Stats Section – NOW CLICKABLE
-                  Text(
-                    'Quick Stats',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black26,
-                          offset: Offset(2, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _QuickStatButton(
-                          title: 'Total Users',
-                          value: totalUsersValue,
-                          icon: Icons.people,
-                          color: Colors.green,
-                          onTap: () => _showStatDetail(
-                            context,
-                            title: 'Total Users',
-                            description: 'The total number of registered users in the system.',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: _QuickStatButton(
-                          title: 'Total Meals',
-                          value: totalMealsValue,
-                          icon: Icons.restaurant,
-                          color: Colors.green,
-                          onTap: () => _showStatDetail(
-                            context,
-                            title: 'Total Meals',
-                            description: 'The total number of meals created by all users.',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _QuickStatButton(
-                          title: 'Ingredients',
-                          value: ingredientsValue,
-                          icon: Icons.kitchen,
-                          color: Colors.orange,
-                          onTap: () => _showStatDetail(
-                            context,
-                            title: 'Ingredients',
-                            description: 'The total number of unique ingredients stored in the database.',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: _QuickStatButton(
-                          title: 'Active Today',
-                          value: activeTodayValue,
-                          icon: Icons.trending_up,
-                          color: Colors.purple,
-                          onTap: () => _showStatDetail(
-                            context,
-                            title: 'Active Today',
-                            description: 'Users who signed up today (proxy for daily activity).',
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Management Sections
-                  Text(
-                    'Management',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black26,
-                          offset: Offset(2, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  
-                  GridView.count(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
-                    childAspectRatio: 1.0,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _ManagementCard(
-                        title: 'Users',
-                        icon: Icons.people_outline,
-                        color: Colors.white.withOpacity(0.9),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AdminUsersPage(userId: widget.userId),
-                            ),
-                          );
-                        },
-                      ),
-                      _ManagementCard(
-                        title: 'Meals',
-                        icon: Icons.restaurant_menu,
-                        color: Colors.white.withOpacity(0.9),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AdminMealsPage(userId: widget.userId),
-                            ),
-                          );
-                        },
-                      ),
-                      _ManagementCard(
-                        title: 'Ingredients',
-                        icon: Icons.kitchen_outlined,
-                        color: Colors.white.withOpacity(0.9),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AdminIngredientsPage(userId: widget.userId),
-                            ),
-                          );
-                        },
-                      ),
-                      _ManagementCard(
-                        title: 'Analytics',
-                        icon: Icons.analytics_outlined,
-                        color: Colors.white.withOpacity(0.9),
-                        onTap: () {
-                          _showAnalyticsDialog(context);
-                        },
-                      ),
-                    ],
-                  ),
+ // Management Section – Analytics icon fixed to match Quick Stats
+Text(
+  'Management',
+  style: const TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+    shadows: [
+      Shadow(
+        color: Colors.black26,
+        offset: Offset(2, 2),
+        blurRadius: 4,
+      ),
+    ],
+  ),
+),
+const SizedBox(height: 15),
 
-                  const SizedBox(height: 20),
+GridView.count(
+  crossAxisCount: 2,
+  crossAxisSpacing: 15,
+  mainAxisSpacing: 15,
+  childAspectRatio: 1.3,
+  shrinkWrap: true,
+  physics: const NeverScrollableScrollPhysics(),
+  children: [
+    _QuickStatButton(
+      title: 'Users',
+      value: totalUsersValue,
+      icon: Icons.people,
+      color: Colors.green,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminUsersPage(userId: widget.userId),
+          ),
+        );
+      },
+    ),
+    _QuickStatButton(
+      title: 'Meals',
+      value: totalMealsValue,
+      icon: Icons.restaurant,
+      color: Colors.green,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminMealsPage(userId: widget.userId),
+          ),
+        );
+      },
+    ),
+    _QuickStatButton(
+      title: 'Ingredients',
+      value: ingredientsValue,
+      icon: Icons.kitchen,
+      color: Colors.orange,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminIngredientsPage(userId: widget.userId),
+          ),
+        );
+      },
+    ),
+    _QuickStatButton(
+      title: 'Analytics',
+      value: activeTodayValue,
+      icon: Icons.bar_chart, // Changed from trending_up to bar_chart
+      color: Colors.purple,   // Purple as requested
+      onTap: () {
+        _showAnalyticsDialog(context);
+      },
+    ),
+  ],
+),
+
+const SizedBox(height: 20),
 
                   // Analytics Charts Section
                   Text(
@@ -782,7 +702,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFF184E77),
+                      backgroundColor: const Color(0xFF76C893),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
