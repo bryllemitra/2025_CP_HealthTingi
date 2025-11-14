@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import 'meal_details.dart'; // Import your meal details page
-import 'substitution_details_dialog.dart'; // New dialog import
 
 class ReverseIngredientPage extends StatefulWidget {
   final List<String>? ingredients;
@@ -621,104 +620,56 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     );
   }
 
-  // New: Parse amount and unit
-  Map<String, dynamic> _parseAmountAndUnit(String original) {
-    RegExp pat = RegExp(r'(\d+/\d+|\d+\.\d+|\d+)\s*([a-zA-Z]+)');
-    var match = pat.firstMatch(original);
-    if (match == null) return {'amount': 1.0, 'unit': 'g'};
-    String amountStr = match.group(1)!;
-    String unit = match.group(2)!;
-    double amount;
-    if (amountStr.contains('/')) {
-      var parts = amountStr.split('/');
-      amount = double.parse(parts[0]) / double.parse(parts[1]);
-    } else {
-      amount = double.parse(amountStr);
-    }
-    return {'amount': amount, 'unit': unit};
-  }
-
-  // New: Show substitution details (from "sa-ReverseIngredientPage-enchance-mo-raw-alternative-selection.txt")
-  Future<void> _showSubstitutionDetails(String original, String alternative) async {
-    final amountAndUnit = _parseAmountAndUnit(original);
-    final dbHelper = DatabaseHelper();
-    final alternatives = await dbHelper.getEnhancedAlternatives(
-      original,
-      amountAndUnit['amount'],
-      amountAndUnit['unit'],
-    );
-    final alternativeData = alternatives.firstWhere(
-      (alt) => alt['substitute']['ingredient']['ingredientName'] == alternative,
-      orElse: () => {},
-    );
-    if (alternativeData.isNotEmpty) {
-      showDialog(
-        context: context,
-        builder: (context) => SubstitutionDetailsDialog(
-          substitutionData: alternativeData,
-          onAccept: (data) {
-            _applySubstitution(data);
-          },
+  // New: Confirm substitution with simple dialog
+  Future<void> _confirmSubstitution(String original, String alternative) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Confirm Substitution',
+          style: TextStyle(fontFamily: 'Orbitron'),
         ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No substitution data found for $alternative')),
-      );
+        content: Text(
+          'Are you sure you want to replace $original with $alternative?',
+          style: const TextStyle(fontFamily: 'Orbitron'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(fontFamily: 'Orbitron'),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF76C893),
+            ),
+            child: const Text(
+              'Confirm',
+              style: TextStyle(fontFamily: 'Orbitron', color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      _applySimpleSubstitution(original, alternative);
     }
   }
 
-  // Fixed: Apply substitution with better amount formatting
-  void _applySubstitution(Map<String, dynamic> data) {
-    final substitute = data['substitute']['ingredient'];
-    final original = data['original']['ingredient'];
-    final originalIngredientName = original['ingredientName'];
-    
+  // Simplified substitution application
+  void _applySimpleSubstitution(String original, String alternative) {
     setState(() {
-      // Format the amount more naturally instead of showing grams
-      final displayAmount = _formatSubstitutionAmount(data['display_amount']);
-      ingredientDisplay[originalIngredientName] = 
-          '$displayAmount ${substitute['ingredientName']}';
-      selectedAlternatives[originalIngredientName] = substitute['ingredientName'];
-      crossedOutIngredients.remove(originalIngredientName);
+      ingredientDisplay[original] = alternative;
+      selectedAlternatives[original] = alternative;
+      crossedOutIngredients.remove(original);
+      recentChanges.add({'type': 'replace', 'original': original, 'alt': alternative});
     });
     
-    // Log the substitution
-    DatabaseHelper().logSubstitution(
-      mealId: widget.mealId,
-      userId: widget.userId,
-      originalIngredientId: original['ingredientID'],
-      substituteIngredientId: substitute['ingredientID'],
-      originalAmountG: data['original']['amount_g'],
-      substituteAmountG: data['substitute']['amount_g'],
-      costDelta: data['deltas']['cost'],
-      calorieDelta: data['deltas']['calories'],
-    );
-    
     _loadSimilarMeals(); // Reload meals with new ingredients
-  }
-
-  // Helper method to format the amount more naturally
-  String _formatSubstitutionAmount(String displayAmount) {
-    // Remove the 'g' suffix and format more naturally
-    if (displayAmount.endsWith('g')) {
-      final amount = displayAmount.replaceAll('g', '').trim();
-      final amountNum = double.tryParse(amount) ?? 1.0;
-      
-      // Convert to more natural units
-      if (amountNum >= 1000) {
-        return '${(amountNum / 1000).toStringAsFixed(1)} kg';
-      } else if (amountNum >= 100) {
-        return '${(amountNum / 100).toStringAsFixed(1)} cups'; // Approximate
-      } else if (amountNum >= 15) {
-        return '${(amountNum / 15).toStringAsFixed(1)} tbsp'; // Approximate
-      } else if (amountNum >= 5) {
-        return '${(amountNum / 5).toStringAsFixed(1)} tsp'; // Approximate
-      } else {
-        return '1 piece'; // Default for small amounts
-      }
-    }
-    return displayAmount;
   }
 
   @override
@@ -959,7 +910,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                             groupValue: selectedAlternatives[original],
                                             onChanged: (val) {
                                               if (val != null) {
-                                                _showSubstitutionDetails(original, val);
+                                                _confirmSubstitution(original, val);
                                               }
                                             },
                                             activeColor: const Color(0xFF76C893),

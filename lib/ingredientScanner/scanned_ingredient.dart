@@ -121,6 +121,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
     return results;
   }
 
+  // NEW: Enhanced recipe suggestion algorithm with first ingredient priority
   Future<void> _loadRecipeSuggestions() async {
     setState(() {
       _isLoadingRecipes = true;
@@ -139,6 +140,13 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
 
       for (var meal in allMeals) {
         final mealIngredients = await dbHelper.getMealIngredients(meal['mealID']);
+        
+        // NEW: Check if meal has ingredients and get the first one
+        String? firstIngredientName;
+        if (mealIngredients.isNotEmpty) {
+          firstIngredientName = mealIngredients.first['ingredientName']?.toString().toLowerCase();
+        }
+
         final mealIngredientNames = mealIngredients
             .map((ing) => ing['ingredientName']?.toString().toLowerCase())
             .where((name) => name != null)
@@ -155,11 +163,24 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                   mealRestriction.contains(userRestriction) ||
                   userRestriction.contains(mealRestriction));
 
+          // NEW: Calculate if scanned ingredient is the FIRST ingredient in the meal
+          bool isMainIngredient = false;
+          for (var scannedIng in matchingIng) {
+            final scannedIngLower = scannedIng.toLowerCase();
+            // Check if this scanned ingredient is the FIRST ingredient in the meal
+            if (firstIngredientName != null && firstIngredientName == scannedIngLower) {
+              isMainIngredient = true;
+              break;
+            }
+          }
+
           final recipeData = {
             ...meal,
             'matchingIngredients': matchingIngredients,
             'matchingList': matchingIng,
             'hasConflict': hasConflict,
+            'isMainIngredient': isMainIngredient, // NEW: Flag for main ingredient (first in list)
+            'firstIngredient': firstIngredientName, // NEW: Store for debugging/display
           };
 
           if (matchingIngredients > 1) {
@@ -173,15 +194,29 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
 
       List<Map<String, dynamic>> orderedGroups = [];
 
-      // Sort multi groups by match count descending
+      // Sort multi groups by match count descending, then by main ingredient priority
       final matchKeys = multiGroups.keys.toList()..sort((a, b) => b.compareTo(a));
       for (var key in matchKeys) {
         var groupRecipes = multiGroups[key]!;
+        
+        // NEW: Enhanced sorting - prioritize meals where scanned ingredients are FIRST ingredients
         groupRecipes.sort((a, b) {
+          // First, prioritize meals where scanned ingredients are first ingredients
+          if (a['isMainIngredient'] && !b['isMainIngredient']) return -1;
+          if (!a['isMainIngredient'] && b['isMainIngredient']) return 1;
+          
+          // Then, prioritize meals without dietary conflicts
           if (a['hasConflict'] && !b['hasConflict']) return 1;
           if (!a['hasConflict'] && b['hasConflict']) return -1;
+          
           return 0;
         });
+        
+        // NEW: Limit to 5 meals per group
+        if (groupRecipes.length > 5) {
+          groupRecipes = groupRecipes.sublist(0, 5);
+        }
+        
         orderedGroups.add({
           'type': 'multi',
           'matchCount': key,
@@ -192,11 +227,31 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
       // Add single groups in order of ingredients
       for (var ing in ingredients) {
         var groupRecipes = singleGroups[ing] ?? [];
+        
+        // NEW: Enhanced sorting for single groups - prioritize if this ingredient is FIRST
         groupRecipes.sort((a, b) {
+          final ingLower = ing.toLowerCase();
+          
+          // Check if this specific ingredient is the FIRST ingredient in each meal
+          final isFirstIngredientA = a['firstIngredient'] == ingLower;
+          final isFirstIngredientB = b['firstIngredient'] == ingLower;
+          
+          // First, prioritize meals where this specific ingredient is the FIRST ingredient
+          if (isFirstIngredientA && !isFirstIngredientB) return -1;
+          if (!isFirstIngredientA && isFirstIngredientB) return 1;
+          
+          // Then, prioritize meals without dietary conflicts
           if (a['hasConflict'] && !b['hasConflict']) return 1;
           if (!a['hasConflict'] && b['hasConflict']) return -1;
+          
           return 0;
         });
+        
+        // NEW: Limit to 5 meals per group
+        if (groupRecipes.length > 5) {
+          groupRecipes = groupRecipes.sublist(0, 5);
+        }
+        
         orderedGroups.add({
           'type': 'single',
           'ingredient': ing,
@@ -219,7 +274,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final carouselHeight = screenHeight * 0.5; // Responsive height, at least 350-400 on most devices
+    final carouselHeight = screenHeight * 0.5;
 
     return Scaffold(
       body: Container(
@@ -287,7 +342,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 48), // For balance
+                    const SizedBox(width: 48),
                   ],
                 ),
               ),
@@ -299,7 +354,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                   ),
-                  child: ListView(  // <-- Already scrollable
+                  child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
                       // Search Section
@@ -467,7 +522,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
 
                       const SizedBox(height: 24),
 
-                      // Detected Ingredients Section (FIXED: Wrap instead of fixed ListTiles)
+                      // Detected Ingredients Section
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -494,7 +549,6 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            // WRAP CHIPS – auto-wraps, no overflow
                             Wrap(
                               spacing: 12,
                               runSpacing: 12,
@@ -569,7 +623,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
 
                       const SizedBox(height: 24),
 
-                      // Recipe Suggestions Section (unchanged)
+                      // Recipe Suggestions Section
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -724,6 +778,34 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                     ),
                                                                   ),
                                                                 ),
+                                                                // NEW: Main Ingredient Badge
+                                                                if (recipe['isMainIngredient'])
+                                                                  Positioned(
+                                                                    top: 8,
+                                                                    right: 8,
+                                                                    child: Container(
+                                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                                      decoration: BoxDecoration(
+                                                                        color: Colors.green.withOpacity(0.9),
+                                                                        borderRadius: BorderRadius.circular(12),
+                                                                      ),
+                                                                      child: const Row(
+                                                                        mainAxisSize: MainAxisSize.min,
+                                                                        children: [
+                                                                          Icon(Icons.star, size: 12, color: Colors.white),
+                                                                          SizedBox(width: 4),
+                                                                          Text(
+                                                                            'Main Ingredient',
+                                                                            style: TextStyle(
+                                                                              fontSize: 10,
+                                                                              color: Colors.white,
+                                                                              fontWeight: FontWeight.bold,
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
                                                               ],
                                                             ),
                                                           ),

@@ -170,6 +170,7 @@ flutter:
     - assets/models/class_info.txt
     - assets/models/class_info.json
     - assets/models/healthtingi_update2.tflite
+    - assets/models/threeokclock_final.tflite
   fonts:
     - family: Orbitron
       fonts:

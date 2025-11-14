@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import 'dart:async';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../searchMeals/history.dart';
-import 'reverse_ingredient.dart';
+import 'package:flutter_animate/flutter_animate.dart'; // Added for animations
+import '../searchMeals/history.dart'; // Import HistoryPage to access completed meals list
+import 'reverse_ingredient.dart'; // Add this import for navigation
 import 'dart:io';
-import 'meal_steps.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
+import 'meal_steps.dart'; // Add this import for the new page
 
 class MealDetailsPage extends StatefulWidget {
   final int mealId;
   final int userId;
-
   const MealDetailsPage({
     super.key,
     required this.mealId,
@@ -56,30 +55,40 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     super.dispose();
   }
 
-  /* ------------------------------------------------------------------ */
-  /*                         DATA LOADING                               */
-  /* ------------------------------------------------------------------ */
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
+
     try {
       _mealDataFuture = _loadMealData();
-      if (widget.userId != 0) await _checkIfFavorite();
+      if (widget.userId != 0) {
+        await _checkIfFavorite();
+      }
     } catch (e) {
-      setState(() => _errorMessage = 'Failed to load data: $e');
+      setState(() {
+        _errorMessage = 'Failed to load data: ${e.toString()}';
+      });
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _loadCustomizedMeal() async {
     if (widget.userId == 0) return;
+   
     try {
-      final db = DatabaseHelper();
-      final custom = await db.getActiveCustomizedMeal(widget.mealId, widget.userId);
-      if (mounted) setState(() => _customizedMeal = custom);
+      final dbHelper = DatabaseHelper();
+      final customized = await dbHelper.getActiveCustomizedMeal(widget.mealId, widget.userId);
+     
+      if (mounted) {
+        setState(() {
+          _customizedMeal = customized;
+        });
+      }
     } catch (e) {
       print('Error loading customized meal: $e');
     }
@@ -87,31 +96,42 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
 
   Future<void> _checkIfFavorite() async {
     try {
-      final db = DatabaseHelper();
-      final user = await db.getUserById(widget.userId);
-      if (user == null) throw Exception('User not found');
-      final fav = user['favorites']?.toString() ?? '';
-      setState(() => _isFavorite = fav.split(',').contains(widget.mealId.toString()));
+      final dbHelper = DatabaseHelper();
+      final user = await dbHelper.getUserById(widget.userId);
+     
+      if (user == null) {
+        throw Exception('User not found');
+      }
+
+      final favorites = user['favorites']?.toString() ?? '';
+      setState(() {
+        _isFavorite = favorites.split(',').contains(widget.mealId.toString());
+      });
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Failed to check favorites: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to check favorites: ${e.toString()}';
+        });
+      }
+      rethrow;
     }
   }
 
-  /* ------------------------------------------------------------------ */
-  /*                         STEP PARSING                               */
-  /* ------------------------------------------------------------------ */
   List<Map<String, dynamic>> parseSteps(String instructions) {
     List<Map<String, dynamic>> steps = [];
     List<String> blocks = instructions.trim().split(RegExp(r'\n{2,}'));
+   
     for (var i = 0; i < blocks.length; i++) {
       var lines = blocks[i].split('\n');
       if (lines.isEmpty) continue;
-      var first = lines[0].trim();
-      var match = RegExp(r'^(\d+)\.\s*(.*)').firstMatch(first);
+     
+      var firstLine = lines[0].trim();
+      var match = RegExp(r'^(\d+)\.\s*(.*)').firstMatch(firstLine);
       if (match == null) continue;
+     
       String title = match.group(2)!.trim();
       String content = lines.sublist(1).join('\n').trim();
-
+     
       int duration = 0;
       var timeMatch = RegExp(r'\((\d+)(–(\d+))?\s*mins?\)').firstMatch(title);
       if (timeMatch != null) {
@@ -119,8 +139,9 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         int? min2 = timeMatch.group(3) != null ? int.parse(timeMatch.group(3)!) : null;
         duration = ((min2 ?? min1) * 60);
       }
+     
       title = title.replaceAll(RegExp(r'\s*\(.*?\)'), '').trim();
-
+     
       steps.add({
         'number': int.parse(match.group(1)!),
         'title': title,
@@ -128,77 +149,105 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         'duration': duration,
       });
     }
+   
     return steps;
   }
 
+  // Helper method to parse quantity string to double (handles fractions)
+  double _parseQuantity(String quantityStr) {
+    if (quantityStr.contains('/')) {
+      // Handle fractions like "1/4", "1/2", "3/4"
+      List<String> parts = quantityStr.split('/');
+      if (parts.length == 2) {
+        double numerator = double.tryParse(parts[0].trim()) ?? 1.0;
+        double denominator = double.tryParse(parts[1].trim()) ?? 1.0;
+        return numerator / denominator;
+      }
+    }
+    // Handle whole numbers and decimals
+    return double.tryParse(quantityStr) ?? 1.0;
+  }
+
   Future<Map<String, dynamic>> _loadMealData() async {
-    final db = DatabaseHelper();
-    final meal = await db.getMealById(widget.mealId);
-    final ingredients = await db.getMealIngredients(widget.mealId);
-    if (meal == null) throw Exception('Meal not found');
+    try {
+      final dbHelper = DatabaseHelper();
+      final meal = await dbHelper.getMealById(widget.mealId);
+      final ingredients = await dbHelper.getMealIngredients(widget.mealId);
+      if (meal == null) throw Exception('Meal not found');
 
-    final steps = parseSteps(meal['instructions'] ?? '');
+      final steps = parseSteps(meal['instructions'] ?? '');
 
-    if (widget.userId == 0) {
+      if (widget.userId == 0) {
+        return {
+          ...meal,
+          'ingredients': ingredients,
+          'hasSpecificRestriction': false,
+          'userRestriction': '',
+          'mealRestrictions': meal['hasDietaryRestrictions'] ?? '',
+          'steps': steps,
+        };
+      }
+
+      final user = await dbHelper.getUserById(widget.userId);
+      if (user == null) throw Exception('User not found');
+
+      final userRestriction = user['dietaryRestriction']?.toString().toLowerCase().trim() ?? '';
+      final mealRestrictionsString = meal['hasDietaryRestrictions']?.toString().toLowerCase() ?? '';
+      final mealRestrictions = mealRestrictionsString.split(',').map((r) => r.trim()).toList();
+     
+      final userHasRestriction = (user['hasDietaryRestriction'] ?? 0) == 1;
+      final hasSpecificRestriction = userHasRestriction &&
+          userRestriction.isNotEmpty &&
+          mealRestrictions.any((mealRestriction) =>
+              mealRestriction.contains(userRestriction) ||
+              userRestriction.contains(mealRestriction));
+
       return {
         ...meal,
         'ingredients': ingredients,
-        'hasSpecificRestriction': false,
-        'userRestriction': '',
-        'mealRestrictions': meal['hasDietaryRestrictions'] ?? '',
+        'hasSpecificRestriction': hasSpecificRestriction,
+        'userRestriction': userRestriction,
+        'mealRestrictions': mealRestrictionsString,
         'steps': steps,
       };
+    } catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = 'Failed to load meal: ${e.toString()}');
+      }
+      rethrow;
     }
-
-    final user = await db.getUserById(widget.userId);
-    if (user == null) throw Exception('User not found');
-
-    final userRestriction = user['dietaryRestriction']?.toString().toLowerCase().trim() ?? '';
-    final mealRestrictionsString = meal['hasDietaryRestrictions']?.toString().toLowerCase() ?? '';
-    final mealRestrictions = mealRestrictionsString.split(',').map((r) => r.trim()).toList();
-
-    final userHasRestriction = (user['hasDietaryRestriction'] ?? 0) == 1;
-    final hasSpecificRestriction = userHasRestriction &&
-        userRestriction.isNotEmpty &&
-        mealRestrictions.any((mr) =>
-            mr.contains(userRestriction) || userRestriction.contains(mr));
-
-    return {
-      ...meal,
-      'ingredients': ingredients,
-      'hasSpecificRestriction': hasSpecificRestriction,
-      'userRestriction': userRestriction,
-      'mealRestrictions': mealRestrictionsString,
-      'steps': steps,
-    };
   }
 
-  /* ------------------------------------------------------------------ */
-  /*                         FAVORITE HANDLING                          */
-  /* ------------------------------------------------------------------ */
   Future<void> _toggleFavorite() async {
     if (_isLoading || widget.userId == 0) return;
     setState(() => _isLoading = true);
+
     try {
-      final db = DatabaseHelper();
-      final user = await db.getUserById(widget.userId);
-      if (user == null) throw Exception('User not found');
+      final dbHelper = DatabaseHelper();
+      final user = await dbHelper.getUserById(widget.userId);
+     
+      if (user == null) {
+        throw Exception('User not found');
+      }
 
       String favorites = user['favorites']?.toString() ?? '';
       final mealIdStr = widget.mealId.toString();
-      final list = favorites.split(',').where((id) => id.isNotEmpty).toList();
+      final favoritesList = favorites.split(',').where((id) => id.isNotEmpty).toList();
 
       setState(() {
         _isFavorite = !_isFavorite;
         if (_isFavorite) {
-          if (!list.contains(mealIdStr)) list.add(mealIdStr);
+          if (!favoritesList.contains(mealIdStr)) {
+            favoritesList.add(mealIdStr);
+          }
         } else {
-          list.remove(mealIdStr);
+          favoritesList.remove(mealIdStr);
         }
-        favorites = list.join(',');
+        favorites = favoritesList.join(',');
       });
 
-      await db.updateUser(widget.userId, {'favorites': favorites});
+      await dbHelper.updateUser(widget.userId, {'favorites': favorites});
+     
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_isFavorite ? 'Added to favorites!' : 'Removed from favorites'),
@@ -206,25 +255,29 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-      );
-      setState(() => _isFavorite = !_isFavorite);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update favorites: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isFavorite = !_isFavorite);
+      }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _trackMealView() async {
     if (widget.userId != 0) {
-      final db = DatabaseHelper();
-      await db.addToRecentlyViewed(widget.userId, widget.mealId);
+      final dbHelper = DatabaseHelper();
+      await dbHelper.addToRecentlyViewed(widget.userId, widget.mealId);
     }
   }
 
-  /* ------------------------------------------------------------------ */
-  /*                         CAROUSEL TIMER                             */
-  /* ------------------------------------------------------------------ */
   void _startCarouselTimer() {
     if (_imagePaths.length > 1) {
       _carouselTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
@@ -244,9 +297,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     }
   }
 
-  /* ------------------------------------------------------------------ */
-  /*                         INGREDIENT WIDGETS                         */
-  /* ------------------------------------------------------------------ */
   Future<List<Widget>> _buildIngredientWidgets(
     List<Map<String, dynamic>> ingredients,
     Map<String, dynamic>? substituted,
@@ -258,6 +308,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       final name = ing['ingredientName']?.toString() ?? 'Unknown';
       String displayName = name;
       String quantity = ing['quantity']?.toString() ?? '';
+
       if (substituted != null && substituted.containsKey(name)) {
         final sub = substituted[name];
         final value = sub is Map ? sub['value'] : sub;
@@ -267,21 +318,32 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
 
       double? price = ing['price'] as double?;
       double cost = 0.0;
+
       if (price != null && quantity.isNotEmpty) {
-        final m = RegExp(r'(\d+\.?\d*)\s*(\w+)').firstMatch(quantity);
+        // FIXED: Updated regex to handle fractions like "1/4", "1/2", "3/4"
+        final m = RegExp(r'(\d+\.?\d*|\d+\/\d+)\s*(\w+)').firstMatch(quantity);
+        
         if (m != null) {
-          double qty = double.parse(m.group(1)!);
+          String qtyStr = m.group(1)!; // This now captures fractions like "1/4"
           String unit = m.group(2)!.toLowerCase();
+          
+          // Parse quantity (handles both fractions and decimals)
+          double qty = _parseQuantity(qtyStr);
+          
           double gramsPerUnit = 1.0;
           if (unit == 'kg') gramsPerUnit = 1000;
           else if (unit == 'g') gramsPerUnit = 1;
           else if (unit == 'tbsp') gramsPerUnit = ing['unit_density_tbsp'] as double? ?? 15;
           else if (unit == 'tsp') gramsPerUnit = ing['unit_density_tsp'] as double? ?? 5;
           else if (unit == 'cup') gramsPerUnit = ing['unit_density_cup'] as double? ?? 240;
+          else if (unit == 'piece' || unit == 'pcs') gramsPerUnit = 100; // Default for pieces
+          
           cost = (qty * gramsPerUnit / 100) * price;
         }
       }
+
       totalPrice += cost;
+
       widgets.add(
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
@@ -337,6 +399,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         final db = DatabaseHelper();
         final info = await db.getIngredientByName(name);
         String priceText = 'Php ?';
+
         if (info != null) {
           double? price = info['price'] as double?;
           if (price != null) {
@@ -352,13 +415,18 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                             : unit == 'cup'
                                 ? info['unit_density_cup'] as double? ?? 240
                                 : 100;
-            final m = RegExp(r'(\d+\.?\d*)\s*(\w+)').firstMatch(qty);
+
+            // FIXED: Use the same parsing logic for new ingredients
+            final m = RegExp(r'(\d+\.?\d*|\d+\/\d+)\s*(\w+)').firstMatch(qty);
             double qtyVal = 1;
             String qtyUnit = 'piece';
+            
             if (m != null) {
-              qtyVal = double.parse(m.group(1)!);
+              String qtyStr = m.group(1)!;
+              qtyVal = _parseQuantity(qtyStr);
               qtyUnit = m.group(2)!.toLowerCase();
             }
+
             double gramsPerQty = qtyUnit == 'kg'
                 ? 1000
                 : qtyUnit == 'g'
@@ -370,10 +438,12 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                             : qtyUnit == 'cup'
                                 ? info['unit_density_cup'] as double? ?? 240
                                 : 100;
+
             final cost = (qtyVal * gramsPerQty / 100) * price;
             priceText = 'Php ${cost.toStringAsFixed(2)}';
           }
         }
+
         widgets.add(
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
@@ -412,12 +482,10 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         );
       }
     }
+
     return widgets;
   }
 
-  /* ------------------------------------------------------------------ */
-  /*                         FULL-SCREEN IMAGE VIEWER                   */
-  /* ------------------------------------------------------------------ */
   void _showFullScreenImage(int startIndex) {
     showDialog(
       context: context,
@@ -480,155 +548,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     );
   }
 
-  /* ------------------------------------------------------------------ */
-  /*                         IMAGE HELPERS                              */
-  /* ------------------------------------------------------------------ */
-  List<String> _extractImagePaths(Map<String, dynamic> mealData) {
-    List<String> paths = [];
-    String? main = mealData['mealPicture'];
-    if (main != null && main.isNotEmpty) paths.add(main);
-    String? extra = mealData['additionalPictures'];
-    if (extra != null && extra.isNotEmpty) paths.addAll(extra.split(',').where((p) => p.isNotEmpty));
-    return paths;
-  }
-
-  Widget _buildErrorImage() {
-    return Container(
-      color: Colors.white.withOpacity(0.1),
-      child: const Center(
-        child: Icon(Icons.broken_image, size: 80, color: Colors.white70),
-      ),
-    );
-  }
-
-  Widget _buildMealImages(Map<String, dynamic> mealData) {
-    if (_imagePaths.isEmpty) {
-      _imagePaths = _extractImagePaths(mealData);
-      if (_imagePaths.isNotEmpty) _startCarouselTimer();
-    }
-
-    if (_imagePaths.isEmpty) {
-      return Container(
-        height: 300,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-          boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 25, offset: Offset(0, 10)),
-          ],
-        ),
-        child: const Center(child: Icon(Icons.fastfood, size: 100, color: Colors.white70)),
-      );
-    }
-
-    return Container(
-      height: 300,
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 25, offset: Offset(0, 10)),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _imagePageController,
-              itemCount: _imagePaths.length,
-              itemBuilder: (context, index) {
-                final path = _imagePaths[index];
-                final isAsset = path.startsWith('assets/');
-
-                return GestureDetector(
-                  behavior: HitTestBehavior.translucent, // Critical for emulator
-                  onTap: () {
-                    print("Image tapped: $path"); // Debug in terminal
-                    _showFullScreenImage(index);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    height: 300,
-                    color: Colors.black12,
-                    child: isAsset
-                        ? Image.asset(
-                            path,
-                            fit: BoxFit.cover,
-                            errorBuilder: (c, e, s) => _buildErrorImage(),
-                          )
-                        : FutureBuilder<bool>(
-                            future: File(path).exists(),
-                            builder: (context, snapshot) {
-                              if (snapshot.data == true) {
-                                return Image.file(
-                                  File(path),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (c, e, s) => _buildErrorImage(),
-                                );
-                              }
-                              return _buildErrorImage();
-                            },
-                          ),
-                  ),
-                );
-              },
-            ),
-
-            // Zoom Icon
-            const Positioned(
-              bottom: 16,
-              right: 16,
-              child: Icon(Icons.zoom_in, color: Colors.white, size: 28),
-            ),
-
-            // Dots
-            if (_imagePaths.length > 1)
-              Positioned(
-                bottom: 16,
-                left: 0,
-                right: 0,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_imagePaths.length, (i) {
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: _currentImageIndex == i ? 12 : 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _currentImageIndex == i ? Colors.white : Colors.white60,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-
-            // Top Gradient
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 100,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.black.withOpacity(0.7), Colors.transparent],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /* ------------------------------------------------------------------ */
-  /*                         BUILD METHOD                               */
-  /* ------------------------------------------------------------------ */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -760,8 +679,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     final mealRestrictions = mealData['mealRestrictions'] ?? '';
                     final ingredients = mealData['ingredients'] as List<Map<String, dynamic>>;
                     final categories = (mealData['category'] as String?)?.split(', ') ?? [];
-
                     double totalPrice = 0.0;
+
                     for (var ing in ingredients) {
                       final name = ing['ingredientName']?.toString() ?? '';
                       if (_showCustomized && _customizedMeal != null) {
@@ -769,13 +688,19 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                         final val = sub[name] is Map ? sub[name]['value'] : sub[name];
                         if (sub.containsKey(name) && val == 'REMOVED') continue;
                       }
+
                       final qty = ing['quantity']?.toString() ?? '';
                       final price = ing['price'] as double?;
                       if (price != null && qty.isNotEmpty) {
-                        final m = RegExp(r'(\d+\.?\d*)\s*(\w+)').firstMatch(qty);
+                        // FIXED: Use the same updated regex for total price calculation
+                        final m = RegExp(r'(\d+\.?\d*|\d+\/\d+)\s*(\w+)').firstMatch(qty);
                         if (m != null) {
-                          double q = double.parse(m.group(1)!);
+                          String qtyStr = m.group(1)!;
                           String u = m.group(2)!.toLowerCase();
+                          
+                          // Parse quantity using the helper method
+                          double q = _parseQuantity(qtyStr);
+                          
                           double g = u == 'kg'
                               ? 1000
                               : u == 'g'
@@ -899,7 +824,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                   const Text('Ingredients and Cost',
                                       style: TextStyle(fontFamily: 'Orbitron', fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF184E77))),
                                   const SizedBox(height: 12),
-
                                   if (_customizedMeal != null)
                                     Row(
                                       children: [
@@ -912,7 +836,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                         ),
                                       ],
                                     ),
-
                                   Card(
                                     elevation: 10,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -940,37 +863,39 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-                                  Center(
-                                    child: ElevatedButton.icon(
-                                      icon: const Icon(Icons.edit, size: 20),
-                                      label: Text(_customizedMeal != null ? 'Modify Customization' : 'Change Ingredients',
-                                          style: const TextStyle(fontFamily: 'Orbitron', fontSize: 16, fontWeight: FontWeight.w600)),
-                                      onPressed: () {
-                                        final names = ingredients.map((i) => i['ingredientName'] as String).toList();
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => ReverseIngredientPage(
-                                              ingredients: names,
-                                              userId: widget.userId,
-                                              mealId: widget.mealId,
+                                  // Only show the Change Ingredients button for logged-in users
+                                  if (widget.userId != 0) // This condition hides the button for guest users
+                                    Center(
+                                      child: ElevatedButton.icon(
+                                        icon: const Icon(Icons.edit, size: 20),
+                                        label: Text(_customizedMeal != null ? 'Modify Customization' : 'Change Ingredients',
+                                            style: const TextStyle(fontFamily: 'Orbitron', fontSize: 16, fontWeight: FontWeight.w600)),
+                                        onPressed: () {
+                                          final names = ingredients.map((i) => i['ingredientName'] as String).toList();
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => ReverseIngredientPage(
+                                                ingredients: names,
+                                                userId: widget.userId,
+                                                mealId: widget.mealId,
+                                              ),
                                             ),
-                                          ),
-                                        ).then((_) {
-                                          _loadCustomizedMeal();
-                                          setState(() => _showCustomized = false);
-                                        });
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,
-                                        foregroundColor: const Color(0xFF184E77),
-                                        elevation: 10,
-                                        shadowColor: Colors.greenAccent,
-                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                      ),
-                                    ).animate().scale(duration: 200.ms, curve: Curves.easeInOut),
-                                  ),
+                                          ).then((_) {
+                                            _loadCustomizedMeal();
+                                            setState(() => _showCustomized = false);
+                                          });
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          foregroundColor: const Color(0xFF184E77),
+                                          elevation: 10,
+                                          shadowColor: Colors.greenAccent,
+                                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                        ),
+                                      ).animate().scale(duration: 200.ms, curve: Curves.easeInOut),
+                                    ),
                                   const SizedBox(height: 32),
                                   const Text('Cooking Quest Steps',
                                       style: TextStyle(fontFamily: 'Orbitron', fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF184E77))),
@@ -1023,6 +948,145 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                   },
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<String> _extractImagePaths(Map<String, dynamic> mealData) {
+    List<String> paths = [];
+    String? main = mealData['mealPicture'];
+    if (main != null && main.isNotEmpty) paths.add(main);
+    String? extra = mealData['additionalPictures'];
+    if (extra != null && extra.isNotEmpty) paths.addAll(extra.split(',').where((p) => p.isNotEmpty));
+    return paths;
+  }
+
+  Widget _buildErrorImage() {
+    return Container(
+      color: Colors.white.withOpacity(0.1),
+      child: const Center(
+        child: Icon(Icons.broken_image, size: 80, color: Colors.white70),
+      ),
+    );
+  }
+
+  Widget _buildMealImages(Map<String, dynamic> mealData) {
+    if (_imagePaths.isEmpty) {
+      _imagePaths = _extractImagePaths(mealData);
+      if (_imagePaths.isNotEmpty) _startCarouselTimer();
+    }
+
+    if (_imagePaths.isEmpty) {
+      return Container(
+        height: 300,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+          boxShadow: const [
+            BoxShadow(color: Colors.black26, blurRadius: 25, offset: Offset(0, 10)),
+          ],
+        ),
+        child: const Center(child: Icon(Icons.fastfood, size: 100, color: Colors.white70)),
+      );
+    }
+
+    return Container(
+      height: 300,
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 25, offset: Offset(0, 10)),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _imagePageController,
+              itemCount: _imagePaths.length,
+              itemBuilder: (context, index) {
+                final path = _imagePaths[index];
+                final isAsset = path.startsWith('assets/');
+                return GestureDetector(
+                  behavior: HitTestBehavior.translucent, // Critical for emulator
+                  onTap: () {
+                    print("Image tapped: $path"); // Debug in terminal
+                    _showFullScreenImage(index);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: 300,
+                    color: Colors.black12,
+                    child: isAsset
+                        ? Image.asset(
+                            path,
+                            fit: BoxFit.cover,
+                            errorBuilder: (c, e, s) => _buildErrorImage(),
+                          )
+                        : FutureBuilder<bool>(
+                            future: File(path).exists(),
+                            builder: (context, snapshot) {
+                              if (snapshot.data == true) {
+                                return Image.file(
+                                  File(path),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) => _buildErrorImage(),
+                                );
+                              }
+                              return _buildErrorImage();
+                            },
+                          ),
+                  ),
+                );
+              },
+            ),
+            // Zoom Icon
+            const Positioned(
+              bottom: 16,
+              right: 16,
+              child: Icon(Icons.zoom_in, color: Colors.white, size: 28),
+            ),
+            // Dots
+            if (_imagePaths.length > 1)
+              Positioned(
+                bottom: 16,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(_imagePaths.length, (i) {
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: _currentImageIndex == i ? 12 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _currentImageIndex == i ? Colors.white : Colors.white60,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            // Top Gradient
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 100,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

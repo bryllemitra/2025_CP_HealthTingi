@@ -8,7 +8,7 @@ import 'dart:math';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _currentVersion = 18; 
+  static const int _currentVersion = 19; 
 
   factory DatabaseHelper() => _instance;
 
@@ -2928,7 +2928,6 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     };
   }
 
-  // New: Insertion for complete substitution data
   Future<void> _insertCompleteSubstitutionData(Database db) async {
     await _insertUnitConversions(db);
     await _insertFilipinoIngredients(db);
@@ -2986,11 +2985,32 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     List<dynamic> ingredientsJson = jsonData['ingredients'] ?? [];
 
     for (var ing in ingredientsJson) {
+      // Existing parsePriceString call
       Map<String, dynamic> parsed = parsePriceString(ing['price_text'] ?? ing['price'] ?? '0', ing['ingredientName'] ?? '', ing['category'] ?? '');
+
+      // Add normalization here (integrate with parsed if needed)
+      double normalizedPrice = parsed['price_per_100g'] ?? (ing['price'] as double? ?? 0.0); // Start with existing parsed value
+      String unit = (parsed['unit'] ?? ing['unit'] as String?)?.toLowerCase() ?? 'unknown';
+      double assumedGrams = 100.0; // Default for per 100g
+
+      if (unit == 'kg') {
+        normalizedPrice /= 10; // 400/kg → 40/100g
+      } else if (unit == 'pack' || unit == 'bottle' || unit == 'can') {
+        // Defaults based on JSON patterns (e.g., packs ~200-350g)
+        if (unit == 'pack') assumedGrams = 200.0; // Adjust per category if needed
+        else if (unit == 'bottle') assumedGrams = 350.0;
+        else if (unit == 'can') assumedGrams = 370.0;
+        normalizedPrice = (normalizedPrice / (assumedGrams / 100)); // e.g., 10/200g pack → 5/100g
+      } else if (unit == 'cube') {
+        assumedGrams = 10.0;
+        normalizedPrice = (normalizedPrice / (assumedGrams / 100)); // 65/cube → 650/100g (diluted broth)
+      }
+      // Handle other units if needed, e.g., add else if for 'ml' or unknowns
+
       await db.insert('ingredients', {
         'ingredientID': ing['ingredientID'],
         'ingredientName': ing['ingredientName'],
-        'price': parsed['price_per_100g'],
+        'price': normalizedPrice, // Use the normalized value
         'calories': ing['calories'],
         'nutritionalValue': ing['nutritionalValue'],
         'ingredientPicture': ing['ingredientPicture'],
