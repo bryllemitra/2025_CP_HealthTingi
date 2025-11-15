@@ -98,7 +98,7 @@ class DatabaseHelper {
     await _insertInitialData(db);
     await _insertInitialFaqs(db);
     await _insertInitialAboutUs(db);
-    await _insertCompleteSubstitutionData(db);
+    //await _insertCompleteSubstitutionData(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -205,7 +205,7 @@ class DatabaseHelper {
         await db.execute('ALTER TABLE ingredients ADD COLUMN unit_density_cup REAL DEFAULT 240');
         await db.execute('ALTER TABLE ingredients ADD COLUMN tags TEXT');
       } catch (e) {}
-      await _insertCompleteSubstitutionData(db);
+      //await _insertCompleteSubstitutionData(db);
     }
     if (oldVersion < 18) {
     db.execute('''
@@ -961,7 +961,7 @@ Serve warm or chilled.
 
   await db.insert('meal_ingredients', {
     'mealID': binignitId,
-    'ingredientID': 215, // Glutinous rice
+    'ingredientID': 242, // Glutinous rice
     'quantity': '1 cup'
   });
   await db.insert('meal_ingredients', {
@@ -2928,6 +2928,8 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     };
   }
 
+/*
+
   Future<void> _insertCompleteSubstitutionData(Database db) async {
     await _insertUnitConversions(db);
     await _insertFilipinoIngredients(db);
@@ -3115,6 +3117,7 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
       'substitution_date': DateTime.now().toIso8601String(),
     });
   }
+  */
 
   // ========== CUSTOMIZED MEALS OPERATIONS ==========
 
@@ -3212,7 +3215,8 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
 
 }
 
-// ========== SUBSTITUTION CALCULATOR CLASS - MOVED OUTSIDE DatabaseHelper ==========
+/*
+ ========== SUBSTITUTION CALCULATOR CLASS - MOVED OUTSIDE DatabaseHelper ==========
 class SubstitutionCalculator {
   final DatabaseHelper dbHelper;
 
@@ -3404,3 +3408,4 @@ class SubstitutionCalculator {
     }
   }
 }
+*/
