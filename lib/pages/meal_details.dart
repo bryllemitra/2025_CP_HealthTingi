@@ -55,6 +55,65 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     super.dispose();
   }
 
+  // Helper method to convert decimal to fraction string
+  String _decimalToFraction(double value) {
+    const tolerance = 0.001;
+    
+    if ((value - 0.125).abs() < tolerance) return '⅛';
+    if ((value - 0.25).abs() < tolerance) return '¼';
+    if ((value - 0.333).abs() < tolerance) return '⅓';
+    if ((value - 0.375).abs() < tolerance) return '⅜';
+    if ((value - 0.5).abs() < tolerance) return '½';
+    if ((value - 0.625).abs() < tolerance) return '⅝';
+    if ((value - 0.666).abs() < tolerance) return '⅔';
+    if ((value - 0.75).abs() < tolerance) return '¾';
+    if ((value - 0.875).abs() < tolerance) return '⅞';
+    
+    // For whole numbers, return without decimal
+    if (value == value.roundToDouble()) return value.round().toString();
+    
+    // For other decimals, return as is with 2 decimal places
+    return value.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+  }
+
+  // Helper method to parse quantity string to double (handles fractions)
+  double _parseQuantity(String quantityStr) {
+    // First try to parse common fractions
+    final fractionMap = {
+      '⅛': 0.125, '¼': 0.25, '⅓': 0.333, '⅜': 0.375,
+      '½': 0.5, '⅝': 0.625, '⅔': 0.666, '¾': 0.75, '⅞': 0.875
+    };
+    
+    // Check if it's already a fraction character
+    if (fractionMap.containsKey(quantityStr.trim())) {
+      return fractionMap[quantityStr.trim()]!;
+    }
+    
+    // Handle fractions like "1/4", "1/2", "3/4"
+    if (quantityStr.contains('/')) {
+      List<String> parts = quantityStr.split('/');
+      if (parts.length == 2) {
+        double numerator = double.tryParse(parts[0].trim()) ?? 1.0;
+        double denominator = double.tryParse(parts[1].trim()) ?? 1.0;
+        return numerator / denominator;
+      }
+    }
+    // Handle whole numbers and decimals
+    return double.tryParse(quantityStr) ?? 1.0;
+  }
+
+  // Helper method to format quantity for display
+  String _formatQuantityForDisplay(String quantity) {
+    if (quantity.isEmpty) return '';
+    
+    try {
+      double value = _parseQuantity(quantity);
+      return _decimalToFraction(value);
+    } catch (e) {
+      return quantity; // Return original if parsing fails
+    }
+  }
+
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
@@ -151,21 +210,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     }
    
     return steps;
-  }
-
-  // Helper method to parse quantity string to double (handles fractions)
-  double _parseQuantity(String quantityStr) {
-    if (quantityStr.contains('/')) {
-      // Handle fractions like "1/4", "1/2", "3/4"
-      List<String> parts = quantityStr.split('/');
-      if (parts.length == 2) {
-        double numerator = double.tryParse(parts[0].trim()) ?? 1.0;
-        double denominator = double.tryParse(parts[1].trim()) ?? 1.0;
-        return numerator / denominator;
-      }
-    }
-    // Handle whole numbers and decimals
-    return double.tryParse(quantityStr) ?? 1.0;
   }
 
   Future<Map<String, dynamic>> _loadMealData() async {
@@ -308,6 +352,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       final name = ing['ingredientName']?.toString() ?? 'Unknown';
       String displayName = name;
       String quantity = ing['quantity']?.toString() ?? '';
+      String unit = ing['unit']?.toString() ?? '';
+      String content = ing['content']?.toString() ?? '';
 
       if (substituted != null && substituted.containsKey(name)) {
         final sub = substituted[name];
@@ -320,29 +366,25 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       double cost = 0.0;
 
       if (price != null && quantity.isNotEmpty) {
-        // FIXED: Updated regex to handle fractions like "1/4", "1/2", "3/4"
-        final m = RegExp(r'(\d+\.?\d*|\d+\/\d+)\s*(\w+)').firstMatch(quantity);
+        // Parse the quantity for calculation (using the original decimal value)
+        double qtyValue = _parseQuantity(quantity);
+        String qtyUnit = unit.toLowerCase();
         
-        if (m != null) {
-          String qtyStr = m.group(1)!; // This now captures fractions like "1/4"
-          String unit = m.group(2)!.toLowerCase();
-          
-          // Parse quantity (handles both fractions and decimals)
-          double qty = _parseQuantity(qtyStr);
-          
-          double gramsPerUnit = 1.0;
-          if (unit == 'kg') gramsPerUnit = 1000;
-          else if (unit == 'g') gramsPerUnit = 1;
-          else if (unit == 'tbsp') gramsPerUnit = ing['unit_density_tbsp'] as double? ?? 15;
-          else if (unit == 'tsp') gramsPerUnit = ing['unit_density_tsp'] as double? ?? 5;
-          else if (unit == 'cup') gramsPerUnit = ing['unit_density_cup'] as double? ?? 240;
-          else if (unit == 'piece' || unit == 'pcs') gramsPerUnit = 100; // Default for pieces
-          
-          cost = (qty * gramsPerUnit / 100) * price;
-        }
+        double gramsPerUnit = 1.0;
+        if (qtyUnit == 'kg') gramsPerUnit = 1000;
+        else if (qtyUnit == 'g') gramsPerUnit = 1;
+        else if (qtyUnit == 'tbsp') gramsPerUnit = ing['unit_density_tbsp'] as double? ?? 15;
+        else if (qtyUnit == 'tsp') gramsPerUnit = ing['unit_density_tsp'] as double? ?? 5;
+        else if (qtyUnit == 'cup') gramsPerUnit = ing['unit_density_cup'] as double? ?? 240;
+        else if (qtyUnit == 'piece' || qtyUnit == 'pcs') gramsPerUnit = 100;
+        
+        cost = (qtyValue * gramsPerUnit / 100) * price;
       }
 
       totalPrice += cost;
+
+      // Format the display quantity with fractions
+      String displayQuantity = _formatQuantityForDisplay(quantity);
 
       widgets.add(
         Padding(
@@ -353,7 +395,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
               Flexible(
                 flex: 3,
                 child: Text(
-                  '$quantity $displayName',
+                  '${displayQuantity.isNotEmpty ? '$displayQuantity ' : ''}${unit.isNotEmpty ? '$unit ' : ''}$displayName${content.isNotEmpty ? ' ($content)' : ''}',
                   style: TextStyle(
                     fontSize: 14,
                     fontFamily: 'Orbitron',
@@ -403,31 +445,17 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         if (info != null) {
           double? price = info['price'] as double?;
           if (price != null) {
-            final unit = info['unit']?.toString()?.toLowerCase() ?? 'piece';
-            double gramsPerUnit = unit == 'kg'
-                ? 1000
-                : unit == 'g'
-                    ? 1
-                    : unit == 'tbsp'
-                        ? info['unit_density_tbsp'] as double? ?? 15
-                        : unit == 'tsp'
-                            ? info['unit_density_tsp'] as double? ?? 5
-                            : unit == 'cup'
-                                ? info['unit_density_cup'] as double? ?? 240
-                                : 100;
-
-            // FIXED: Use the same parsing logic for new ingredients
-            final m = RegExp(r'(\d+\.?\d*|\d+\/\d+)\s*(\w+)').firstMatch(qty);
-            double qtyVal = 1;
-            String qtyUnit = 'piece';
+            // Parse quantity for new ingredients
+            double qtyValue = _parseQuantity(qty);
+            String qtyUnit = 'piece'; // Default unit
             
+            // Extract unit from quantity string if present
+            final m = RegExp(r'(\d+\.?\d*|\d+\/\d+|[⅛¼⅓⅜½⅝⅔¾⅞])\s*(\w+)').firstMatch(qty);
             if (m != null) {
-              String qtyStr = m.group(1)!;
-              qtyVal = _parseQuantity(qtyStr);
               qtyUnit = m.group(2)!.toLowerCase();
             }
 
-            double gramsPerQty = qtyUnit == 'kg'
+            double gramsPerUnit = qtyUnit == 'kg'
                 ? 1000
                 : qtyUnit == 'g'
                     ? 1
@@ -439,10 +467,13 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                 ? info['unit_density_cup'] as double? ?? 240
                                 : 100;
 
-            final cost = (qtyVal * gramsPerQty / 100) * price;
+            final cost = (qtyValue * gramsPerUnit / 100) * price;
             priceText = 'Php ${cost.toStringAsFixed(2)}';
           }
         }
+
+        // Format display quantity for new ingredients
+        String displayQty = _formatQuantityForDisplay(qty);
 
         widgets.add(
           Padding(
@@ -453,7 +484,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                 Flexible(
                   flex: 3,
                   child: Text(
-                    '$qty $name',
+                    '$displayQty $name',
                     style: const TextStyle(
                       fontSize: 14,
                       fontFamily: 'Orbitron',
@@ -692,28 +723,18 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                       final qty = ing['quantity']?.toString() ?? '';
                       final price = ing['price'] as double?;
                       if (price != null && qty.isNotEmpty) {
-                        // FIXED: Use the same updated regex for total price calculation
-                        final m = RegExp(r'(\d+\.?\d*|\d+\/\d+)\s*(\w+)').firstMatch(qty);
-                        if (m != null) {
-                          String qtyStr = m.group(1)!;
-                          String u = m.group(2)!.toLowerCase();
-                          
-                          // Parse quantity using the helper method
-                          double q = _parseQuantity(qtyStr);
-                          
-                          double g = u == 'kg'
-                              ? 1000
-                              : u == 'g'
-                                  ? 1
-                                  : u == 'tbsp'
-                                      ? ing['unit_density_tbsp'] as double? ?? 15
-                                      : u == 'tsp'
-                                          ? ing['unit_density_tsp'] as double? ?? 5
-                                          : u == 'cup'
-                                              ? ing['unit_density_cup'] as double? ?? 240
-                                              : 1;
-                          totalPrice += (q * g / 100) * price;
-                        }
+                        double qtyValue = _parseQuantity(qty);
+                        String unit = ing['unit']?.toString().toLowerCase() ?? '';
+                        
+                        double gramsPerUnit = 1.0;
+                        if (unit == 'kg') gramsPerUnit = 1000;
+                        else if (unit == 'g') gramsPerUnit = 1;
+                        else if (unit == 'tbsp') gramsPerUnit = ing['unit_density_tbsp'] as double? ?? 15;
+                        else if (unit == 'tsp') gramsPerUnit = ing['unit_density_tsp'] as double? ?? 5;
+                        else if (unit == 'cup') gramsPerUnit = ing['unit_density_cup'] as double? ?? 240;
+                        else if (unit == 'piece' || unit == 'pcs') gramsPerUnit = 100;
+                        
+                        totalPrice += (qtyValue * gramsPerUnit / 100) * price;
                       }
                     }
 

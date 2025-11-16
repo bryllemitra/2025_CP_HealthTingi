@@ -8,7 +8,7 @@ import 'dart:math';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _currentVersion = 19; 
+  static const int _currentVersion = 20; 
 
   factory DatabaseHelper() => _instance;
 
@@ -196,10 +196,6 @@ class DatabaseHelper {
       try {
         await db.execute('ALTER TABLE ingredients ADD COLUMN price_text TEXT');
         await db.execute('ALTER TABLE ingredients ADD COLUMN unit TEXT');
-        await db.execute('ALTER TABLE ingredients ADD COLUMN sodium_mg_per_100g REAL DEFAULT 0');
-        await db.execute('ALTER TABLE ingredients ADD COLUMN protein_g_per_100g REAL DEFAULT 0');
-        await db.execute('ALTER TABLE ingredients ADD COLUMN carbs_g_per_100g REAL DEFAULT 0');
-        await db.execute('ALTER TABLE ingredients ADD COLUMN fat_g_per_100g REAL DEFAULT 0');
         await db.execute('ALTER TABLE ingredients ADD COLUMN unit_density_tbsp REAL DEFAULT 15');
         await db.execute('ALTER TABLE ingredients ADD COLUMN unit_density_tsp REAL DEFAULT 5');
         await db.execute('ALTER TABLE ingredients ADD COLUMN unit_density_cup REAL DEFAULT 240');
@@ -224,6 +220,41 @@ class DatabaseHelper {
       )
     ''');
   }
+    if (oldVersion < 20) {
+      try {
+        // Create temporary table with new structure
+        await db.execute('''
+          CREATE TABLE meal_ingredients_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            mealID INTEGER NOT NULL,
+            ingredientID INTEGER NOT NULL,
+            quantity REAL,
+            unit TEXT,
+            content TEXT,
+            FOREIGN KEY (mealID) REFERENCES meals(mealID) ON DELETE CASCADE,
+            FOREIGN KEY (ingredientID) REFERENCES ingredients(ingredientID)
+          )
+        ''');
+        
+        // Copy data from old table to new table
+        await db.execute('''
+          INSERT INTO meal_ingredients_new (id, mealID, ingredientID, quantity, unit, content)
+          SELECT id, mealID, ingredientID, NULL, NULL, quantity FROM meal_ingredients
+        ''');
+        
+        // Drop old table
+        await db.execute('DROP TABLE meal_ingredients');
+        
+        // Rename new table
+        await db.execute('ALTER TABLE meal_ingredients_new RENAME TO meal_ingredients');
+        
+        print('Successfully migrated meal_ingredients table to new structure');
+      } catch (e) {
+        print('Error migrating meal_ingredients table: $e');
+        // If migration fails, recreate the table
+        await _createMealIngredientsTable(db);
+      }
+    }
   }
 
   // ADD THIS NEW METHOD
@@ -374,10 +405,6 @@ class DatabaseHelper {
       additionalPictures TEXT,
       price_text TEXT,
       unit TEXT,
-      sodium_mg_per_100g REAL DEFAULT 0,
-      protein_g_per_100g REAL DEFAULT 0,
-      carbs_g_per_100g REAL DEFAULT 0,
-      fat_g_per_100g REAL DEFAULT 0,
       unit_density_tbsp REAL DEFAULT 15,
       unit_density_tsp REAL DEFAULT 5,
       unit_density_cup REAL DEFAULT 240,
@@ -422,6 +449,8 @@ class DatabaseHelper {
         mealID INTEGER NOT NULL,
         ingredientID INTEGER NOT NULL,
         quantity TEXT,
+        unit REAL,
+        content REAL,
         FOREIGN KEY (mealID) REFERENCES meals(mealID) ON DELETE CASCADE,
         FOREIGN KEY (ingredientID) REFERENCES ingredients(ingredientID)
       )
@@ -544,10 +573,6 @@ class DatabaseHelper {
               'additionalPictures': ingredient['additionalPictures'] as String?,
               'price_text': ingredient['price_text'] as String?,
               'unit': ingredient['unit'] as String?,
-              'sodium_mg_per_100g': double.tryParse(ingredient['sodium_mg_per_100g'].toString()) ?? 0.0,
-              'protein_g_per_100g': double.tryParse(ingredient['protein_g_per_100g'].toString()) ?? 0.0,
-              'carbs_g_per_100g': double.tryParse(ingredient['carbs_g_per_100g'].toString()) ?? 0.0,
-              'fat_g_per_100g': double.tryParse(ingredient['fat_g_per_100g'].toString()) ?? 0.0,
               'unit_density_tbsp': double.tryParse(ingredient['unit_density_tbsp'].toString()) ?? 15.0,
               'unit_density_tsp': double.tryParse(ingredient['unit_density_tsp'].toString()) ?? 5.0,
               'unit_density_cup': double.tryParse(ingredient['unit_density_cup'].toString()) ?? 240.0,
@@ -576,10 +601,6 @@ class DatabaseHelper {
         'additionalPictures': '',
         'price_text': '30/kg',
         'unit': 'kg',
-        'sodium_mg_per_100g': 0.0,
-        'protein_g_per_100g': 0.0,
-        'carbs_g_per_100g': 0.0,
-        'fat_g_per_100g': 0.0,
         'unit_density_tbsp': 15.0,
         'unit_density_tsp': 5.0,
         'unit_density_cup': 240.0,
@@ -595,10 +616,6 @@ class DatabaseHelper {
         'additionalPictures': '',
         'price_text': '12/kg',
         'unit': 'kg',
-        'sodium_mg_per_100g': 0.0,
-        'protein_g_per_100g': 0.0,
-        'carbs_g_per_100g': 0.0,
-        'fat_g_per_100g': 0.0,
         'unit_density_tbsp': 15.0,
         'unit_density_tsp': 5.0,
         'unit_density_cup': 240.0,
@@ -620,1753 +637,2089 @@ class DatabaseHelper {
 
   Future<void> _insertMeals(Database db) async {
     // Insert Tinolang Manok
-    final tinolangId = await db.insert('meals', {
-      'mealName': 'Tinolang Manok',
-      'price': 65.0,
-      'calories': 250,
+      final tinolangId = await db.insert('meals', {
+        'mealName': 'Tinolang Manok',
+        'price': 65.0,
+        'calories': 250,
+        'servings': 2,
+        'cookingTime': '15-20 minutes',
+        'mealPicture': 'assets/tinolang_manok.jpg',
+        'category': 'main dish, soup',
+        'content': 'Chicken soup with sayote, malunggay, and ginger',
+        'instructions': '''
+  1. Prep Time (5 mins)
+  Wash the chicken pieces thoroughly.
+  Peel and mince the garlic.
+  Peel and slice the onion into wedges.
+  Peel and julienne the ginger.
+  Peel the sayote, remove the seed, and cut into wedges.
+  Wash the malunggay leaves and separate them from the stems.
+
+  2. Sauté Aromatics (3 mins)
+  In a cooking pot over medium heat, add the cooking oil.
+  Once the oil is hot, sauté the garlic until fragrant and light golden.
+  Add the onion and ginger, and sauté until the onion becomes translucent.
+
+  3. Brown the Chicken (5 mins)
+  Add the chicken pieces to the pot.
+  Sauté until the chicken is lightly browned on the outside and no longer pink.
+  Season with a pinch of salt or a splash of fish sauce (patis) at this stage.
+
+  4. Simmer the Chicken (20 mins)
+  Pour in enough water to just cover the chicken (about 2–3 cups).
+  Bring to a boil, then immediately lower the heat to a gentle simmer.
+  Cover the pot and let it cook for 20–25 minutes, or until the chicken is fully tender.
+
+  5. Add the Sayote (7 mins)
+  Add the sayote wedges to the pot.
+  Continue simmering until the sayote is tender but still firm, about 7–10 minutes.
+
+  6. Final Touches (2 mins)
+  Add the malunggay leaves to the pot.
+  Let it simmer for another 1–2 minutes until the leaves are just wilted.
+  Do a final taste test and adjust the seasoning with more salt or fish sauce if needed.
+  Serve hot.
+  ''',
+        'hasDietaryRestrictions': 'hypertension, chicken allergy',
+        'availableFrom': '17:00',
+        'availableTo': '21:00'
+      });
+
+      // Insert Tinolang Manok ingredients
+      await db.insert('meal_ingredients', {
+        'mealID': tinolangId,
+        'ingredientID': 37, // Chicken
+        'quantity': 0.25,
+        'unit': 'kg',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tinolangId,
+        'ingredientID': 128, // Sayote
+        'quantity': 1,
+        'unit': 'small',
+        'content': 'peeled and wedged'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tinolangId,
+        'ingredientID': 153, // Ginger
+        'quantity': 1,
+        'unit': 'small thumb',
+        'content': 'julienned'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tinolangId,
+        'ingredientID': 149, // Onion
+        'quantity': 1,
+        'unit': 'small',
+        'content': 'wedged'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tinolangId,
+        'ingredientID': 152, // Garlic
+        'quantity': 2,
+        'unit': 'cloves',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tinolangId,
+        'ingredientID': 237, // Cooking oil
+        'quantity': 1,
+        'unit': 'tbsp',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tinolangId,
+        'ingredientID': 238, // Malunggay
+        'quantity': 1,
+        'unit': 'small bundle',
+        'content': 'leaves separated'
+      });
+
+      // Insert Ginisang Sayote
+      final ginisangId = await db.insert('meals', {
+        'mealName': 'Ginisang Sayote',
+        'price': 57.0,
+        'calories': 180,
+        'servings': 2,
+        'cookingTime': '10-15 minutes',
+        'mealPicture': 'assets/ginisang_sayote.jpg',
+        'category': 'main dish',
+        'content': 'Sauteed sayote with tomato, onion, garlic, and bagoong',
+        'instructions': '''
+  1. Prep Time (5 mins)
+  Peel and slice the sayote into thin strips or matchsticks.
+  Dice the onion, tomato, and mince the garlic.
+
+  2. Heat the Pan (1 min)
+  In a pan over medium heat, add the oil and let it heat up.
+
+  3. Sauté Aromatics (2–3 mins)
+  Add garlic and stir until fragrant and golden.
+  Add the onion and tomato. Sauté until softened.
+
+  4. Add Bagoong (1 min)
+  Add the bagoong and sauté for about a minute to release flavor.
+
+  5. Cook the Sayote (5–7 mins)
+  Add the sliced sayote and sauté for a couple of minutes.
+  Pour in the soy sauce.
+  Stir occasionally, cover the pan, and let it cook until the sayote is tender but not mushy.
+
+  6. Taste and Adjust (1 min)
+  You may add a bit of water if it's too salty or dry.
+  Optional: Add chili flakes or ground pepper for heat.
+
+  7. Serve
+  Serve hot with steamed rice. Great with fried fish or just on its own!
+  ''',
+        'hasDietaryRestrictions': 'pescatarian',
+        'availableFrom': '11:00',
+        'availableTo': '13:00'
+      });
+
+      // Insert Ginisang Sayote ingredients
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangId,
+        'ingredientID': 128, // Sayote
+        'quantity': 1,
+        'unit': 'small',
+        'content': 'sliced into strips'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangId,
+        'ingredientID': 23, // Bagoong
+        'quantity': 0.25,
+        'unit': 'tsp',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangId,
+        'ingredientID': 149, // Onion
+        'quantity': 1,
+        'unit': 'small',
+        'content': 'diced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangId,
+        'ingredientID': 152, // Garlic
+        'quantity': 4,
+        'unit': 'cloves',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangId,
+        'ingredientID': 129, // Tomato
+        'quantity': 1,
+        'unit': 'small',
+        'content': 'diced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangId,
+        'ingredientID': 237, // Cooking oil
+        'quantity': 0.125,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangId,
+        'ingredientID': 239, // Soy Sauce
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': null
+      });
+
+      // Insert Adobong Manok
+    final adobongManokId = await db.insert('meals', {
+      'mealName': 'Adobong Manok',
+      'price': 60.0,
+      'calories': 217,
       'servings': 2,
-      'cookingTime': '15-20 minutes',
-      'mealPicture': 'assets/tinolang_manok.jpg',
-      'category': 'main dish, soup',
-      'content': 'Chicken soup with sayote, malunggay, and ginger',
+      'cookingTime': '45 minutes',
+      'mealPicture': 'assets/adobong_manok.jpg',
+      'category': 'Main Dish, Soup',
+      'content': 'Classic Filipino chicken simmered in soy-vinegar garlic sauce.',
       'instructions': '''
-1. Prep Time (5 mins)
-Wash the chicken pieces thoroughly.
-Peel and mince the garlic.
-Peel and slice the onion into wedges.
-Peel and julienne the ginger.
-Peel the sayote, remove the seed, and cut into wedges.
-Wash the malunggay leaves and separate them from the stems.
+  1. Prep Time (5 mins)
+  Pat the chicken thighs dry with a paper towel.
+  Peel and crush the garlic cloves.
+  If using whole peppercorns, you can lightly crush them.
 
-2. Sauté Aromatics (3 mins)
-In a cooking pot over medium heat, add the cooking oil.
-Once the oil is hot, sauté the garlic until fragrant and light golden.
-Add the onion and ginger, and sauté until the onion becomes translucent.
+  2. Marinate (15–30 mins)
+  In a large bowl, combine the chicken, soy sauce, crushed garlic, and peppercorns.
+  You can let it marinate for 15-30 minutes for deeper flavor, or proceed immediately.
 
-3. Brown the Chicken (5 mins)
-Add the chicken pieces to the pot.
-Sauté until the chicken is lightly browned on the outside and no longer pink.
-Season with a pinch of salt or a splash of fish sauce (patis) at this stage.
+  3. Initial Simmer (25 mins)
+  Transfer the chicken and marinade into a wide pot or pan.
+  Add the bay leaves and 1 cup of water.
+  Bring to a boil, then reduce the heat to low, cover, and simmer for 25-30 minutes until the chicken is tender.
 
-4. Simmer the Chicken (20 mins)
-Pour in enough water to just cover the chicken (about 2–3 cups).
-Bring to a boil, then immediately lower the heat to a gentle simmer.
-Cover the pot and let it cook for 20–25 minutes, or until the chicken is fully tender.
+  4. Add Vinegar (5 mins)
+  Uncover the pot and pour in the vinegar.
+  Do not stir immediately; let the vinegar cook off its raw acidity for about 3-5 minutes.
 
-5. Add the Sayote (7 mins)
-Add the sayote wedges to the pot.
-Continue simmering until the sayote is tender but still firm, about 7–10 minutes.
+  5. Reduce the Sauce (7 mins)
+  After the vinegar has cooked, you can now stir.
+  Increase the heat to medium and let the sauce reduce and thicken to your desired consistency, stirring occasionally. This should take about 5-10 minutes.
 
-6. Final Touches (2 mins)
-Add the malunggay leaves to the pot.
-Let it simmer for another 1–2 minutes until the leaves are just wilted.
-Do a final taste test and adjust the seasoning with more salt or fish sauce if needed.
-Serve hot.
-''',
-      'hasDietaryRestrictions': 'hypertension, chicken allergy',
-      'availableFrom': '17:00',
-      'availableTo': '21:00'
-    });
-
-    // Insert Tinolang Manok ingredients
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangId,
-      'ingredientID': 37, // Chicken
-      'quantity': '1/4 kg'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangId,
-      'ingredientID': 128, // Sayote
-      'quantity': '1 small'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangId,
-      'ingredientID': 153, // Ginger
-      'quantity': '1 small thumb'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangId,
-      'ingredientID': 149, // Onion
-      'quantity': '1 small'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangId,
-      'ingredientID': 152, // Garlic
-      'quantity': '2 cloves'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangId,
-      'ingredientID': 237, // Cooking oil
-      'quantity': '1 tbsp'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': tinolangId,
-      'ingredientID': 238, // Malunggay
-      'quantity': '1 small bundle'
-    });
-
-    // Insert Ginisang Sayote
-    final ginisangId = await db.insert('meals', {
-      'mealName': 'Ginisang Sayote',
-      'price': 57.0,
-      'calories': 180,
-      'servings': 2,
-      'cookingTime': '10-15 minutes',
-      'mealPicture': 'assets/ginisang_sayote.jpg',
-      'category': 'main dish',
-      'content': 'Sauteed sayote with tomato, onion, garlic, and bagoong',
-      'instructions': '''
-1. Prep Time (5 mins)
-Peel and slice the sayote into thin strips or matchsticks.
-Dice the onion, tomato, and mince the garlic.
-
-2. Heat the Pan (1 min)
-In a pan over medium heat, add the oil and let it heat up.
-
-3. Sauté Aromatics (2–3 mins)
-Add garlic and stir until fragrant and golden.
-Add the onion and tomato. Sauté until softened.
-
-4. Add Bagoong (1 min)
-Add the bagoong and sauté for about a minute to release flavor.
-
-5. Cook the Sayote (5–7 mins)
-Add the sliced sayote and sauté for a couple of minutes.
-Pour in the soy sauce.
-Stir occasionally, cover the pan, and let it cook until the sayote is tender but not mushy.
-
-6. Taste and Adjust (1 min)
-You may add a bit of water if it's too salty or dry.
-Optional: Add chili flakes or ground pepper for heat.
-
-7. Serve
-Serve hot with steamed rice. Great with fried fish or just on its own!
-''',
-      'hasDietaryRestrictions': 'pescatarian',
+  6. Sauté for Color (3 mins)
+  In a separate pan, heat 1 tsp of cooking oil.
+  You can optionally sauté the cooked chicken pieces briefly until they get a slightly browned, crispy exterior.
+  Pour the reduced sauce over the chicken before serving.
+  ''',
+      'hasDietaryRestrictions': 'Hypertension, Halal if using halal-certified chicken',
       'availableFrom': '11:00',
       'availableTo': '13:00'
     });
 
-    // Insert Ginisang Sayote ingredients
     await db.insert('meal_ingredients', {
-      'mealID': ginisangId,
-      'ingredientID': 128, // Sayote
-      'quantity': '1 small'
+      'mealID': adobongManokId,
+      'ingredientID': 43, // Chicken thigh
+      'quantity': 2,
+      'unit': 'pieces',
+      'content': '≈300g'
     });
     await db.insert('meal_ingredients', {
-      'mealID': ginisangId,
-      'ingredientID': 23, // Bagoong
-      'quantity': '1/4 tsp'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': ginisangId,
-      'ingredientID': 149, // Onion
-      'quantity': '1 small'
-    });
-    await db.insert('meal_ingredients', {
-      'mealID': ginisangId,
+      'mealID': adobongManokId,
       'ingredientID': 152, // Garlic
-      'quantity': '4 cloves'
+      'quantity': 3,
+      'unit': 'cloves',
+      'content': 'crushed'
     });
     await db.insert('meal_ingredients', {
-      'mealID': ginisangId,
-      'ingredientID': 129, // Tomato
-      'quantity': '1 small'
+      'mealID': adobongManokId,
+      'ingredientID': 234, // Bay leaf
+      'quantity': 1,
+      'unit': 'leaf',
+      'content': null
     });
     await db.insert('meal_ingredients', {
-      'mealID': ginisangId,
+      'mealID': adobongManokId,
+      'ingredientID': 235, // Peppercorns
+      'quantity': 0.5,
+      'unit': 'tsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongManokId,
+      'ingredientID': 239, // Soy sauce
+      'quantity': 2,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongManokId,
+      'ingredientID': 236, // Vinegar
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongManokId,
       'ingredientID': 237, // Cooking oil
-      'quantity': '1/8 cup'
+      'quantity': 1,
+      'unit': 'tsp',
+      'content': null
+    });
+
+    // Insert Biko
+    final bikoId = await db.insert('meals', {
+      'mealName': 'Biko',
+      'price': 50.0,
+      'calories': 476,
+      'servings': 4,
+      'cookingTime': '60 minutes',
+      'mealPicture': 'assets/biko.jpg',
+      'category': 'Dessert, Snack',
+      'content': 'Sticky rice cake with coconut milk and sweet brown sugar caramel (latik).',
+      'instructions': '''
+  1. Prep Time (10 mins)
+  Rinse the glutinous rice thoroughly until the water runs clear.
+  In a rice cooker or pot, combine the rinsed rice with 2 cups of coconut milk and 1 cup of water.
+  Let the rice soak for 30 minutes if you have time.
+
+  2. Cook the Rice (20 mins)
+  Cook the rice mixture as you normally would (in a rice cooker or over the stove) until the liquid is absorbed and the rice is fully cooked.
+
+  3. Prepare the Latik / Syrup (15 mins)
+  In a separate, wide, heavy-bottomed pan, combine the remaining 2 cups of coconut milk and brown sugar.
+  Cook over medium heat, stirring continuously, until the mixture thickens significantly into a sticky, caramel-like syrup. This can take 15-20 minutes.
+
+  4. Combine Rice and Syrup (10 mins)
+  Add the cooked sticky rice to the pan with the caramel syrup.
+  Mix vigorously and continuously until the rice is fully coated and the mixture becomes very thick and difficult to stir.
+
+  5. Transfer and Flatten (5 mins)
+  Grease a baking pan or a tray with a little oil.
+  Transfer the thick rice mixture into the pan.
+  Using a spatula or a banana leaf, press and flatten the mixture evenly.
+
+  6. Top and Cool (10 mins)
+  If you made latik (coconut curds) from reducing coconut cream, sprinkle it on top.
+  Allow the Biko to cool completely before slicing into squares or diamonds.
+  ''',
+      'hasDietaryRestrictions': 'Vegetarian (contains no meat), not vegan because of sugar/latik (check sugar source)',
+      'availableFrom': '14:00',
+      'availableTo': '17:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': bikoId,
+      'ingredientID': 242, // Glutinous rice
+      'quantity': 2,
+      'unit': 'cups',
+      'content': 'rinsed'
     });
     await db.insert('meal_ingredients', {
-      'mealID': ginisangId,
-      'ingredientID': 239, // Soy Sauce
-      'quantity': '1/4 cup'
+      'mealID': bikoId,
+      'ingredientID': 243, // Coconut milk
+      'quantity': 2,
+      'unit': 'cups',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': bikoId,
+      'ingredientID': 241, // Brown sugar
+      'quantity': 0.75,
+      'unit': 'cup',
+      'content': null
     });
 
-    // Insert Adobong Manok
-  final adobongManokId = await db.insert('meals', {
-    'mealName': 'Adobong Manok',
-    'price': 60.0,
-    'calories': 217,
-    'servings': 2,
-    'cookingTime': '45 minutes',
-    'mealPicture': 'assets/adobong_manok.jpg',
-    'category': 'Main Dish, Soup',
-    'content': 'Classic Filipino chicken simmered in soy-vinegar garlic sauce.',
-    'instructions': '''
-1. Prep Time (5 mins)
-Pat the chicken thighs dry with a paper towel.
-Peel and crush the garlic cloves.
-If using whole peppercorns, you can lightly crush them.
-
-2. Marinate (15–30 mins)
-In a large bowl, combine the chicken, soy sauce, crushed garlic, and peppercorns.
-You can let it marinate for 15-30 minutes for deeper flavor, or proceed immediately.
-
-3. Initial Simmer (25 mins)
-Transfer the chicken and marinade into a wide pot or pan.
-Add the bay leaves and 1 cup of water.
-Bring to a boil, then reduce the heat to low, cover, and simmer for 25-30 minutes until the chicken is tender.
-
-4. Add Vinegar (5 mins)
-Uncover the pot and pour in the vinegar.
-Do not stir immediately; let the vinegar cook off its raw acidity for about 3-5 minutes.
-
-5. Reduce the Sauce (7 mins)
-After the vinegar has cooked, you can now stir.
-Increase the heat to medium and let the sauce reduce and thicken to your desired consistency, stirring occasionally. This should take about 5-10 minutes.
-
-6. Sauté for Color (3 mins)
-In a separate pan, heat 1 tsp of cooking oil.
-You can optionally sauté the cooked chicken pieces briefly until they get a slightly browned, crispy exterior.
-Pour the reduced sauce over the chicken before serving.
-''',
-    'hasDietaryRestrictions': 'Hypertension, Halal if using halal-certified chicken',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': adobongManokId,
-    'ingredientID': 43, // Chicken thigh
-    'quantity': '2 pieces (≈300g)'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongManokId,
-    'ingredientID': 152, // Garlic
-    'quantity': '3 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongManokId,
-    'ingredientID': 234, // Bay leaf
-    'quantity': '1 leaf'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongManokId,
-    'ingredientID': 235, // Peppercorns
-    'quantity': '½ tsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongManokId,
-    'ingredientID': 239, // Soy sauce
-    'quantity': '2 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongManokId,
-    'ingredientID': 236, // Vinegar
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongManokId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '1 tsp'
-  });
-
-  // Insert Biko
-  final bikoId = await db.insert('meals', {
-    'mealName': 'Biko',
-    'price': 50.0,
-    'calories': 476,
-    'servings': 4,
-    'cookingTime': '60 minutes',
-    'mealPicture': 'assets/biko.jpg',
-    'category': 'Dessert, Snack',
-    'content': 'Sticky rice cake with coconut milk and sweet brown sugar caramel (latik).',
-    'instructions': '''
-1. Prep Time (10 mins)
-Rinse the glutinous rice thoroughly until the water runs clear.
-In a rice cooker or pot, combine the rinsed rice with 2 cups of coconut milk and 1 cup of water.
-Let the rice soak for 30 minutes if you have time.
-
-2. Cook the Rice (20 mins)
-Cook the rice mixture as you normally would (in a rice cooker or over the stove) until the liquid is absorbed and the rice is fully cooked.
-
-3. Prepare the Latik / Syrup (15 mins)
-In a separate, wide, heavy-bottomed pan, combine the remaining 2 cups of coconut milk and brown sugar.
-Cook over medium heat, stirring continuously, until the mixture thickens significantly into a sticky, caramel-like syrup. This can take 15-20 minutes.
-
-4. Combine Rice and Syrup (10 mins)
-Add the cooked sticky rice to the pan with the caramel syrup.
-Mix vigorously and continuously until the rice is fully coated and the mixture becomes very thick and difficult to stir.
-
-5. Transfer and Flatten (5 mins)
-Grease a baking pan or a tray with a little oil.
-Transfer the thick rice mixture into the pan.
-Using a spatula or a banana leaf, press and flatten the mixture evenly.
-
-6. Top and Cool (10 mins)
-If you made latik (coconut curds) from reducing coconut cream, sprinkle it on top.
-Allow the Biko to cool completely before slicing into squares or diamonds.
-''',
-    'hasDietaryRestrictions': 'Vegetarian (contains no meat), not vegan because of sugar/latik (check sugar source)',
-    'availableFrom': '14:00',
-    'availableTo': '17:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': bikoId,
-    'ingredientID': 242, // Glutinous rice
-    'quantity': '2 cups'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': bikoId,
-    'ingredientID': 243, // Coconut milk
-    'quantity': '2 cups'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': bikoId,
-    'ingredientID': 241, // Brown sugar
-    'quantity': '¾ cup'
-  });
-
-  // Insert Binignit
-  final binignitId = await db.insert('meals', {
-    'mealName': 'Binignit',
-    'price': 55.0,
-    'calories': 246,
-    'servings': 3,
-    'cookingTime': '45 minutes',
-    'mealPicture': 'assets/binignit.jpg',
-    'category': 'Dessert, Snack, Soup',
-    'content': 'Creamy Filipino sweet stew of coconut milk with tubers, saba banana, glutinous rice, and jackfruit.',
-    'instructions': '''
-1. Prep Time (10 mins)
-Peel and cube the sweet potato, taro, and purple yam into bite-sized pieces.
-Peel the saba bananas and slice into thick rounds.
-If using fresh jackfruit, remove the seeds and cut into chunks.
-If tapioca pearls are raw, cook them separately according to package directions until translucent.
-
-2. Simmer the Base (10 mins)
-In a large pot, bring the coconut milk and 2 cups of water to a gentle simmer over medium heat.
-Add the rinsed glutinous rice and cook, stirring occasionally to prevent sticking, for about 10-15 minutes.
-
-3. Cook the Root Vegetables (15 mins)
-Add the cubed sweet potato, taro, and purple yam to the pot.
-Continue to simmer, stirring occasionally, until the root vegetables are almost tender.
-
-4. Add Soft Fruits (5–7 mins)
-Stir in the saba bananas and jackfruit pieces.
-Cook for another 5-7 minutes until the bananas are soft.
-
-5. Final Touches (5 mins)
-Add the cooked tapioca pearls and brown sugar.
-Stir well and simmer for a final 5 minutes until everything is heated through and the sugar is dissolved. The consistency should be thick and porridge-like.
-Serve warm or chilled.
-''',
-    'hasDietaryRestrictions': 'Vegetarian (no meat), Vegan-friendly if sugar is vegan',
-    'availableFrom': '14:00',
-    'availableTo': '17:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': binignitId,
-    'ingredientID': 242, // Glutinous rice
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': binignitId,
-    'ingredientID': 144, // Sweet potato
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': binignitId,
-    'ingredientID': 148, // Taro (gabi)
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': binignitId,
-    'ingredientID': 147, // Purple yam (ube)
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': binignitId,
-    'ingredientID': 154, // Saba banana
-    'quantity': '2 pieces'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': binignitId,
-    'ingredientID': 175, // Jackfruit
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': binignitId,
-    'ingredientID': 8, // Tapioca pearls
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': binignitId,
-    'ingredientID': 216, // Coconut milk
-    'quantity': '4 cups'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': binignitId,
-    'ingredientID': 217, // Brown sugar
-    'quantity': '½ cup'
-  });
-
-  // Insert Halo-Halo
-  final haloHaloId = await db.insert('meals', {
-    'mealName': 'Halo-Halo',
-    'price': 75.0,
-    'calories': 226,
-    'servings': 2,
-    'cookingTime': '15 minutes',
-    'mealPicture': 'assets/halo_halo.jpg',
-    'category': 'Dessert, Snack',
-    'content': 'A classic Filipino shave-ice treat layered with sweet fruit, beans, jellies, milk and topped with ice cream or leche flan.',
-    'instructions': '''
-1. Prep Time (5 mins)
-Ensure all your ingredients (sweetened beans, nata de coco, kaong, macapuno, gulaman, etc.) are prepared, sweetened, and chilled.
-If using leche flan, have it sliced and ready.
-Scoop the ube ice cream and keep it in the freezer until serving time.
-
-2. Prepare the Glass (3 mins)
-Get a tall glass.
-Start layering your sweet ingredients at the bottom. Begin with the sweetened beans, then add nata de coco, kaong, saba banana, jackfruit, macapuno, and gulaman.
-
-3. Add Ice (1 min)
-Fill the glass to the top with finely shaved ice, pressing down gently.
-
-4. Add Milk and Toppings (1 min)
-Drizzle the evaporated milk (and/or condensed milk) over the shaved ice.
-Place your chosen toppings on top: a slice of leche flan and a scoop (or two) of ube ice cream.
-
-5. Serve Immediately
-Serve immediately with a long spoon. Instruct to mix all the ingredients together thoroughly before eating.
-''',
-    'hasDietaryRestrictions': 'Vegetarian (contains dairy), not suitable for strict vegans',
-    'availableFrom': '11:00',
-    'availableTo': '14:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 226, // Sweetened beans (mungo)
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 58, // Nata de coco
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 59, // Kaong
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 154, // Saba banana
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 175, // Jackfruit
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 60, // Macapuno
-    'quantity': '¼ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 61, // Gulaman
-    'quantity': '¼ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 62, // Shaved ice
-    'quantity': 'To fill'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 253, // Evaporated milk
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 63, // Ube ice cream
-    'quantity': '1–2 scoops (optional)'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': haloHaloId,
-    'ingredientID': 64, // Leche flan
-    'quantity': '1 slice (optional)'
-  });
-
-  // Insert Chopsuey
-  final chopsueyId = await db.insert('meals', {
-    'mealName': 'Chopsuey',
-    'price': 60.0,
-    'calories': 167,
-    'servings': 2,
-    'cookingTime': '25 minutes',
-    'mealPicture': 'assets/chopsuey.jpg',
-    'category': 'Main Dish, Vegetable',
-    'content': 'Stir-fried mixed vegetables with chicken/shrimp in savory sauce.',
-    'instructions': '''
-1. Prep Time (10–15 mins)
-Cut the chicken into thin slices or bite-sized pieces.
-Peel and mince the garlic.
-Slice the onion.
-Chop the carrots, broccoli, and cauliflower into florets.
-Slice the bell pepper and cabbage.
-If using mushrooms, slice them.
-
-2. Sauté Aromatics and Protein (5 mins)
-Heat oil in a large wok or pan over medium-high heat.
-Sauté garlic and onion until fragrant and softened.
-Add the chicken slices and cook until they are no longer pink and are lightly browned.
-
-3. Cook Harder Vegetables (4–5 mins)
-Add the carrots, broccoli, and cauliflower to the wok.
-Stir-fry for about 4-5 minutes until they start to soften but are still crisp.
-
-4. Add Sauces and Broth (3–4 mins)
-Pour in the chicken broth, soy sauce, and oyster sauce.
-Stir everything together and bring to a simmer.
-
-5. Thicken the Sauce (2–3 mins)
-In a small bowl, mix the cornstarch with 2 tablespoons of water to create a slurry.
-While stirring the contents of the wok, slowly pour in the cornstarch slurry.
-Continue to cook until the sauce thickens to a glossy consistency.
-
-6. Final Stir-in (2 mins)
-Add the bell peppers, cabbage, and mushrooms.
-Stir-fry for just another 1-2 minutes until the cabbage is slightly wilted but still colorful and crisp.
-Season with ground pepper to taste. Serve immediately.
-''',
-    'hasDietaryRestrictions': 'Contains soy; can omit meat to make vegetarian',
-    'availableFrom': '11:00',
-    'availableTo': '14:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 43, // Chicken thigh
-    'quantity': '100g'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 52, // Carrots
-    'quantity': '⅓ piece'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 139, // Broccoli
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 115, // Cauliflower
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 133, // Bell pepper
-    'quantity': '½ small'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 114, // Cabbage
-    'quantity': '½ small'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 6, // Mushrooms
-    'quantity': '¼ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 152, // Garlic
-    'quantity': '3 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 149, // Onion
-    'quantity': '1 small'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 239, // Soy sauce
-    'quantity': '2 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 247, // Oyster sauce
-    'quantity': '2 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 248, // Cornstarch
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 60, // Chicken broth
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': chopsueyId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '1 tsp'
-  });
-
-  // Insert Laing
-  final laingId = await db.insert('meals', {
-    'mealName': 'Laing',
-    'price': 65.0,
-    'calories': 380,
-    'servings': 2,
-    'cookingTime': '75 minutes',
-    'mealPicture': 'assets/laing.jpg',
-    'category': 'Main Dish, Soup, Vegetable',
-    'content': 'Creamy coconut-based taro leaf stew with shrimp paste and chili.',
-    'instructions': '''
-1. Prep Time (10 mins)
-If using dried taro leaves, ensure they are properly rehydrated.
-Peel and mince the garlic and ginger.
-Slice the onion.
-Cut the pork belly into small cubes.
-Slice the Thai chilies (for less heat, you can leave them whole).
-
-2. Sauté the Base (3 mins)
-In a pot, heat the cooking oil over medium heat.
-Sauté the garlic, onion, and ginger until very fragrant and the onion is soft.
-
-3. Cook the Pork and Shrimp Paste (5 mins)
-Add the pork belly cubes and cook until they start to render fat and brown slightly.
-Add the shrimp paste (bagoong alamang) and sauté for another 2 minutes to incorporate its flavor.
-
-4. Simmer with Coconut Milk (40 mins)
-Pour in the coconut milk and bring the mixture to a gentle simmer.
-Carefully add the taro leaves, pushing them down into the liquid. IMPORTANT: Do not stir for the first 15 minutes to prevent itching.
-Let it simmer uncovered for 40-45 minutes, stirring occasionally after the first 15 minutes, until the leaves have absorbed much of the liquid and the sauce has thickened.
-
-5. Add Cream and Chili (10 mins)
-Stir in the coconut cream and the sliced chilies.
-Continue to simmer for another 10 minutes until the sauce is rich and creamy, and the oil starts to separate slightly.
-Season with salt if needed. Serve hot.
-''',
-    'hasDietaryRestrictions': 'Not suitable for strict vegetarians due to shrimp paste',
-    'availableFrom': '12:00',
-    'availableTo': '15:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': laingId,
-    'ingredientID': 19, // Taro leaves
-    'quantity': '3 cups dried (rehydrated)'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': laingId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '2 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': laingId,
-    'ingredientID': 152, // Garlic
-    'quantity': '4 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': laingId,
-    'ingredientID': 149, // Onion
-    'quantity': '1 medium'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': laingId,
-    'ingredientID': 153, // Ginger
-    'quantity': '1 thumb'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': laingId,
-    'ingredientID': 52, // Pork belly
-    'quantity': '100g'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': laingId,
-    'ingredientID': 23, // Shrimp paste
-    'quantity': '¼ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': laingId,
-    'ingredientID': 243, // Coconut milk
-    'quantity': '3 cups'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': laingId,
-    'ingredientID': 250, // Thai chilies
-    'quantity': '5–7 pieces'
-  });
-
-  // Insert Sinigang na Baboy (Pork)
-  final sinigangBaboyId = await db.insert('meals', {
-    'mealName': 'Sinigang na Baboy (Pork)',
-    'price': 70.0,
-    'calories': 150,
-    'servings': 2,
-    'cookingTime': '70 minutes',
-    'mealPicture': 'assets/sinigang_na_baboy.jpg',
-    'category': 'Soup, Main Dish',
-    'content': 'Sour tamarind broth soup with pork and veggies.',
-    'instructions': '''
-1. Prep Time (8 mins)
-Wash the pork belly and cut into serving pieces.
-Slice the tomato.
-Quarter the onion.
-Peel and slice the gabi (taro) into chunks.
-Peel and slice the radish.
-Slice the eggplant.
-Wash the kangkong leaves.
-
-2. Boil the Pork (40–45 mins)
-In a large pot, combine the pork, tomato, and onion.
-Cover with about 8-10 cups of water.
-Bring to a boil, then skim off any scum that rises to the surface.
-Lower the heat, cover, and simmer for 40-45 minutes or until the pork is tender.
-
-3. Add Gabi and Tamarind (10 mins)
-Add the gabi (taro) and your tamarind seasoning mix (or fresh tamarind pulp).
-Simmer for about 10 minutes until the gabi starts to soften.
-
-4. Add Other Vegetables (5–7 mins)
-Add the radish and eggplant.
-Continue to simmer for 5-7 minutes until these vegetables are tender.
-
-5. Final Touches (2 mins)
-Add the kangkong leaves.
-Season the soup with fish sauce (patis) to your taste.
-Let it cook for just another minute until the kangkong wilts. Serve hot.
-''',
-    'hasDietaryRestrictions': 'Halal/vegetarian option if using fish instead of pork',
-    'availableFrom': '11:00',
-    'availableTo': '14:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangBaboyId,
-    'ingredientID': 52, // Pork belly
-    'quantity': '300g'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangBaboyId,
-    'ingredientID': 129, // Tomato
-    'quantity': '1 medium'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangBaboyId,
-    'ingredientID': 149, // Onion
-    'quantity': '½'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangBaboyId,
-    'ingredientID': 245, // Tamarind
-    'quantity': '2 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangBaboyId,
-    'ingredientID': 117, // Kangkong
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangBaboyId,
-    'ingredientID': 148, // Gabi (taro)
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangBaboyId,
-    'ingredientID': 34, // Radish
-    'quantity': '¼ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangBaboyId,
-    'ingredientID': 122, // Eggplant
-    'quantity': '¼ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangBaboyId,
-    'ingredientID': 246, // Fish sauce
-    'quantity': '1 tsp'
-  });
-
-  // Insert Ginataang Gulay
-  final ginataangGulayId = await db.insert('meals', {
-    'mealName': 'Ginataang Gulay',
-    'price': 55.0,
-    'calories': 210,
-    'servings': 2,
-    'cookingTime': '30 minutes',
-    'mealPicture': 'assets/ginataang_gulay.jpg',
-    'category': 'Main Dish, Vegetable',
-    'content': 'A creamy vegetable stew simmered in coconut milk, rich and comforting.',
-    'instructions': '''
-1. Prep Time (8 mins)
-Slice the string beans into 2-inch lengths.
-Peel the squash, remove seeds, and cut into cubes.
-Slice the eggplant.
-Peel and mince the garlic and ginger.
-Slice the onion.
-
-2. Sauté Aromatics (2 mins)
-In a pot, heat the cooking oil over medium heat.
-Sauté the garlic, onion, and ginger until fragrant and the onion is translucent.
-
-3. Sauté Vegetables (4–5 mins)
-Add the string beans and squash cubes.
-Stir-fry for about 4-5 minutes to lightly cook the exterior.
-
-4. Simmer in Coconut Milk (10–12 mins)
-Pour in the coconut milk and bring to a gentle simmer.
-Let it cook, uncovered, for 10-12 minutes, or until the squash is fork-tender.
-
-5. Add Cream and Season (3–5 mins)
-Stir in the coconut cream.
-Add the sliced eggplant and simmer for another 3-5 minutes until the eggplant is cooked and the sauce has thickened slightly.
-Season with salt and pepper to taste. Serve hot.
-''',
-    'hasDietaryRestrictions': 'Vegan, Halal, Gluten-Free',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangGulayId,
-    'ingredientID': 134, // String beans
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangGulayId,
-    'ingredientID': 127, // Squash
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangGulayId,
-    'ingredientID': 122, // Eggplant
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangGulayId,
-    'ingredientID': 243, // Coconut milk
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangGulayId,
-    'ingredientID': 149, // Onion
-    'quantity': '1 small'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangGulayId,
-    'ingredientID': 152, // Garlic
-    'quantity': '3 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangGulayId,
-    'ingredientID': 153, // Ginger
-    'quantity': '1 thumb'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangGulayId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '1 tbsp'
-  });
-
-  // Insert Ginisang Kalabasa
-  final ginisangKalabasaId = await db.insert('meals', {
-    'mealName': 'Ginisang Kalabasa',
-    'price': 50.0,
-    'calories': 185,
-    'servings': 2,
-    'cookingTime': '25 minutes',
-    'mealPicture': 'assets/ginisang_kalabasa.jpg',
-    'category': 'Main Dish, Vegetable',
-    'content': 'A budget-friendly sautéed squash dish that is simple and hearty.',
-    'instructions': '''
-1. Prep Time (8 mins)
-Peel the kalabasa (squash), remove seeds, and cut into small cubes.
-Dice the tomato and onion.
-Mince the garlic.
-If using meat, have your ground pork or shrimp ready.
-
-2. Sauté Aromatics and Protein (5–7 mins)
-Heat oil in a pan over medium heat.
-Sauté the garlic and onion until soft and fragrant.
-Add the tomato and cook until it softens and releases its juice.
-If using, add the ground pork or shrimp and cook until browned or opaque.
-
-3. Cook the Squash (12–15 mins)
-Add the kalabasa cubes to the pan.
-Pour in about ½ cup of water or broth.
-Cover the pan and let it simmer for 12-15 minutes, or until the kalabasa is very tender and can be easily mashed with a spoon.
-
-4. Mash and Season (2–3 mins)
-You can lightly mash some of the kalabasa with the back of your spoon to thicken the sauce.
-Season with salt and plenty of ground black pepper to taste.
-Simmer for another 2-3 minutes. Serve hot.
-''',
-    'hasDietaryRestrictions': 'Vegetarian (if no meat), Halal',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangKalabasaId,
-    'ingredientID': 127, // Kalabasa (squash)
-    'quantity': '2 cups'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangKalabasaId,
-    'ingredientID': 129, // Tomato
-    'quantity': '1 small'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangKalabasaId,
-    'ingredientID': 149, // Onion
-    'quantity': '½'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangKalabasaId,
-    'ingredientID': 152, // Garlic
-    'quantity': '3 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangKalabasaId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '1 tbsp'
-  });
-
-  // Insert Sinigang na Isda
-  final sinigangIsdaId = await db.insert('meals', {
-    'mealName': 'Sinigang na Isda',
-    'price': 60.0,
-    'calories': 130,
-    'servings': 2,
-    'cookingTime': '30 minutes',
-    'mealPicture': 'assets/sinigang_na_isda.jpg',
-    'category': 'Soup, Main Dish',
-    'content': 'A tangy tamarind-based fish soup perfect for rainy days.',
-    'instructions': '''
-1. Prep Time (8–10 mins)
-Clean the fish (bangus or tilapia) and cut into large slices.
-Slice the tomato.
-Quarter the onion.
-Peel and slice the radish.
-Slice the eggplant.
-Wash the kangkong leaves.
-
-2. Boil the Broth Base (5 mins)
-In a pot, bring 6-8 cups of water to a boil.
-Add the tomato and onion, and boil for about 5 minutes until they soften.
-
-3. Add Tamarind and Fish (7–10 mins)
-Stir in the tamarind seasoning mix until dissolved.
-Gently add the fish slices and simmer for 7-10 minutes until the fish is cooked through.
-
-4. Add Vegetables (5–7 mins)
-Add the radish and eggplant.
-Continue to simmer for 5-7 minutes until the vegetables are tender.
-
-5. Final Touches (2 mins)
-Add the kangkong leaves and the whole green chili (if using).
-Season with fish sauce to taste.
-Cook for just another minute until the kangkong wilts. Serve immediately.
-''',
-    'hasDietaryRestrictions': 'Halal, Pescatarian',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangIsdaId,
-    'ingredientID': 183, // Bangus or tilapia
-    'quantity': '2 medium slices'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangIsdaId,
-    'ingredientID': 129, // Tomato
-    'quantity': '1 small'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangIsdaId,
-    'ingredientID': 149, // Onion
-    'quantity': '½'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangIsdaId,
-    'ingredientID': 245, // Tamarind paste
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangIsdaId,
-    'ingredientID': 117, // Kangkong
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangIsdaId,
-    'ingredientID': 34, // Radish
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangIsdaId,
-    'ingredientID': 122, // Eggplant
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangIsdaId,
-    'ingredientID': 132, // Green chili
-    'quantity': '1 (optional)'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangIsdaId,
-    'ingredientID': 246, // Fish sauce
-    'quantity': 'To taste'
-  });
-
-  // Insert Sinigang na Hipon
-  final sinigangHiponId = await db.insert('meals', {
-    'mealName': 'Sinigang na Hipon',
-    'price': 75.0,
-    'calories': 160,
-    'servings': 2,
-    'cookingTime': '25 minutes',
-    'mealPicture': 'assets/sinigang_na_hipon.jpg',
-    'category': 'Soup, Main Dish',
-    'content': 'A light and tangy shrimp soup that warms and satisfies with its sour kick.',
-    'instructions': '''
-1. Prep Time (10 mins)
-Clean the shrimp, leaving the heads on for more flavor if desired.
-Slice the tomato.
-Quarter the onion.
-Peel and slice the radish.
-Slice the eggplant and cut the sitaw into 2-inch lengths.
-Wash the kangkong leaves.
-
-2. Boil the Broth Base (5 mins)
-In a pot, bring 6-8 cups of water to a boil.
-Add the tomato and onion and boil for about 5 minutes.
-
-3. Add Tamarind and Shrimp (5–7 mins)
-Stir in the tamarind paste until it dissolves.
-Gently add the shrimp and simmer for 5-7 minutes until they turn pink and are cooked through. Do not overcook.
-
-4. Add Vegetables (5 mins)
-Add the radish, eggplant, and sitaw.
-Simmer for about 5 minutes until the vegetables are tender but still firm.
-
-5. Final Touches (2 mins)
-Add the kangkong leaves and green chili.
-Season with fish sauce to taste.
-Let it cook for just another minute until the kangkong wilts. Serve hot.
-''',
-    'hasDietaryRestrictions': 'Halal, Pescatarian',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangHiponId,
-    'ingredientID': 206, // Shrimp
-    'quantity': '250g'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangHiponId,
-    'ingredientID': 129, // Tomato
-    'quantity': '1'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangHiponId,
-    'ingredientID': 149, // Onion
-    'quantity': '½'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangHiponId,
-    'ingredientID': 117, // Kangkong
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangHiponId,
-    'ingredientID': 134, // Sitaw
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangHiponId,
-    'ingredientID': 34, // Radish
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangHiponId,
-    'ingredientID': 122, // Eggplant
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangHiponId,
-    'ingredientID': 245, // Tamarind paste
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangHiponId,
-    'ingredientID': 132, // Green chili
-    'quantity': '1 (optional)'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sinigangHiponId,
-    'ingredientID': 246, // Fish sauce
-    'quantity': 'To taste'
-  });
-
-  // Insert Tortang Sayote
-  final tortangSayoteId = await db.insert('meals', {
-    'mealName': 'Tortang Sayote',
-    'price': 50.0,
-    'calories': 200,
-    'servings': 2,
-    'cookingTime': '20 minutes',
-    'mealPicture': 'assets/tortang_sayote.jpg',
-    'category': 'Appetizer, Vegetable',
-    'content': 'A crispy egg-and-chayote omelette—simple, budget-friendly, and filling.',
-    'instructions': '''
-1. Prep and Grate Sayote (7 mins)
-Peel the sayote, remove the seed, and grate them using a grater.
-Place the grated sayote in a clean cloth or cheesecloth and squeeze out as much excess water as possible. This is a crucial step for a crispy torta.
-
-2. Mix the Batter (3 mins)
-In a bowl, beat the eggs.
-Add the squeezed grated sayote, minced garlic, chopped onion, and flour.
-Season with salt and pepper. Mix everything until well-combined.
-
-3. Heat the Pan (2 mins)
-Place a non-stick skillet over medium heat and add enough cooking oil to coat the surface.
-Let the oil get hot.
-
-4. Fry the Patties (10–12 mins)
-Scoop about ¼ cup of the mixture and pour it into the pan, shaping it into a patty.
-Fry for about 3-4 minutes on one side until the bottom is golden brown and set.
-Carefully flip and cook the other side for another 3-4 minutes.
-Repeat with the remaining mixture.
-
-5. Drain and Serve (2 mins)
-Place the cooked Tortang Sayote on a plate lined with paper towels to drain excess oil.
-Serve hot with ketchup or a vinegar and garlic dip.
-''',
-    'hasDietaryRestrictions': 'Vegetarian, Halal',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': tortangSayoteId,
-    'ingredientID': 128, // Sayote
-    'quantity': '2 medium'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': tortangSayoteId,
-    'ingredientID': 178, // Eggs
-    'quantity': '3'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': tortangSayoteId,
-    'ingredientID': 152, // Garlic
-    'quantity': '2 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': tortangSayoteId,
-    'ingredientID': 149, // Onion
-    'quantity': '1 small'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': tortangSayoteId,
-    'ingredientID': 251, // Flour
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': tortangSayoteId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': 'For frying'
-  });
-
-  // Insert Adobong Pusit
-  final adobongPusitId = await db.insert('meals', {
-    'mealName': 'Adobong Pusit',
-    'price': 80.0,
-    'calories': 240,
-    'servings': 2,
-    'cookingTime': '35 minutes',
-    'mealPicture': 'assets/adobong_pusit.jpg',
-    'category': 'Main Dish, Seafood',
-    'content': 'A bold, savory squid dish stewed in soy sauce and vinegar with a hint of garlic.',
-    'instructions': '''
-1. Prep Time (10 mins)
-Clean the squid thoroughly, removing the ink sac, quill, and innards. You can keep the ink for a darker sauce if you like.
-Leave the squid whole or slice it into rings.
-Mince the garlic and slice the onion.
-
-2. Sauté Aromatics (3 mins)
-Heat oil in a pan over medium heat.
-Sauté the garlic and onion until soft and aromatic.
-
-3. Cook the Squid (2–3 mins)
-Add the squid to the pan and cook for 2-3 minutes, stirring, until it firms up and turns opaque.
-
-4. Add Sauces and Simmer (10 mins)
-Pour in the soy sauce and vinegar. DO NOT STIR. Let the vinegar cook for about 3 minutes to lose its raw acidity.
-Add the black pepper and, if using, the optional tomato.
-After 3 minutes, you can stir. Let it simmer on low heat for 10-15 minutes until the squid is tender and the sauce has reduced. Be careful not to overcook the squid, or it will become rubbery.
-
-5. Final Reduction (2 mins)
-If there's still a lot of sauce, increase the heat for the last 2 minutes to reduce it to a glazy consistency.
-Serve hot.
-''',
-    'hasDietaryRestrictions': 'Halal, Pescatarian',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': adobongPusitId,
-    'ingredientID': 207, // Squid
-    'quantity': '300g'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongPusitId,
-    'ingredientID': 149, // Onion
-    'quantity': '1 small'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongPusitId,
-    'ingredientID': 152, // Garlic
-    'quantity': '3 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongPusitId,
-    'ingredientID': 239, // Soy sauce
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongPusitId,
-    'ingredientID': 236, // Vinegar
-    'quantity': '2 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongPusitId,
-    'ingredientID': 233, // Black pepper
-    'quantity': '½ tsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongPusitId,
-    'ingredientID': 129, // Tomato
-    'quantity': '1 small (optional)'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongPusitId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '1 tbsp'
-  });
-
-  // Insert Adobong Baboy
-  final adobongBaboyId = await db.insert('meals', {
-    'mealName': 'Adobong Baboy',
-    'price': 120.0,
-    'calories': 380,
-    'servings': 3,
-    'cookingTime': '45 minutes',
-    'mealPicture': 'assets/adobong_baboy.jpg',
-    'category': 'Main Dish',
-    'content': 'A hearty Filipino classic of pork stewed in soy sauce, vinegar, and spices.',
-    'instructions': '''
-1. Prep and Marinate (20–30 mins)
-Cut the pork belly into bite-sized cubes.
-In a large bowl, combine the pork, soy sauce, crushed garlic, peppercorns, and bay leaves.
-Let it marinate for at least 20-30 minutes.
-
-2. Initial Simmer (30–40 mins)
-Transfer the pork and its marinade into a pot.
-Add 1 cup of water.
-Bring to a boil, then reduce the heat to low, cover, and simmer for 30-40 minutes until the pork is very tender.
-
-3. Add Vinegar (5 mins)
-Uncover the pot and pour in the vinegar.
-Do not stir. Let it cook undisturbed for about 5 minutes to allow the vinegar's sharpness to mellow.
-
-4. Brown and Reduce (10–15 mins)
-You can now stir. Increase the heat to medium.
-Let the pork cook in the reducing sauce until the sauce thickens and the pork starts to sizzle and fry in its own rendered fat, getting slightly crispy edges. This should take 10-15 minutes.
-
-5. Serve
-Serve the Adobong Baboy hot with its reduced sauce, alongside steamed rice.
-''',
-    'hasDietaryRestrictions': 'Not suitable for Halal, Hypertension',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': adobongBaboyId,
-    'ingredientID': 52, // Pork belly
-    'quantity': '500g'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongBaboyId,
-    'ingredientID': 239, // Soy sauce
-    'quantity': '¼ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongBaboyId,
-    'ingredientID': 236, // Vinegar
-    'quantity': '3 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongBaboyId,
-    'ingredientID': 152, // Garlic
-    'quantity': '3 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongBaboyId,
-    'ingredientID': 234, // Bay leaves
-    'quantity': '2'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongBaboyId,
-    'ingredientID': 235, // Peppercorns
-    'quantity': '1 tsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': adobongBaboyId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '1 tbsp'
-  });
-
-  // Insert Ginataang Alimango
-  final ginataangAlimangoId = await db.insert('meals', {
-    'mealName': 'Ginataang Alimango',
-    'price': 120.0,
-    'calories': 450,
-    'servings': 2,
-    'cookingTime': '40 minutes',
-    'mealPicture': 'assets/ginataang_alimango.jpg',
-    'category': 'Main Dish, Seafood',
-    'content': 'Rich and creamy crab dish simmered in coconut milk with vegetables.',
-    'instructions': '''
-1. Prep Time (10–15 mins)
-Clean the live crabs thoroughly. You can leave them whole or chop them into sections.
-Peel and mince the garlic and ginger.
-Slice the onion.
-Cut the squash into chunks and the sitaw into lengths.
-
-2. Sauté the Base (2 mins)
-In a wide pot, heat oil over medium heat.
-Sauté the garlic, onion, and ginger until very fragrant.
-
-3. Cook the Crab (5–7 mins)
-Add the crab pieces to the pot.
-Sauté for 5-7 minutes until the shells start to turn orange-red.
-
-4. Simmer in Coconut Milk (15–20 mins)
-Pour in the coconut milk and bring the mixture to a gentle boil.
-Lower the heat, cover, and simmer for 15-20 minutes to cook the crab through and infuse the flavor.
-
-5. Add Veggies and Cream (7–10 mins)
-Add the squash and sitaw.
-Continue to simmer until the vegetables are tender, about 7-10 minutes.
-Stir in the coconut cream and add the red chili.
-Simmer for another 5 minutes until the sauce is rich and creamy. Season with salt if needed.
-''',
-    'hasDietaryRestrictions': 'Pescatarian, Halal',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangAlimangoId,
-    'ingredientID': 202, // Alimango/crab
-    'quantity': '2 pcs'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangAlimangoId,
-    'ingredientID': 243, // Coconut milk
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangAlimangoId,
-    'ingredientID': 127, // Squash
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangAlimangoId,
-    'ingredientID': 134, // Sitaw
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangAlimangoId,
-    'ingredientID': 131, // Red chili
-    'quantity': '1'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangAlimangoId,
-    'ingredientID': 149, // Onion
-    'quantity': '1'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangAlimangoId,
-    'ingredientID': 6, // Garlic
-    'quantity': '3 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangAlimangoId,
-    'ingredientID': 153, // Ginger
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangAlimangoId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '1 tbsp'
-  });
-
-  // Insert Saging Prito
-  final sagingPritoId = await db.insert('meals', {
-    'mealName': 'Saging Prito',
-    'price': 50.0,
-    'calories': 160,
-    'servings': 2,
-    'cookingTime': '15 minutes',
-    'mealPicture': 'assets/saging_prito.jpg',
-    'category': 'Dessert, Snack',
-    'content': 'Golden fried saba bananas—crispy outside, soft and sweet inside.',
-    'instructions': '''
-1. Prep Time (5 mins)
-Peel the saba bananas.
-You can leave them whole, slice them in half lengthwise, or diagonally into thick slices.
-Place the brown sugar on a plate.
-
-2. Coat Bananas in Sugar (2 mins)
-Roll the banana pieces in the brown sugar until they are evenly coated.
-
-3. Heat the Oil (3 mins)
-In a frying pan, pour enough cooking oil to reach about ½ inch deep.
-Heat the oil over medium heat until hot (a piece of banana should sizzle when added).
-
-4. Fry the Bananas (8–10 mins)
-Carefully place the sugar-coated bananas in the hot oil.
-Fry for about 4-5 minutes on each side, or until they are golden brown and caramelized, and the sugar forms a crispy coating.
-
-5. Drain and Cool (2 mins)
-Remove the bananas from the oil and place them on a wire rack or a plate lined with paper towels to drain excess oil.
-Let them cool for a minute or two before serving, as the caramelized sugar will be very hot.
-''',
-    'hasDietaryRestrictions': 'Vegan, Vegetarian, Halal',
-    'availableFrom': '14:00',
-    'availableTo': '17:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': sagingPritoId,
-    'ingredientID': 154, // Saba banana
-    'quantity': '4 pcs'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sagingPritoId,
-    'ingredientID': 252, // Brown sugar
-    'quantity': '3 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': sagingPritoId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': 'For frying'
-  });
-
-  // Insert Escabeche
-  final escabecheId = await db.insert('meals', {
-    'mealName': 'Escabeche',
-    'price': 100.0,
-    'calories': 320,
-    'servings': 2,
-    'cookingTime': '35 minutes',
-    'mealPicture': 'assets/escabeche.jpg',
-    'category': 'Main Dish',
-    'content': 'A sweet and tangy fried fish dish topped with sautéed vegetables in sauce.',
-    'instructions': '''
-1. Prep and Fry the Fish (10–12 mins)
-Clean the fish (tilapia or bangus) and score the sides.
-Pat it completely dry with paper towels.
-Heat oil for frying in a pan over medium-high heat.
-Fry the fish until golden brown and crispy on both sides. Remove and set aside on a serving plate.
-
-2. Sauté Vegetables for Sauce (5 mins)
-In a separate pan, heat a tablespoon of oil.
-Sauté the garlic and onion until soft.
-Add the julienned carrots and bell pepper, and stir-fry for 2-3 minutes until they begin to soften.
-
-3. Combine Sauce Ingredients (2 mins)
-Pour in the soy sauce, vinegar, and about ½ cup of water.
-Add the sugar and stir until dissolved.
-Let the mixture come to a simmer.
-
-4. Thicken the Sauce (2 mins)
-In a small bowl, create a slurry by mixing the cornstarch with 2 tablespoons of water.
-While stirring the simmering sauce, slowly add the cornstarch slurry.
-Continue to cook and stir until the sauce thickens to a glossy, syrupy consistency.
-
-5. Assemble and Serve (1 min)
-Taste the sauce and adjust seasoning if needed.
-Pour the hot sweet and sour sauce with vegetables over the fried fish.
-Serve immediately.
-''',
-    'hasDietaryRestrictions': 'Pescatarian, Halal',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': escabecheId,
-    'ingredientID': 183, // Tilapia or bangus
-    'quantity': '2 pcs'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': escabecheId,
-    'ingredientID': 139, // Carrots
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': escabecheId,
-    'ingredientID': 133, // Bell pepper
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': escabecheId,
-    'ingredientID': 149, // Onion
-    'quantity': '1'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': escabecheId,
-    'ingredientID': 152, // Garlic
-    'quantity': '3 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': escabecheId,
-    'ingredientID': 236, // Vinegar
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': escabecheId,
-    'ingredientID': 239, // Soy sauce
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': escabecheId,
-    'ingredientID': 252, // Sugar
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': escabecheId,
-    'ingredientID': 248, // Cornstarch
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': escabecheId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': 'For frying'
-  });
-
-  // Insert Ginataang Kalabasa
-  final ginataangKalabasaId = await db.insert('meals', {
-    'mealName': 'Ginataang Kalabasa',
-    'price': 60.0,
-    'calories': 250,
-    'servings': 2,
-    'cookingTime': '25 minutes',
-    'mealPicture': 'assets/ginataang_kalabasa.jpg',
-    'category': 'Vegetable, Main Dish',
-    'content': 'Creamy coconut-based stew with squash and string beans.',
-    'instructions': '''
-1. Prep Time (8–10 mins)
-Peel the kalabasa, remove seeds, and cut into cubes.
-Cut the sitaw into 2-inch lengths.
-Mince the garlic and slice the onion.
-
-2. Sauté Aromatics (2 mins)
-Heat oil in a pot over medium heat.
-Sauté the garlic and onion until soft and translucent.
-
-3. Sauté Squash (2–3 mins)
-Add the kalabasa cubes and sauté for 2-3 minutes.
-
-4. Simmer in Coconut Milk (10–12 mins)
-Pour in the coconut milk and bring to a gentle simmer.
-Let it cook for 10-12 minutes until the kalabasa is almost tender.
-
-5. Add Sitaw and Shrimp (5–7 mins)
-Add the sitaw and the shrimp (if using).
-Continue to simmer for another 5-7 minutes until the sitaw is cooked but still crisp, the shrimp is pink, and the kalabasa is fully tender.
-Season with salt or fish sauce to taste. Serve hot.
-''',
-    'hasDietaryRestrictions': 'Vegetarian (if no shrimp), Vegan (if no fish), Halal',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangKalabasaId,
-    'ingredientID': 127, // Kalabasa
-    'quantity': '1½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangKalabasaId,
-    'ingredientID': 134, // Sitaw
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangKalabasaId,
-    'ingredientID': 243, // Coconut milk
-    'quantity': '1 cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangKalabasaId,
-    'ingredientID': 149, // Onion
-    'quantity': '1'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangKalabasaId,
-    'ingredientID': 152, // Garlic
-    'quantity': '2 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangKalabasaId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '1 tbsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginataangKalabasaId,
-    'ingredientID': 206, // Shrimp
-    'quantity': '½ cup (optional)'
-  });
-
-  // Insert Ginisang Upo
-  final ginisangUpoId = await db.insert('meals', {
-    'mealName': 'Ginisang Upo',
-    'price': 55.0,
-    'calories': 180,
-    'servings': 2,
-    'cookingTime': '20 minutes',
-    'mealPicture': 'assets/ginisang_upo.jpg',
-    'category': 'Vegetable',
-    'content': 'A healthy sautéed bottle gourd dish, light and perfect for lunch.',
-    'instructions': '''
-1. Prep Time (8 mins)
-Peel the upo (bottle gourd), remove the soft inner part with seeds, and slice into half-moons.
-Dice the tomato and onion.
-Mince the garlic.
-Prepare your protein (ground pork or shrimp).
-
-2. Sauté Aromatics and Protein (5 mins)
-Heat oil in a pan over medium heat.
-Sauté the garlic and onion until fragrant.
-Add the tomato and cook until soft.
-Add the ground pork or shrimp and cook until browned or opaque.
-
-3. Cook the Upo (8–10 mins)
-Add the sliced upo to the pan.
-Season with salt and pepper.
-You can add about ¼ cup of water to create some steam.
-Cover the pan and let it simmer for 8-10 minutes, or until the upo is translucent and tender but not mushy.
-
-4. Season and Serve (1 min)
-Do a final taste test and adjust seasoning if necessary.
-Serve hot.
-''',
-    'hasDietaryRestrictions': 'Halal (if using shrimp), Pescatarian, Not Vegan if using meat',
-    'availableFrom': '11:00',
-    'availableTo': '13:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangUpoId,
-    'ingredientID': 125, // Upo
-    'quantity': '2 cups'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangUpoId,
-    'ingredientID': 129, // Tomato
-    'quantity': '1 small'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangUpoId,
-    'ingredientID': 152, // Garlic
-    'quantity': '2 cloves'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangUpoId,
-    'ingredientID': 149, // Onion
-    'quantity': '½ small'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangUpoId,
-    'ingredientID': 25, // Ground pork or shrimp
-    'quantity': '½ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': ginisangUpoId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '1 tbsp'
-  });
-
-  // Insert Fried Egg with Malunggay
-  final friedEggMalunggayId = await db.insert('meals', {
-    'mealName': 'Fried Egg with Malunggay',
-    'price': 50.0,
-    'calories': 220,
-    'servings': 1,
-    'cookingTime': '10 minutes',
-    'mealPicture': 'assets/fried_egg_malunggay.jpg',
-    'category': 'Breakfast, Appetizer',
-    'content': 'Nutritious fried egg packed with moringa leaves for an energy boost.',
-    'instructions': '''
-1. Prep Time (3 mins)
-Crack the eggs into a bowl.
-Wash the malunggay leaves and pluck them from the stems.
-If using, mince a small amount of garlic.
-
-2. Beat the Eggs (1 min)
-Beat the eggs vigorously with a fork or whisk until the yolks and whites are fully combined.
-Stir in the malunggay leaves and minced garlic (if using). Season with a pinch of salt and pepper.
-
-3. Heat the Pan (1 min)
-Place a non-stick skillet over medium heat and add the cooking oil.
-Let the oil get hot.
-
-4. Cook the Egg (3–4 mins)
-Pour the egg and malunggay mixture into the hot skillet.
-Let it cook undisturbed for about 2 minutes until the edges are set and the bottom is golden.
-You can scramble it or flip it to cook as a single omelette until it's cooked to your liking.
-
-5. Serve Immediately
-Slide the fried egg onto a plate.
-Serve immediately while hot, ideally with a side of rice.
-''',
-    'hasDietaryRestrictions': 'Halal, Vegetarian',
-    'availableFrom': '07:00',
-    'availableTo': '09:00'
-  });
-
-  await db.insert('meal_ingredients', {
-    'mealID': friedEggMalunggayId,
-    'ingredientID': 38, // Eggs
-    'quantity': '2'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': friedEggMalunggayId,
-    'ingredientID': 179, // Malunggay
-    'quantity': '¼ cup'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': friedEggMalunggayId,
-    'ingredientID': 237, // Cooking oil
-    'quantity': '1 tsp'
-  });
-  await db.insert('meal_ingredients', {
-    'mealID': friedEggMalunggayId,
-    'ingredientID': 152, // Garlic bits (optional)
-    'quantity': 'Optional'
-  });
+    // Insert Binignit
+    final binignitId = await db.insert('meals', {
+      'mealName': 'Binignit',
+      'price': 55.0,
+      'calories': 246,
+      'servings': 3,
+      'cookingTime': '45 minutes',
+      'mealPicture': 'assets/binignit.jpg',
+      'category': 'Dessert, Snack, Soup',
+      'content': 'Creamy Filipino sweet stew of coconut milk with tubers, saba banana, glutinous rice, and jackfruit.',
+      'instructions': '''
+  1. Prep Time (10 mins)
+  Peel and cube the sweet potato, taro, and purple yam into bite-sized pieces.
+  Peel the saba bananas and slice into thick rounds.
+  If using fresh jackfruit, remove the seeds and cut into chunks.
+  If tapioca pearls are raw, cook them separately according to package directions until translucent.
+
+  2. Simmer the Base (10 mins)
+  In a large pot, bring the coconut milk and 2 cups of water to a gentle simmer over medium heat.
+  Add the rinsed glutinous rice and cook, stirring occasionally to prevent sticking, for about 10-15 minutes.
+
+  3. Cook the Root Vegetables (15 mins)
+  Add the cubed sweet potato, taro, and purple yam to the pot.
+  Continue to simmer, stirring occasionally, until the root vegetables are almost tender.
+
+  4. Add Soft Fruits (5–7 mins)
+  Stir in the saba bananas and jackfruit pieces.
+  Cook for another 5-7 minutes until the bananas are soft.
+
+  5. Final Touches (5 mins)
+  Add the cooked tapioca pearls and brown sugar.
+  Stir well and simmer for a final 5 minutes until everything is heated through and the sugar is dissolved. The consistency should be thick and porridge-like.
+  Serve warm or chilled.
+  ''',
+      'hasDietaryRestrictions': 'Vegetarian (no meat), Vegan-friendly if sugar is vegan',
+      'availableFrom': '14:00',
+      'availableTo': '17:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': binignitId,
+      'ingredientID': 242, // Glutinous rice
+      'quantity': 1,
+      'unit': 'cup',
+      'content': 'rinsed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': binignitId,
+      'ingredientID': 144, // Sweet potato
+      'quantity': 1,
+      'unit': 'cup',
+      'content': 'cubed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': binignitId,
+      'ingredientID': 148, // Taro (gabi)
+      'quantity': 1,
+      'unit': 'cup',
+      'content': 'cubed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': binignitId,
+      'ingredientID': 147, // Purple yam (ube)
+      'quantity': 1,
+      'unit': 'cup',
+      'content': 'cubed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': binignitId,
+      'ingredientID': 154, // Saba banana
+      'quantity': 2,
+      'unit': 'pieces',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': binignitId,
+      'ingredientID': 175, // Jackfruit
+      'quantity': 1,
+      'unit': 'cup',
+      'content': 'chunks'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': binignitId,
+      'ingredientID': 8, // Tapioca pearls
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'cooked'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': binignitId,
+      'ingredientID': 216, // Coconut milk
+      'quantity': 4,
+      'unit': 'cups',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': binignitId,
+      'ingredientID': 217, // Brown sugar
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': null
+    });
+
+    // Insert Halo-Halo
+    final haloHaloId = await db.insert('meals', {
+      'mealName': 'Halo-Halo',
+      'price': 75.0,
+      'calories': 226,
+      'servings': 2,
+      'cookingTime': '15 minutes',
+      'mealPicture': 'assets/halo_halo.jpg',
+      'category': 'Dessert, Snack',
+      'content': 'A classic Filipino shave-ice treat layered with sweet fruit, beans, jellies, milk and topped with ice cream or leche flan.',
+      'instructions': '''
+  1. Prep Time (5 mins)
+  Ensure all your ingredients (sweetened beans, nata de coco, kaong, macapuno, gulaman, etc.) are prepared, sweetened, and chilled.
+  If using leche flan, have it sliced and ready.
+  Scoop the ube ice cream and keep it in the freezer until serving time.
+
+  2. Prepare the Glass (3 mins)
+  Get a tall glass.
+  Start layering your sweet ingredients at the bottom. Begin with the sweetened beans, then add nata de coco, kaong, saba banana, jackfruit, macapuno, and gulaman.
+
+  3. Add Ice (1 min)
+  Fill the glass to the top with finely shaved ice, pressing down gently.
+
+  4. Add Milk and Toppings (1 min)
+  Drizzle the evaporated milk (and/or condensed milk) over the shaved ice.
+  Place your chosen toppings on top: a slice of leche flan and a scoop (or two) of ube ice cream.
+
+  5. Serve Immediately
+  Serve immediately with a long spoon. Instruct to mix all the ingredients together thoroughly before eating.
+  ''',
+      'hasDietaryRestrictions': 'Vegetarian (contains dairy), not suitable for strict vegans',
+      'availableFrom': '11:00',
+      'availableTo': '14:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 226, // Sweetened beans (mungo)
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'sweetened'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 58, // Nata de coco
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 59, // Kaong
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 154, // Saba banana
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'sweetened'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 175, // Jackfruit
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'sweetened'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 60, // Macapuno
+      'quantity': 0.25,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 61, // Gulaman
+      'quantity': 0.25,
+      'unit': 'cup',
+      'content': 'cubed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 62, // Shaved ice
+      'quantity': 1,
+      'unit': 'glass',
+      'content': 'to fill'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 253, // Evaporated milk
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 63, // Ube ice cream
+      'quantity': 1,
+      'unit': 'scoop',
+      'content': 'optional'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': haloHaloId,
+      'ingredientID': 64, // Leche flan
+      'quantity': 1,
+      'unit': 'slice',
+      'content': 'optional'
+    });
+
+    // Insert Chopsuey
+    final chopsueyId = await db.insert('meals', {
+      'mealName': 'Chopsuey',
+      'price': 60.0,
+      'calories': 167,
+      'servings': 2,
+      'cookingTime': '25 minutes',
+      'mealPicture': 'assets/chopsuey.jpg',
+      'category': 'Main Dish, Vegetable',
+      'content': 'Stir-fried mixed vegetables with chicken/shrimp in savory sauce.',
+      'instructions': '''
+  1. Prep Time (10–15 mins)
+  Cut the chicken into thin slices or bite-sized pieces.
+  Peel and mince the garlic.
+  Slice the onion.
+  Chop the carrots, broccoli, and cauliflower into florets.
+  Slice the bell pepper and cabbage.
+  If using mushrooms, slice them.
+
+  2. Sauté Aromatics and Protein (5 mins)
+  Heat oil in a large wok or pan over medium-high heat.
+  Sauté garlic and onion until fragrant and softened.
+  Add the chicken slices and cook until they are no longer pink and are lightly browned.
+
+  3. Cook Harder Vegetables (4–5 mins)
+  Add the carrots, broccoli, and cauliflower to the wok.
+  Stir-fry for about 4-5 minutes until they start to soften but are still crisp.
+
+  4. Add Sauces and Broth (3–4 mins)
+  Pour in the chicken broth, soy sauce, and oyster sauce.
+  Stir everything together and bring to a simmer.
+
+  5. Thicken the Sauce (2–3 mins)
+  In a small bowl, mix the cornstarch with 2 tablespoons of water to create a slurry.
+  While stirring the contents of the wok, slowly pour in the cornstarch slurry.
+  Continue to cook until the sauce thickens to a glossy consistency.
+
+  6. Final Stir-in (2 mins)
+  Add the bell peppers, cabbage, and mushrooms.
+  Stir-fry for just another 1-2 minutes until the cabbage is slightly wilted but still colorful and crisp.
+  Season with ground pepper to taste. Serve immediately.
+  ''',
+      'hasDietaryRestrictions': 'Contains soy; can omit meat to make vegetarian',
+      'availableFrom': '11:00',
+      'availableTo': '14:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 43, // Chicken thigh
+      'quantity': 100,
+      'unit': 'g',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 52, // Carrots
+      'quantity': 0.33,
+      'unit': 'piece',
+      'content': 'julienned'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 139, // Broccoli
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'florets'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 115, // Cauliflower
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'florets'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 133, // Bell pepper
+      'quantity': 0.5,
+      'unit': 'small',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 114, // Cabbage
+      'quantity': 0.5,
+      'unit': 'small',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 6, // Mushrooms
+      'quantity': 0.25,
+      'unit': 'cup',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 152, // Garlic
+      'quantity': 3,
+      'unit': 'cloves',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 149, // Onion
+      'quantity': 1,
+      'unit': 'small',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 239, // Soy sauce
+      'quantity': 2,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 247, // Oyster sauce
+      'quantity': 2,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 248, // Cornstarch
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 60, // Chicken broth
+      'quantity': 1,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': chopsueyId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 1,
+      'unit': 'tsp',
+      'content': null
+    });
+
+    // Insert Laing
+    final laingId = await db.insert('meals', {
+      'mealName': 'Laing',
+      'price': 65.0,
+      'calories': 380,
+      'servings': 2,
+      'cookingTime': '75 minutes',
+      'mealPicture': 'assets/laing.jpg',
+      'category': 'Main Dish, Soup, Vegetable',
+      'content': 'Creamy coconut-based taro leaf stew with shrimp paste and chili.',
+      'instructions': '''
+  1. Prep Time (10 mins)
+  If using dried taro leaves, ensure they are properly rehydrated.
+  Peel and mince the garlic and ginger.
+  Slice the onion.
+  Cut the pork belly into small cubes.
+  Slice the Thai chilies (for less heat, you can leave them whole).
+
+  2. Sauté the Base (3 mins)
+  In a pot, heat the cooking oil over medium heat.
+  Sauté the garlic, onion, and ginger until very fragrant and the onion is soft.
+
+  3. Cook the Pork and Shrimp Paste (5 mins)
+  Add the pork belly cubes and cook until they start to render fat and brown slightly.
+  Add the shrimp paste (bagoong alamang) and sauté for another 2 minutes to incorporate its flavor.
+
+  4. Simmer with Coconut Milk (40 mins)
+  Pour in the coconut milk and bring the mixture to a gentle simmer.
+  Carefully add the taro leaves, pushing them down into the liquid. IMPORTANT: Do not stir for the first 15 minutes to prevent itching.
+  Let it simmer uncovered for 40-45 minutes, stirring occasionally after the first 15 minutes, until the leaves have absorbed much of the liquid and the sauce has thickened.
+
+  5. Add Cream and Chili (10 mins)
+  Stir in the coconut cream and the sliced chilies.
+  Continue to simmer for another 10 minutes until the sauce is rich and creamy, and the oil starts to separate slightly.
+  Season with salt if needed. Serve hot.
+  ''',
+      'hasDietaryRestrictions': 'Not suitable for strict vegetarians due to shrimp paste',
+      'availableFrom': '12:00',
+      'availableTo': '15:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': laingId,
+      'ingredientID': 19, // Taro leaves
+      'quantity': 3,
+      'unit': 'cups',
+      'content': 'dried, rehydrated'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': laingId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 2,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': laingId,
+      'ingredientID': 152, // Garlic
+      'quantity': 4,
+      'unit': 'cloves',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': laingId,
+      'ingredientID': 149, // Onion
+      'quantity': 1,
+      'unit': 'medium',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': laingId,
+      'ingredientID': 153, // Ginger
+      'quantity': 1,
+      'unit': 'thumb',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': laingId,
+      'ingredientID': 52, // Pork belly
+      'quantity': 100,
+      'unit': 'g',
+      'content': 'cubed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': laingId,
+      'ingredientID': 23, // Shrimp paste
+      'quantity': 0.25,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': laingId,
+      'ingredientID': 243, // Coconut milk
+      'quantity': 3,
+      'unit': 'cups',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': laingId,
+      'ingredientID': 250, // Thai chilies
+      'quantity': 6,
+      'unit': 'pieces',
+      'content': 'sliced'
+    });
+
+    // Insert Sinigang na Baboy (Pork)
+    final sinigangBaboyId = await db.insert('meals', {
+      'mealName': 'Sinigang na Baboy (Pork)',
+      'price': 70.0,
+      'calories': 150,
+      'servings': 2,
+      'cookingTime': '70 minutes',
+      'mealPicture': 'assets/sinigang_na_baboy.jpg',
+      'category': 'Soup, Main Dish',
+      'content': 'Sour tamarind broth soup with pork and veggies.',
+      'instructions': '''
+  1. Prep Time (8 mins)
+  Wash the pork belly and cut into serving pieces.
+  Slice the tomato.
+  Quarter the onion.
+  Peel and slice the gabi (taro) into chunks.
+  Peel and slice the radish.
+  Slice the eggplant.
+  Wash the kangkong leaves.
+
+  2. Boil the Pork (40–45 mins)
+  In a large pot, combine the pork, tomato, and onion.
+  Cover with about 8-10 cups of water.
+  Bring to a boil, then skim off any scum that rises to the surface.
+  Lower the heat, cover, and simmer for 40-45 minutes or until the pork is tender.
+
+  3. Add Gabi and Tamarind (10 mins)
+  Add the gabi (taro) and your tamarind seasoning mix (or fresh tamarind pulp).
+  Simmer for about 10 minutes until the gabi starts to soften.
+
+  4. Add Other Vegetables (5–7 mins)
+  Add the radish and eggplant.
+  Continue to simmer for 5-7 minutes until these vegetables are tender.
+
+  5. Final Touches (2 mins)
+  Add the kangkong leaves.
+  Season the soup with fish sauce (patis) to your taste.
+  Let it cook for just another minute until the kangkong wilts. Serve hot.
+  ''',
+      'hasDietaryRestrictions': 'Halal/vegetarian option if using fish instead of pork',
+      'availableFrom': '11:00',
+      'availableTo': '14:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangBaboyId,
+      'ingredientID': 52, // Pork belly
+      'quantity': 300,
+      'unit': 'g',
+      'content': 'serving pieces'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangBaboyId,
+      'ingredientID': 129, // Tomato
+      'quantity': 1,
+      'unit': 'medium',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangBaboyId,
+      'ingredientID': 149, // Onion
+      'quantity': 0.5,
+      'unit': 'piece',
+      'content': 'quartered'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangBaboyId,
+      'ingredientID': 245, // Tamarind
+      'quantity': 2,
+      'unit': 'tbsp',
+      'content': 'seasoning mix'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangBaboyId,
+      'ingredientID': 117, // Kangkong
+      'quantity': 1,
+      'unit': 'cup',
+      'content': 'leaves'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangBaboyId,
+      'ingredientID': 148, // Gabi (taro)
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'chunks'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangBaboyId,
+      'ingredientID': 34, // Radish
+      'quantity': 0.25,
+      'unit': 'cup',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangBaboyId,
+      'ingredientID': 122, // Eggplant
+      'quantity': 0.25,
+      'unit': 'cup',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangBaboyId,
+      'ingredientID': 246, // Fish sauce
+      'quantity': 1,
+      'unit': 'tsp',
+      'content': 'to taste'
+    });
+
+    // Insert Ginataang Gulay
+    final ginataangGulayId = await db.insert('meals', {
+      'mealName': 'Ginataang Gulay',
+      'price': 55.0,
+      'calories': 210,
+      'servings': 2,
+      'cookingTime': '30 minutes',
+      'mealPicture': 'assets/ginataang_gulay.jpg',
+      'category': 'Main Dish, Vegetable',
+      'content': 'A creamy vegetable stew simmered in coconut milk, rich and comforting.',
+      'instructions': '''
+  1. Prep Time (8 mins)
+  Slice the string beans into 2-inch lengths.
+  Peel the squash, remove seeds, and cut into cubes.
+  Slice the eggplant.
+  Peel and mince the garlic and ginger.
+  Slice the onion.
+
+  2. Sauté Aromatics (2 mins)
+  In a pot, heat the cooking oil over medium heat.
+  Sauté the garlic, onion, and ginger until fragrant and the onion is translucent.
+
+  3. Sauté Vegetables (4–5 mins)
+  Add the string beans and squash cubes.
+  Stir-fry for about 4-5 minutes to lightly cook the exterior.
+
+  4. Simmer in Coconut Milk (10–12 mins)
+  Pour in the coconut milk and bring to a gentle simmer.
+  Let it cook, uncovered, for 10-12 minutes, or until the squash is fork-tender.
+
+  5. Add Cream and Season (3–5 mins)
+  Stir in the coconut cream.
+  Add the sliced eggplant and simmer for another 3-5 minutes until the eggplant is cooked and the sauce has thickened slightly.
+  Season with salt and pepper to taste. Serve hot.
+  ''',
+      'hasDietaryRestrictions': 'Vegan, Halal, Gluten-Free',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangGulayId,
+      'ingredientID': 134, // String beans
+      'quantity': 1,
+      'unit': 'cup',
+      'content': '2-inch lengths'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangGulayId,
+      'ingredientID': 127, // Squash
+      'quantity': 1,
+      'unit': 'cup',
+      'content': 'cubed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangGulayId,
+      'ingredientID': 122, // Eggplant
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangGulayId,
+      'ingredientID': 243, // Coconut milk
+      'quantity': 1,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangGulayId,
+      'ingredientID': 149, // Onion
+      'quantity': 1,
+      'unit': 'small',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangGulayId,
+      'ingredientID': 152, // Garlic
+      'quantity': 3,
+      'unit': 'cloves',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangGulayId,
+      'ingredientID': 153, // Ginger
+      'quantity': 1,
+      'unit': 'thumb',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangGulayId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+
+    // Insert Ginisang Kalabasa
+    final ginisangKalabasaId = await db.insert('meals', {
+      'mealName': 'Ginisang Kalabasa',
+      'price': 50.0,
+      'calories': 185,
+      'servings': 2,
+      'cookingTime': '25 minutes',
+      'mealPicture': 'assets/ginisang_kalabasa.jpg',
+      'category': 'Main Dish, Vegetable',
+      'content': 'A budget-friendly sautéed squash dish that is simple and hearty.',
+      'instructions': '''
+  1. Prep Time (8 mins)
+  Peel the kalabasa (squash), remove seeds, and cut into small cubes.
+  Dice the tomato and onion.
+  Mince the garlic.
+  If using meat, have your ground pork or shrimp ready.
+
+  2. Sauté Aromatics and Protein (5–7 mins)
+  Heat oil in a pan over medium heat.
+  Sauté the garlic and onion until soft and fragrant.
+  Add the tomato and cook until it softens and releases its juice.
+  If using, add the ground pork or shrimp and cook until browned or opaque.
+
+  3. Cook the Squash (12–15 mins)
+  Add the kalabasa cubes to the pan.
+  Pour in about ½ cup of water or broth.
+  Cover the pan and let it simmer for 12-15 minutes, or until the kalabasa is very tender and can be easily mashed with a spoon.
+
+  4. Mash and Season (2–3 mins)
+  You can lightly mash some of the kalabasa with the back of your spoon to thicken the sauce.
+  Season with salt and plenty of ground black pepper to taste.
+  Simmer for another 2-3 minutes. Serve hot.
+  ''',
+      'hasDietaryRestrictions': 'Vegetarian (if no meat), Halal',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangKalabasaId,
+      'ingredientID': 127, // Kalabasa (squash)
+      'quantity': 2,
+      'unit': 'cups',
+      'content': 'cubed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangKalabasaId,
+      'ingredientID': 129, // Tomato
+      'quantity': 1,
+      'unit': 'small',
+      'content': 'diced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangKalabasaId,
+      'ingredientID': 149, // Onion
+      'quantity': 0.5,
+      'unit': 'piece',
+      'content': 'diced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangKalabasaId,
+      'ingredientID': 152, // Garlic
+      'quantity': 3,
+      'unit': 'cloves',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangKalabasaId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+
+    // Insert Sinigang na Isda
+    final sinigangIsdaId = await db.insert('meals', {
+      'mealName': 'Sinigang na Isda',
+      'price': 60.0,
+      'calories': 130,
+      'servings': 2,
+      'cookingTime': '30 minutes',
+      'mealPicture': 'assets/sinigang_na_isda.jpg',
+      'category': 'Soup, Main Dish',
+      'content': 'A tangy tamarind-based fish soup perfect for rainy days.',
+      'instructions': '''
+  1. Prep Time (8–10 mins)
+  Clean the fish (bangus or tilapia) and cut into large slices.
+  Slice the tomato.
+  Quarter the onion.
+  Peel and slice the radish.
+  Slice the eggplant.
+  Wash the kangkong leaves.
+
+  2. Boil the Broth Base (5 mins)
+  In a pot, bring 6-8 cups of water to a boil.
+  Add the tomato and onion, and boil for about 5 minutes until they soften.
+
+  3. Add Tamarind and Fish (7–10 mins)
+  Stir in the tamarind seasoning mix until dissolved.
+  Gently add the fish slices and simmer for 7-10 minutes until the fish is cooked through.
+
+  4. Add Vegetables (5–7 mins)
+  Add the radish and eggplant.
+  Continue to simmer for 5-7 minutes until the vegetables are tender.
+
+  5. Final Touches (2 mins)
+  Add the kangkong leaves and the whole green chili (if using).
+  Season with fish sauce to taste.
+  Cook for just another minute until the kangkong wilts. Serve immediately.
+  ''',
+      'hasDietaryRestrictions': 'Halal, Pescatarian',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangIsdaId,
+      'ingredientID': 183, // Bangus or tilapia
+      'quantity': 2,
+      'unit': 'medium slices',
+      'content': 'cleaned'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangIsdaId,
+      'ingredientID': 129, // Tomato
+      'quantity': 1,
+      'unit': 'small',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangIsdaId,
+      'ingredientID': 149, // Onion
+      'quantity': 0.5,
+      'unit': 'piece',
+      'content': 'quartered'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangIsdaId,
+      'ingredientID': 245, // Tamarind paste
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': 'seasoning mix'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangIsdaId,
+      'ingredientID': 117, // Kangkong
+      'quantity': 1,
+      'unit': 'cup',
+      'content': 'leaves'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangIsdaId,
+      'ingredientID': 34, // Radish
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangIsdaId,
+      'ingredientID': 122, // Eggplant
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangIsdaId,
+      'ingredientID': 132, // Green chili
+      'quantity': 1,
+      'unit': 'piece',
+      'content': 'optional, whole'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangIsdaId,
+      'ingredientID': 246, // Fish sauce
+      'quantity': 1,
+      'unit': 'tsp',
+      'content': 'to taste'
+    });
+
+    // Insert Sinigang na Hipon
+    final sinigangHiponId = await db.insert('meals', {
+      'mealName': 'Sinigang na Hipon',
+      'price': 75.0,
+      'calories': 160,
+      'servings': 2,
+      'cookingTime': '25 minutes',
+      'mealPicture': 'assets/sinigang_na_hipon.jpg',
+      'category': 'Soup, Main Dish',
+      'content': 'A light and tangy shrimp soup that warms and satisfies with its sour kick.',
+      'instructions': '''
+  1. Prep Time (10 mins)
+  Clean the shrimp, leaving the heads on for more flavor if desired.
+  Slice the tomato.
+  Quarter the onion.
+  Peel and slice the radish.
+  Slice the eggplant and cut the sitaw into 2-inch lengths.
+  Wash the kangkong leaves.
+
+  2. Boil the Broth Base (5 mins)
+  In a pot, bring 6-8 cups of water to a boil.
+  Add the tomato and onion and boil for about 5 minutes.
+
+  3. Add Tamarind and Shrimp (5–7 mins)
+  Stir in the tamarind paste until it dissolves.
+  Gently add the shrimp and simmer for 5-7 minutes until they turn pink and are cooked through. Do not overcook.
+
+  4. Add Vegetables (5 mins)
+  Add the radish, eggplant, and sitaw.
+  Simmer for about 5 minutes until the vegetables are tender but still firm.
+
+  5. Final Touches (2 mins)
+  Add the kangkong leaves and green chili.
+  Season with fish sauce to taste.
+  Let it cook for just another minute until the kangkong wilts. Serve hot.
+  ''',
+      'hasDietaryRestrictions': 'Halal, Pescatarian',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangHiponId,
+      'ingredientID': 206, // Shrimp
+      'quantity': 250,
+      'unit': 'g',
+      'content': 'cleaned'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangHiponId,
+      'ingredientID': 129, // Tomato
+      'quantity': 1,
+      'unit': 'piece',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangHiponId,
+      'ingredientID': 149, // Onion
+      'quantity': 0.5,
+      'unit': 'piece',
+      'content': 'quartered'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangHiponId,
+      'ingredientID': 117, // Kangkong
+      'quantity': 1,
+      'unit': 'cup',
+      'content': 'leaves'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangHiponId,
+      'ingredientID': 134, // Sitaw
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': '2-inch lengths'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangHiponId,
+      'ingredientID': 34, // Radish
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangHiponId,
+      'ingredientID': 122, // Eggplant
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangHiponId,
+      'ingredientID': 245, // Tamarind paste
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': 'seasoning mix'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangHiponId,
+      'ingredientID': 132, // Green chili
+      'quantity': 1,
+      'unit': 'piece',
+      'content': 'optional, whole'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sinigangHiponId,
+      'ingredientID': 246, // Fish sauce
+      'quantity': 1,
+      'unit': 'tsp',
+      'content': 'to taste'
+    });
+
+    // Insert Tortang Sayote
+    final tortangSayoteId = await db.insert('meals', {
+      'mealName': 'Tortang Sayote',
+      'price': 50.0,
+      'calories': 200,
+      'servings': 2,
+      'cookingTime': '20 minutes',
+      'mealPicture': 'assets/tortang_sayote.jpg',
+      'category': 'Appetizer, Vegetable',
+      'content': 'A crispy egg-and-chayote omelette—simple, budget-friendly, and filling.',
+      'instructions': '''
+  1. Prep and Grate Sayote (7 mins)
+  Peel the sayote, remove the seed, and grate them using a grater.
+  Place the grated sayote in a clean cloth or cheesecloth and squeeze out as much excess water as possible. This is a crucial step for a crispy torta.
+
+  2. Mix the Batter (3 mins)
+  In a bowl, beat the eggs.
+  Add the squeezed grated sayote, minced garlic, chopped onion, and flour.
+  Season with salt and pepper. Mix everything until well-combined.
+
+  3. Heat the Pan (2 mins)
+  Place a non-stick skillet over medium heat and add enough cooking oil to coat the surface.
+  Let the oil get hot.
+
+  4. Fry the Patties (10–12 mins)
+  Scoop about ¼ cup of the mixture and pour it into the pan, shaping it into a patty.
+  Fry for about 3-4 minutes on one side until the bottom is golden brown and set.
+  Carefully flip and cook the other side for another 3-4 minutes.
+  Repeat with the remaining mixture.
+
+  5. Drain and Serve (2 mins)
+  Place the cooked Tortang Sayote on a plate lined with paper towels to drain excess oil.
+  Serve hot with ketchup or a vinegar and garlic dip.
+  ''',
+      'hasDietaryRestrictions': 'Vegetarian, Halal',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': tortangSayoteId,
+      'ingredientID': 128, // Sayote
+      'quantity': 2,
+      'unit': 'medium',
+      'content': 'grated and squeezed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tortangSayoteId,
+      'ingredientID': 178, // Eggs
+      'quantity': 3,
+      'unit': 'pieces',
+      'content': 'beaten'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tortangSayoteId,
+      'ingredientID': 152, // Garlic
+      'quantity': 2,
+      'unit': 'cloves',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tortangSayoteId,
+      'ingredientID': 149, // Onion
+      'quantity': 1,
+      'unit': 'small',
+      'content': 'chopped'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tortangSayoteId,
+      'ingredientID': 251, // Flour
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': tortangSayoteId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 3,
+      'unit': 'tbsp',
+      'content': 'for frying'
+    });
+
+    // Insert Adobong Pusit
+    final adobongPusitId = await db.insert('meals', {
+      'mealName': 'Adobong Pusit',
+      'price': 80.0,
+      'calories': 240,
+      'servings': 2,
+      'cookingTime': '35 minutes',
+      'mealPicture': 'assets/adobong_pusit.jpg',
+      'category': 'Main Dish, Seafood',
+      'content': 'A bold, savory squid dish stewed in soy sauce and vinegar with a hint of garlic.',
+      'instructions': '''
+  1. Prep Time (10 mins)
+  Clean the squid thoroughly, removing the ink sac, quill, and innards. You can keep the ink for a darker sauce if you like.
+  Leave the squid whole or slice it into rings.
+  Mince the garlic and slice the onion.
+
+  2. Sauté Aromatics (3 mins)
+  Heat oil in a pan over medium heat.
+  Sauté the garlic and onion until soft and aromatic.
+
+  3. Cook the Squid (2–3 mins)
+  Add the squid to the pan and cook for 2-3 minutes, stirring, until it firms up and turns opaque.
+
+  4. Add Sauces and Simmer (10 mins)
+  Pour in the soy sauce and vinegar. DO NOT STIR. Let the vinegar cook for about 3 minutes to lose its raw acidity.
+  Add the black pepper and, if using, the optional tomato.
+  After 3 minutes, you can stir. Let it simmer on low heat for 10-15 minutes until the squid is tender and the sauce has reduced. Be careful not to overcook the squid, or it will become rubbery.
+
+  5. Final Reduction (2 mins)
+  If there's still a lot of sauce, increase the heat for the last 2 minutes to reduce it to a glazy consistency.
+  Serve hot.
+  ''',
+      'hasDietaryRestrictions': 'Halal, Pescatarian',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': adobongPusitId,
+      'ingredientID': 207, // Squid
+      'quantity': 300,
+      'unit': 'g',
+      'content': 'cleaned'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongPusitId,
+      'ingredientID': 149, // Onion
+      'quantity': 1,
+      'unit': 'small',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongPusitId,
+      'ingredientID': 152, // Garlic
+      'quantity': 3,
+      'unit': 'cloves',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongPusitId,
+      'ingredientID': 239, // Soy sauce
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongPusitId,
+      'ingredientID': 236, // Vinegar
+      'quantity': 2,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongPusitId,
+      'ingredientID': 233, // Black pepper
+      'quantity': 0.5,
+      'unit': 'tsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongPusitId,
+      'ingredientID': 129, // Tomato
+      'quantity': 1,
+      'unit': 'small',
+      'content': 'optional, sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongPusitId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+
+    // Insert Adobong Baboy
+    final adobongBaboyId = await db.insert('meals', {
+      'mealName': 'Adobong Baboy',
+      'price': 120.0,
+      'calories': 380,
+      'servings': 3,
+      'cookingTime': '45 minutes',
+      'mealPicture': 'assets/adobong_baboy.jpg',
+      'category': 'Main Dish',
+      'content': 'A hearty Filipino classic of pork stewed in soy sauce, vinegar, and spices.',
+      'instructions': '''
+  1. Prep and Marinate (20–30 mins)
+  Cut the pork belly into bite-sized cubes.
+  In a large bowl, combine the pork, soy sauce, crushed garlic, peppercorns, and bay leaves.
+  Let it marinate for at least 20-30 minutes.
+
+  2. Initial Simmer (30–40 mins)
+  Transfer the pork and its marinade into a pot.
+  Add 1 cup of water.
+  Bring to a boil, then reduce the heat to low, cover, and simmer for 30-40 minutes until the pork is very tender.
+
+  3. Add Vinegar (5 mins)
+  Uncover the pot and pour in the vinegar.
+  Do not stir. Let it cook undisturbed for about 5 minutes to allow the vinegar's sharpness to mellow.
+
+  4. Brown and Reduce (10–15 mins)
+  You can now stir. Increase the heat to medium.
+  Let the pork cook in the reducing sauce until the sauce thickens and the pork starts to sizzle and fry in its own rendered fat, getting slightly crispy edges. This should take 10-15 minutes.
+
+  5. Serve
+  Serve the Adobong Baboy hot with its reduced sauce, alongside steamed rice.
+  ''',
+      'hasDietaryRestrictions': 'Not suitable for Halal, Hypertension',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': adobongBaboyId,
+      'ingredientID': 52, // Pork belly
+      'quantity': 500,
+      'unit': 'g',
+      'content': 'cubed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongBaboyId,
+      'ingredientID': 239, // Soy sauce
+      'quantity': 0.25,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongBaboyId,
+      'ingredientID': 236, // Vinegar
+      'quantity': 3,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongBaboyId,
+      'ingredientID': 152, // Garlic
+      'quantity': 3,
+      'unit': 'cloves',
+      'content': 'crushed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongBaboyId,
+      'ingredientID': 234, // Bay leaves
+      'quantity': 2,
+      'unit': 'pieces',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongBaboyId,
+      'ingredientID': 235, // Peppercorns
+      'quantity': 1,
+      'unit': 'tsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': adobongBaboyId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+
+    // Insert Ginataang Alimango
+    final ginataangAlimangoId = await db.insert('meals', {
+      'mealName': 'Ginataang Alimango',
+      'price': 120.0,
+      'calories': 450,
+      'servings': 2,
+      'cookingTime': '40 minutes',
+      'mealPicture': 'assets/ginataang_alimango.jpg',
+      'category': 'Main Dish, Seafood',
+      'content': 'Rich and creamy crab dish simmered in coconut milk with vegetables.',
+      'instructions': '''
+  1. Prep Time (10–15 mins)
+  Clean the live crabs thoroughly. You can leave them whole or chop them into sections.
+  Peel and mince the garlic and ginger.
+  Slice the onion.
+  Cut the squash into chunks and the sitaw into lengths.
+
+  2. Sauté the Base (2 mins)
+  In a wide pot, heat oil over medium heat.
+  Sauté the garlic, onion, and ginger until very fragrant.
+
+  3. Cook the Crab (5–7 mins)
+  Add the crab pieces to the pot.
+  Sauté for 5-7 minutes until the shells start to turn orange-red.
+
+  4. Simmer in Coconut Milk (15–20 mins)
+  Pour in the coconut milk and bring the mixture to a gentle boil.
+  Lower the heat, cover, and simmer for 15-20 minutes to cook the crab through and infuse the flavor.
+
+  5. Add Veggies and Cream (7–10 mins)
+  Add the squash and sitaw.
+  Continue to simmer until the vegetables are tender, about 7-10 minutes.
+  Stir in the coconut cream and add the red chili.
+  Simmer for another 5 minutes until the sauce is rich and creamy. Season with salt if needed.
+  ''',
+      'hasDietaryRestrictions': 'Pescatarian, Halal',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangAlimangoId,
+      'ingredientID': 202, // Alimango/crab
+      'quantity': 2,
+      'unit': 'pieces',
+      'content': 'cleaned'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangAlimangoId,
+      'ingredientID': 243, // Coconut milk
+      'quantity': 1,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangAlimangoId,
+      'ingredientID': 127, // Squash
+      'quantity': 1,
+      'unit': 'cup',
+      'content': 'chunks'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangAlimangoId,
+      'ingredientID': 134, // Sitaw
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'lengths'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangAlimangoId,
+      'ingredientID': 131, // Red chili
+      'quantity': 1,
+      'unit': 'piece',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangAlimangoId,
+      'ingredientID': 149, // Onion
+      'quantity': 1,
+      'unit': 'piece',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangAlimangoId,
+      'ingredientID': 152, // Garlic
+      'quantity': 3,
+      'unit': 'cloves',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangAlimangoId,
+      'ingredientID': 153, // Ginger
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangAlimangoId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+
+    // Insert Saging Prito
+    final sagingPritoId = await db.insert('meals', {
+      'mealName': 'Saging Prito',
+      'price': 50.0,
+      'calories': 160,
+      'servings': 2,
+      'cookingTime': '15 minutes',
+      'mealPicture': 'assets/saging_prito.jpg',
+      'category': 'Dessert, Snack',
+      'content': 'Golden fried saba bananas—crispy outside, soft and sweet inside.',
+      'instructions': '''
+  1. Prep Time (5 mins)
+  Peel the saba bananas.
+  You can leave them whole, slice them in half lengthwise, or diagonally into thick slices.
+  Place the brown sugar on a plate.
+
+  2. Coat Bananas in Sugar (2 mins)
+  Roll the banana pieces in the brown sugar until they are evenly coated.
+
+  3. Heat the Oil (3 mins)
+  In a frying pan, pour enough cooking oil to reach about ½ inch deep.
+  Heat the oil over medium heat until hot (a piece of banana should sizzle when added).
+
+  4. Fry the Bananas (8–10 mins)
+  Carefully place the sugar-coated bananas in the hot oil.
+  Fry for about 4-5 minutes on each side, or until they are golden brown and caramelized, and the sugar forms a crispy coating.
+
+  5. Drain and Cool (2 mins)
+  Remove the bananas from the oil and place them on a wire rack or a plate lined with paper towels to drain excess oil.
+  Let them cool for a minute or two before serving, as the caramelized sugar will be very hot.
+  ''',
+      'hasDietaryRestrictions': 'Vegan, Vegetarian, Halal',
+      'availableFrom': '14:00',
+      'availableTo': '17:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': sagingPritoId,
+      'ingredientID': 154, // Saba banana
+      'quantity': 4,
+      'unit': 'pieces',
+      'content': 'peeled'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sagingPritoId,
+      'ingredientID': 252, // Brown sugar
+      'quantity': 3,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': sagingPritoId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'for frying'
+    });
+
+    // Insert Escabeche
+    final escabecheId = await db.insert('meals', {
+      'mealName': 'Escabeche',
+      'price': 100.0,
+      'calories': 320,
+      'servings': 2,
+      'cookingTime': '35 minutes',
+      'mealPicture': 'assets/escabeche.jpg',
+      'category': 'Main Dish',
+      'content': 'A sweet and tangy fried fish dish topped with sautéed vegetables in sauce.',
+      'instructions': '''
+  1. Prep and Fry the Fish (10–12 mins)
+  Clean the fish (tilapia or bangus) and score the sides.
+  Pat it completely dry with paper towels.
+  Heat oil for frying in a pan over medium-high heat.
+  Fry the fish until golden brown and crispy on both sides. Remove and set aside on a serving plate.
+
+  2. Sauté Vegetables for Sauce (5 mins)
+  In a separate pan, heat a tablespoon of oil.
+  Sauté the garlic and onion until soft.
+  Add the julienned carrots and bell pepper, and stir-fry for 2-3 minutes until they begin to soften.
+
+  3. Combine Sauce Ingredients (2 mins)
+  Pour in the soy sauce, vinegar, and about ½ cup of water.
+  Add the sugar and stir until dissolved.
+  Let the mixture come to a simmer.
+
+  4. Thicken the Sauce (2 mins)
+  In a small bowl, create a slurry by mixing the cornstarch with 2 tablespoons of water.
+  While stirring the simmering sauce, slowly add the cornstarch slurry.
+  Continue to cook and stir until the sauce thickens to a glossy, syrupy consistency.
+
+  5. Assemble and Serve (1 min)
+  Taste the sauce and adjust seasoning if needed.
+  Pour the hot sweet and sour sauce with vegetables over the fried fish.
+  Serve immediately.
+  ''',
+      'hasDietaryRestrictions': 'Pescatarian, Halal',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': escabecheId,
+      'ingredientID': 183, // Tilapia or bangus
+      'quantity': 2,
+      'unit': 'pieces',
+      'content': 'cleaned and scored'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': escabecheId,
+      'ingredientID': 139, // Carrots
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'julienned'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': escabecheId,
+      'ingredientID': 133, // Bell pepper
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'julienned'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': escabecheId,
+      'ingredientID': 149, // Onion
+      'quantity': 1,
+      'unit': 'piece',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': escabecheId,
+      'ingredientID': 152, // Garlic
+      'quantity': 3,
+      'unit': 'cloves',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': escabecheId,
+      'ingredientID': 236, // Vinegar
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': escabecheId,
+      'ingredientID': 239, // Soy sauce
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': escabecheId,
+      'ingredientID': 252, // Sugar
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': escabecheId,
+      'ingredientID': 248, // Cornstarch
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': escabecheId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'for frying'
+    });
+
+    // Insert Ginataang Kalabasa
+    final ginataangKalabasaId = await db.insert('meals', {
+      'mealName': 'Ginataang Kalabasa',
+      'price': 60.0,
+      'calories': 250,
+      'servings': 2,
+      'cookingTime': '25 minutes',
+      'mealPicture': 'assets/ginataang_kalabasa.jpg',
+      'category': 'Vegetable, Main Dish',
+      'content': 'Creamy coconut-based stew with squash and string beans.',
+      'instructions': '''
+  1. Prep Time (8–10 mins)
+  Peel the kalabasa, remove seeds, and cut into cubes.
+  Cut the sitaw into 2-inch lengths.
+  Mince the garlic and slice the onion.
+
+  2. Sauté Aromatics (2 mins)
+  Heat oil in a pot over medium heat.
+  Sauté the garlic and onion until soft and translucent.
+
+  3. Sauté Squash (2–3 mins)
+  Add the kalabasa cubes and sauté for 2-3 minutes.
+
+  4. Simmer in Coconut Milk (10–12 mins)
+  Pour in the coconut milk and bring to a gentle simmer.
+  Let it cook for 10-12 minutes until the kalabasa is almost tender.
+
+  5. Add Sitaw and Shrimp (5–7 mins)
+  Add the sitaw and the shrimp (if using).
+  Continue to simmer for another 5-7 minutes until the sitaw is cooked but still crisp, the shrimp is pink, and the kalabasa is fully tender.
+  Season with salt or fish sauce to taste. Serve hot.
+  ''',
+      'hasDietaryRestrictions': 'Vegetarian (if no shrimp), Vegan (if no fish), Halal',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangKalabasaId,
+      'ingredientID': 127, // Kalabasa
+      'quantity': 1.5,
+      'unit': 'cup',
+      'content': 'cubed'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangKalabasaId,
+      'ingredientID': 134, // Sitaw
+      'quantity': 1,
+      'unit': 'cup',
+      'content': '2-inch lengths'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangKalabasaId,
+      'ingredientID': 243, // Coconut milk
+      'quantity': 1,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangKalabasaId,
+      'ingredientID': 149, // Onion
+      'quantity': 1,
+      'unit': 'piece',
+      'content': 'sliced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangKalabasaId,
+      'ingredientID': 152, // Garlic
+      'quantity': 2,
+      'unit': 'cloves',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangKalabasaId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginataangKalabasaId,
+      'ingredientID': 206, // Shrimp
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': 'optional, peeled'
+    });
+
+    // Insert Ginisang Upo
+    final ginisangUpoId = await db.insert('meals', {
+      'mealName': 'Ginisang Upo',
+      'price': 55.0,
+      'calories': 180,
+      'servings': 2,
+      'cookingTime': '20 minutes',
+      'mealPicture': 'assets/ginisang_upo.jpg',
+      'category': 'Vegetable',
+      'content': 'A healthy sautéed bottle gourd dish, light and perfect for lunch.',
+      'instructions': '''
+  1. Prep Time (8 mins)
+  Peel the upo (bottle gourd), remove the soft inner part with seeds, and slice into half-moons.
+  Dice the tomato and onion.
+  Mince the garlic.
+  Prepare your protein (ground pork or shrimp).
+
+  2. Sauté Aromatics and Protein (5 mins)
+  Heat oil in a pan over medium heat.
+  Sauté the garlic and onion until fragrant.
+  Add the tomato and cook until soft.
+  Add the ground pork or shrimp and cook until browned or opaque.
+
+  3. Cook the Upo (8–10 mins)
+  Add the sliced upo to the pan.
+  Season with salt and pepper.
+  You can add about ¼ cup of water to create some steam.
+  Cover the pan and let it simmer for 8-10 minutes, or until the upo is translucent and tender but not mushy.
+
+  4. Season and Serve (1 min)
+  Do a final taste test and adjust seasoning if necessary.
+  Serve hot.
+  ''',
+      'hasDietaryRestrictions': 'Halal (if using shrimp), Pescatarian, Not Vegan if using meat',
+      'availableFrom': '11:00',
+      'availableTo': '13:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangUpoId,
+      'ingredientID': 125, // Upo
+      'quantity': 2,
+      'unit': 'cups',
+      'content': 'sliced half-moons'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangUpoId,
+      'ingredientID': 129, // Tomato
+      'quantity': 1,
+      'unit': 'small',
+      'content': 'diced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangUpoId,
+      'ingredientID': 152, // Garlic
+      'quantity': 2,
+      'unit': 'cloves',
+      'content': 'minced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangUpoId,
+      'ingredientID': 149, // Onion
+      'quantity': 0.5,
+      'unit': 'small',
+      'content': 'diced'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangUpoId,
+      'ingredientID': 25, // Ground pork or shrimp
+      'quantity': 0.5,
+      'unit': 'cup',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': ginisangUpoId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 1,
+      'unit': 'tbsp',
+      'content': null
+    });
+
+    // Insert Fried Egg with Malunggay
+    final friedEggMalunggayId = await db.insert('meals', {
+      'mealName': 'Fried Egg with Malunggay',
+      'price': 50.0,
+      'calories': 220,
+      'servings': 1,
+      'cookingTime': '10 minutes',
+      'mealPicture': 'assets/fried_egg_malunggay.jpg',
+      'category': 'Breakfast, Appetizer',
+      'content': 'Nutritious fried egg packed with moringa leaves for an energy boost.',
+      'instructions': '''
+  1. Prep Time (3 mins)
+  Crack the eggs into a bowl.
+  Wash the malunggay leaves and pluck them from the stems.
+  If using, mince a small amount of garlic.
+
+  2. Beat the Eggs (1 min)
+  Beat the eggs vigorously with a fork or whisk until the yolks and whites are fully combined.
+  Stir in the malunggay leaves and minced garlic (if using). Season with a pinch of salt and pepper.
+
+  3. Heat the Pan (1 min)
+  Place a non-stick skillet over medium heat and add the cooking oil.
+  Let the oil get hot.
+
+  4. Cook the Egg (3–4 mins)
+  Pour the egg and malunggay mixture into the hot skillet.
+  Let it cook undisturbed for about 2 minutes until the edges are set and the bottom is golden.
+  You can scramble it or flip it to cook as a single omelette until it's cooked to your liking.
+
+  5. Serve Immediately
+  Slide the fried egg onto a plate.
+  Serve immediately while hot, ideally with a side of rice.
+  ''',
+      'hasDietaryRestrictions': 'Halal, Vegetarian',
+      'availableFrom': '07:00',
+      'availableTo': '09:00'
+    });
+
+    await db.insert('meal_ingredients', {
+      'mealID': friedEggMalunggayId,
+      'ingredientID': 178, // Eggs
+      'quantity': 2,
+      'unit': 'pieces',
+      'content': 'beaten'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': friedEggMalunggayId,
+      'ingredientID': 238, // Malunggay
+      'quantity': 0.25,
+      'unit': 'cup',
+      'content': 'leaves'
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': friedEggMalunggayId,
+      'ingredientID': 237, // Cooking oil
+      'quantity': 1,
+      'unit': 'tsp',
+      'content': null
+    });
+    await db.insert('meal_ingredients', {
+      'mealID': friedEggMalunggayId,
+      'ingredientID': 152, // Garlic bits (optional)
+      'quantity': 1,
+      'unit': 'clove',
+      'content': 'optional, minced'
+    });
   }
 
    // ========== NEW METHOD: Load meals from JSON ==========
@@ -2455,8 +2808,9 @@ Serve immediately while hot, ideally with a side of rice.
       i.price,  -- This fetches the per-unit price
       i.category,
       i.ingredientPicture,
-      -- Add other fields as needed
-      mi.quantity
+      mi.quantity,
+      mi.unit,
+      mi.content
     FROM meal_ingredients mi
     JOIN ingredients i ON mi.ingredientID = i.ingredientID
     WHERE mi.mealID = ?
@@ -2928,197 +3282,6 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     };
   }
 
-/*
-
-  Future<void> _insertCompleteSubstitutionData(Database db) async {
-    await _insertUnitConversions(db);
-    await _insertFilipinoIngredients(db);
-    await _insertSubstitutionRules(db);
-  }
-
-  Future<void> _insertUnitConversions(Database db) async {
-    final units = [
-      {'unit_name': 'tbsp', 'grams_per_unit': 15.0},
-      {'unit_name': 'tsp', 'grams_per_unit': 5.0},
-      {'unit_name': 'cup', 'grams_per_unit': 240.0},
-      {'unit_name': 'ml', 'grams_per_unit': 1.0},
-      {'unit_name': 'piece', 'grams_per_unit': 100.0},
-      {'unit_name': 'clove', 'grams_per_unit': 5.0},
-      {'unit_name': 'kg', 'grams_per_unit': 1000.0},
-      {'unit_name': 'g', 'grams_per_unit': 1.0},
-      {'unit_name': 'bunch', 'grams_per_unit': 100.0},
-      {'unit_name': 'slice', 'grams_per_unit': 30.0},
-      {'unit_name': 'wedge', 'grams_per_unit': 75.0},
-      // Expanded for 29 units
-      {'unit_name': 'pack', 'grams_per_unit': 250.0}, // Average from searches
-      {'unit_name': 'pcs', 'grams_per_unit': 100.0},
-      {'unit_name': 'bottle', 'grams_per_unit': 500.0},
-      {'unit_name': 'tray', 'grams_per_unit': 1800.0},
-      {'unit_name': 'tie', 'grams_per_unit': 250.0},
-      {'unit_name': 'group', 'grams_per_unit': 500.0},
-      {'unit_name': 'can', 'grams_per_unit': 370.0},
-      {'unit_name': 'leaves', 'grams_per_unit': 1.0},
-      {'unit_name': '1/4kg', 'grams_per_unit': 250.0},
-      {'unit_name': '350ml bottle', 'grams_per_unit': 350.0},
-      {'unit_name': '500ml', 'grams_per_unit': 500.0},
-      {'unit_name': '250ml pack', 'grams_per_unit': 250.0},
-      {'unit_name': '10g cube', 'grams_per_unit': 10.0},
-      {'unit_name': '150g bottle', 'grams_per_unit': 150.0},
-      {'unit_name': '200g pack', 'grams_per_unit': 200.0},
-      {'unit_name': '370ml can', 'grams_per_unit': 370.0},
-      {'unit_name': '50g pack', 'grams_per_unit': 50.0},
-      {'unit_name': '1/4', 'grams_per_unit': 250.0}, // Assume kg
-      {'unit_name': '100pcs/100 pesos', 'grams_per_unit': 100.0},
-      {'unit_name': '3 for 120', 'grams_per_unit': 100.0},
-      {'unit_name': '6 each', 'grams_per_unit': 100.0},
-      {'unit_name': '12-45/pack', 'grams_per_unit': 250.0},
-      {'unit_name': '20-25/pack', 'grams_per_unit': 250.0},
-      {'unit_name': '20-30/pack', 'grams_per_unit': 250.0},
-      {'unit_name': '70-80/pack', 'grams_per_unit': 250.0},
-    ];
-    for (var unit in units) {
-      await db.insert('unit_conversions', unit, conflictAlgorithm: ConflictAlgorithm.ignore);
-    }
-  }
-
-  Future<void> _insertFilipinoIngredients(Database db) async {
-    String jsonString = await rootBundle.loadString('assets/data/ingredients.json');
-    Map<String, dynamic> jsonData = json.decode(jsonString);
-    List<dynamic> ingredientsJson = jsonData['ingredients'] ?? [];
-
-    for (var ing in ingredientsJson) {
-      // Existing parsePriceString call
-      Map<String, dynamic> parsed = parsePriceString(ing['price_text'] ?? ing['price'] ?? '0', ing['ingredientName'] ?? '', ing['category'] ?? '');
-
-      // Add normalization here (integrate with parsed if needed)
-      double normalizedPrice = parsed['price_per_100g'] ?? (ing['price'] as double? ?? 0.0); // Start with existing parsed value
-      String unit = (parsed['unit'] ?? ing['unit'] as String?)?.toLowerCase() ?? 'unknown';
-      double assumedGrams = 100.0; // Default for per 100g
-
-      if (unit == 'kg') {
-        normalizedPrice /= 10; // 400/kg → 40/100g
-      } else if (unit == 'pack' || unit == 'bottle' || unit == 'can') {
-        // Defaults based on JSON patterns (e.g., packs ~200-350g)
-        if (unit == 'pack') assumedGrams = 200.0; // Adjust per category if needed
-        else if (unit == 'bottle') assumedGrams = 350.0;
-        else if (unit == 'can') assumedGrams = 370.0;
-        normalizedPrice = (normalizedPrice / (assumedGrams / 100)); // e.g., 10/200g pack → 5/100g
-      } else if (unit == 'cube') {
-        assumedGrams = 10.0;
-        normalizedPrice = (normalizedPrice / (assumedGrams / 100)); // 65/cube → 650/100g (diluted broth)
-      }
-      // Handle other units if needed, e.g., add else if for 'ml' or unknowns
-
-      await db.insert('ingredients', {
-        'ingredientID': ing['ingredientID'],
-        'ingredientName': ing['ingredientName'],
-        'price': normalizedPrice, // Use the normalized value
-        'calories': ing['calories'],
-        'nutritionalValue': ing['nutritionalValue'],
-        'ingredientPicture': ing['ingredientPicture'],
-        'category': ing['category'],
-        'sodium_mg_per_100g': ing['sodium_mg_per_100g'] ?? 0.0, // Preserve from JSON
-        'protein_g_per_100g': ing['protein_g_per_100g'] ?? 0.0,
-        'carbs_g_per_100g': ing['carbs_g_per_100g'] ?? 0.0,
-        'fat_g_per_100g': ing['fat_g_per_100g'] ?? 0.0,
-        'unit_density_tbsp': ing['unit_density_tbsp'] ?? 15.0, // Preserve
-        'unit_density_tsp': ing['unit_density_tsp'] ?? 5.0,
-        'unit_density_cup': ing['unit_density_cup'] ?? 240.0,
-        'tags': ing['tags'] ?? '[]',
-        'price_text': parsed['price_text'],
-        'unit': parsed['unit'] ?? ing['unit'],
-        'additionalPictures': ing['additionalPictures'] ?? '',
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
-    }
-  }
-
-  Future<void> _insertSubstitutionRules(Database db) async {
-  try {
-    final String jsonString = await rootBundle.loadString('assets/data/substitutions.json');
-    final Map<String, dynamic> subData = jsonDecode(jsonString);
-    
-    for (var entry in subData.entries) {
-      final origName = entry.key;
-      final subs = entry.value as List<dynamic>;
-      
-      // Get original ID
-      final origResult = await db.query(
-        'ingredients',
-        where: 'ingredientName = ?',
-        whereArgs: [origName],
-      );
-      if (origResult.isEmpty) continue; // Skip if original not found
-      final origId = origResult.first['ingredientID'] as int;
-      
-      for (var subName in subs) {
-        final subResult = await db.query(
-          'ingredients',
-          where: 'ingredientName = ?',
-          whereArgs: [subName],
-        );
-        if (subResult.isEmpty) continue; // Skip if substitute not found
-        final subId = subResult.first['ingredientID'] as int;
-        
-        // Insert with defaults (you can adjust based on category)
-        await db.insert('substitutions', {
-          'original_ingredient_id': origId,
-          'substitute_ingredient_id': subId,
-          'equivalence_ratio': 1.0,
-          'flavor_similarity': 0.7, // Medium similarity
-          'notes': 'General substitute based on availability and similar use.',
-          'confidence': 'medium',
-        }, conflictAlgorithm: ConflictAlgorithm.ignore);
-      }
-    }
-    print('Inserted substitutions from JSON');
-  } catch (e) {
-    print('Error loading substitutions.json: $e');
-    // Optional: Fallback to hardcoded rules if JSON fails
-  }
-}
-
-  // SubstitutionCalculator class - FIXED: Moved outside DatabaseHelper
-  late final SubstitutionCalculator substitutionCalculator = SubstitutionCalculator(this);
-
-  // Enhanced alternatives method
-  Future<List<Map<String, dynamic>>> getEnhancedAlternatives(
-    String ingredientName, double amount, String unit) async {
-    final db = await database;
-    final ingredient = await getIngredientByName(ingredientName); // Assume this method exists or add it
-    if (ingredient == null) return [];
-    return await substitutionCalculator.getRankedSubstitutes(
-      originalIngredientId: ingredient['ingredientID'] as int,
-      originalAmount: amount,
-      originalUnit: unit,
-    );
-  }
-
-  // Log substitution
-  Future<void> logSubstitution({
-    required int mealId,
-    required int userId,
-    required int originalIngredientId,
-    required int substituteIngredientId,
-    required double originalAmountG,
-    required double substituteAmountG,
-    required double costDelta,
-    required double calorieDelta,
-  }) async {
-    final db = await database;
-    await db.insert('meal_substitution_log', {
-      'meal_id': mealId,
-      'user_id': userId,
-      'original_ingredient_id': originalIngredientId,
-      'substitute_ingredient_id': substituteIngredientId,
-      'original_amount_g': originalAmountG,
-      'substitute_amount_g': substituteAmountG,
-      'cost_delta': costDelta,
-      'calorie_delta': calorieDelta,
-      'substitution_date': DateTime.now().toIso8601String(),
-    });
-  }
-  */
-
   // ========== CUSTOMIZED MEALS OPERATIONS ==========
 
   Future<int> saveCustomizedMeal({
@@ -3214,198 +3377,3 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
   }
 
 }
-
-/*
- ========== SUBSTITUTION CALCULATOR CLASS - MOVED OUTSIDE DatabaseHelper ==========
-class SubstitutionCalculator {
-  final DatabaseHelper dbHelper;
-
-  SubstitutionCalculator(this.dbHelper);
-
-  // Convert recipe amount to grams
-  Future<double> convertToGrams(double amount, String unit, Map<String, dynamic>? ingredient) async {
-    final db = await dbHelper.database;
-    final result = await db.query(
-      'unit_conversions',
-      where: 'unit_name = ?',
-      whereArgs: [unit.toLowerCase()],
-    );
-    
-    if (result.isEmpty) {
-      // Default to grams if unit not found
-      return amount;
-    }
-    
-    double gramsPerUnit = result.first['grams_per_unit'] as double;
-    
-    // Override with per-ingredient if available
-    if (ingredient != null) {
-      if (unit == 'cup') gramsPerUnit = ingredient['unit_density_cup'] as double? ?? gramsPerUnit;
-      if (unit == 'tbsp') gramsPerUnit = ingredient['unit_density_tbsp'] as double? ?? gramsPerUnit;
-      if (unit == 'tsp') gramsPerUnit = ingredient['unit_density_tsp'] as double? ?? gramsPerUnit;
-    }
-    
-    return amount * gramsPerUnit;
-  }
-
-  // Calculate substitution details
-  Future<Map<String, dynamic>> calculateSubstitution({
-    required int originalIngredientId,
-    required int substituteIngredientId,
-    required double originalAmount,
-    required String originalUnit,
-  }) async {
-    final db = await dbHelper.database;
-    
-    // Get original ingredient data
-    final originalIngredient = await db.query(
-      'ingredients',
-      where: 'ingredientID = ?',
-      whereArgs: [originalIngredientId],
-    );
-    
-    // Get substitute ingredient data  
-    final substituteIngredient = await db.query(
-      'ingredients',
-      where: 'ingredientID = ?',
-      whereArgs: [substituteIngredientId],
-    );
-    
-    // Get substitution rule
-    final substitutionRule = await db.query(
-      'substitutions',
-      where: 'original_ingredient_id = ? AND substitute_ingredient_id = ?',
-      whereArgs: [originalIngredientId, substituteIngredientId],
-    );
-    
-    if (originalIngredient.isEmpty || substituteIngredient.isEmpty) {
-      throw Exception('Ingredient not found');
-    }
-    
-    final orig = originalIngredient.first;
-    final sub = substituteIngredient.first;
-    final rule = substitutionRule.isNotEmpty ? substitutionRule.first : null;
-    
-    // Convert to grams (fixed: pass orig as the ingredient map)
-    final origGrams = await convertToGrams(originalAmount, originalUnit, orig);
-    
-    // Calculate substitute amount
-    final equivalenceRatio = rule?['equivalence_ratio'] as double? ?? 1.0;
-    final subGrams = origGrams * equivalenceRatio;
-    
-    // Calculate nutritional values (per 100g basis)
-    final origCalories = (orig['calories'] as int) * (origGrams / 100);
-    final subCalories = (sub['calories'] as int) * (subGrams / 100);
-    final calorieDelta = subCalories - origCalories;
-    
-    // Calculate cost
-    final origPricePer100g = orig['price'] as double;
-    final subPricePer100g = sub['price'] as double;
-    final origCost = origPricePer100g * (origGrams / 100);
-    final subCost = subPricePer100g * (subGrams / 100);
-    final costDelta = subCost - origCost;
-    
-    // Calculate sodium impact
-    final origSodium = (orig['sodium_mg_per_100g'] as double?) ?? 0 * (origGrams / 100);
-    final subSodium = (sub['sodium_mg_per_100g'] as double?) ?? 0 * (subGrams / 100);
-    final sodiumDelta = subSodium - origSodium;
-    
-    return {
-      'original': {
-        'ingredient': orig,
-        'amount_g': origGrams,
-        'calories': origCalories,
-        'cost': origCost,
-        'sodium_mg': origSodium,
-      },
-      'substitute': {
-        'ingredient': sub,
-        'amount_g': subGrams,
-        'calories': subCalories,
-        'cost': subCost,
-        'sodium_mg': subSodium,
-      },
-      'deltas': {
-        'calories': calorieDelta,
-        'cost': costDelta,
-        'sodium': sodiumDelta,
-      },
-      'rule': rule,
-      'equivalence_ratio': equivalenceRatio,
-    };
-  }
-
-  // Get ranked substitutes for an ingredient
-  Future<List<Map<String, dynamic>>> getRankedSubstitutes({
-    required int originalIngredientId,
-    required double originalAmount,
-    required String originalUnit,
-    Map<String, double> weights = const {
-      'cost': 0.3,
-      'calories': 0.3,
-      'flavor': 0.4,
-    },
-  }) async {
-    final db = await dbHelper.database;
-    
-    // Get all possible substitutes
-    final substitutes = await db.rawQuery('''
-      SELECT s.*, i.* 
-      FROM substitutions s
-      JOIN ingredients i ON s.substitute_ingredient_id = i.ingredientID
-      WHERE s.original_ingredient_id = ?
-    ''', [originalIngredientId]);
-    
-    List<Map<String, dynamic>> rankedSubstitutes = [];
-    
-    for (var sub in substitutes) {
-      final calculation = await calculateSubstitution(
-        originalIngredientId: originalIngredientId,
-        substituteIngredientId: sub['substitute_ingredient_id'] as int,
-        originalAmount: originalAmount,
-        originalUnit: originalUnit,
-      );
-      
-      // Calculate composite score
-      final costDelta = calculation['deltas']['cost'] as double;
-      final calorieDelta = calculation['deltas']['calories'] as double;
-      final flavorSimilarity = sub['flavor_similarity'] as double;
-      
-      // Normalize deltas (lower is better)
-      final normCost = costDelta.abs() / ((calculation['original']['cost'] as double) + 0.001);
-      final normCalories = calorieDelta.abs() / ((calculation['original']['calories'] as double) + 0.001);
-      
-      // Composite score (lower is better)
-      final score = 
-          weights['cost']! * normCost +
-          weights['calories']! * normCalories +
-          weights['flavor']! * (1 - flavorSimilarity);
-      
-      rankedSubstitutes.add({
-        ...calculation,
-        'score': score,
-        'display_amount': _formatAmountForDisplay(
-          calculation['substitute']['amount_g'] as double,
-          originalUnit,
-        ),
-      });
-    }
-    
-    // Sort by score (ascending - lower score is better)
-    rankedSubstitutes.sort((a, b) => (a['score'] as double).compareTo(b['score'] as double));
-    
-    return rankedSubstitutes;
-  }
-
-  String _formatAmountForDisplay(double grams, String originalUnit) {
-    // Simple conversion back to original units for display
-    if (originalUnit == 'tbsp') {
-      return '${(grams / 15).toStringAsFixed(1)} tbsp';
-    } else if (originalUnit == 'tsp') {
-      return '${(grams / 5).toStringAsFixed(1)} tsp';
-    } else {
-      return '${grams.toStringAsFixed(1)}g';
-    }
-  }
-}
-*/
