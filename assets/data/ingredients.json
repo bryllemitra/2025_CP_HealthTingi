@@ -3,7 +3,7 @@
     {
       "ingredientID": 1,
       "ingredientName": "Celery",
-      "price": "400.0",
+      "price": 400.0,
       "calories": 16,
       "nutritionalValue": "Very low in calories; excellent source of vitamin K and a good source of antioxidants like apigenin. Contains dietary fiber and provides small amounts of vitamin C, potassium, and folate.",
       "ingredientPicture": "assets/ingredients/celery.jpg",
@@ -19,7 +19,7 @@
     {
       "ingredientID": 2,
       "ingredientName": "Banana blossom",
-      "price": "600.0",
+      "price": 600.0,
       "calories": 23,
       "nutritionalValue": "A good source of fiber, potassium, calcium, and copper. Rich in antioxidants and plant compounds like lignin and tannins, which may help combat free radicals. Often used like a vegetable.",
       "ingredientPicture": "assets/ingredients/banana_blossom.jpg",
@@ -35,7 +35,7 @@
     {
       "ingredientID": 3,
       "ingredientName": "Star Anise",
-      "price": "800.0",
+      "price": 800.0,
       "calories": 337,
       "nutritionalValue": "Highly concentrated in antioxidants and vitamins A and C. Not consumed in large quantities; primarily used as a spice for its licorice-like flavor and shikimic acid, a compound used in antiviral medications.",
       "ingredientPicture": "assets/ingredients/star_anise.jpg",
@@ -51,7 +51,7 @@
     {
       "ingredientID": 4,
       "ingredientName": "Atsuete",
-      "price": "10.0",
+      "price": 10.0,
       "calories": 355,
       "nutritionalValue": "The seeds are used for color and mild flavor, not for significant nutritional intake. They contain carotenoids (like bixin and norbixin), tocotrienols, and some antioxidant properties.",
       "ingredientPicture": "assets/ingredients/atsuete.jpg",
@@ -67,7 +67,7 @@
     {
       "ingredientID": 5,
       "ingredientName": "Cultured Mushroom",
-      "price": "400.0",
+      "price": 400.0,
       "calories": 22,
       "nutritionalValue": "Low in calories and fat. Contains B-vitamins, selenium, potassium, copper, and a small amount of vitamin D. A source of antioxidants and beta-glucans, which support immune health.",
       "ingredientPicture": "assets/ingredients/cultured_mushroom.jpg",
@@ -83,7 +83,7 @@
     {
       "ingredientID": 6,
       "ingredientName": "Oyster mushroom",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 33,
       "nutritionalValue": "A good source of protein, fiber, B-vitamins (especially niacin and riboflavin), and minerals like iron, zinc, and potassium. Contains antioxidants and may help lower cholesterol.",
       "ingredientPicture": "assets/ingredients/oyster_mushroom.jpg",
@@ -99,7 +99,7 @@
     {
       "ingredientID": 7,
       "ingredientName": "Landang",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 350,
       "nutritionalValue": "Processed sago palm pith. A pure source of carbohydrates with minimal protein, fat, or micronutrients. Primarily used as a starchy staple or thickener.",
       "ingredientPicture": "assets/ingredients/landang.jpg",
@@ -115,7 +115,7 @@
     {
       "ingredientID": 8,
       "ingredientName": "Sago",
-      "price": "30.0",
+      "price": 30.0,
       "calories": 355,
       "nutritionalValue": "Almost pure starch (carbohydrates). Provides quick energy but is devoid of significant protein, vitamins, or minerals. Commonly used for pearls and puddings.",
       "ingredientPicture": "assets/ingredients/sago.jpg",
@@ -131,7 +131,7 @@
     {
       "ingredientID": 9,
       "ingredientName": "Kidney beans",
-      "price": "40.0",
+      "price": 40.0,
       "calories": 127,
       "nutritionalValue": "An excellent source of plant-based protein and fiber, which aids digestion and blood sugar control. Rich in iron, folate, manganese, and antioxidants.",
       "ingredientPicture": "assets/ingredients/kidney_beans.jpg",
@@ -147,7 +147,7 @@
     {
       "ingredientID": 10,
       "ingredientName": "Cumin seeds",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 375,
       "nutritionalValue": "A spice rich in iron, a good source of manganese, calcium, and magnesium. Contains antioxidants and compounds that may aid digestion and provide antimicrobial benefits.",
       "ingredientPicture": "assets/ingredients/cumin_seeds.jpg",
@@ -163,7 +163,7 @@
     {
       "ingredientID": 11,
       "ingredientName": "Cinnamon",
-      "price": "25.0",
+      "price": 25.0,
       "calories": 261,
       "nutritionalValue": "A powerful spice rich in antioxidants (polyphenols). Contains anti-inflammatory properties and may help lower blood sugar levels by improving insulin sensitivity.",
       "ingredientPicture": "assets/ingredients/cinnamon.jpg",
@@ -179,7 +179,7 @@
     {
       "ingredientID": 12,
       "ingredientName": "Paprika",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 282,
       "nutritionalValue": "Made from dried, ground peppers. Exceptionally high in vitamin A (from beta-carotene) and vitamin E. Contains capsaicinoids, which have antioxidant and anti-inflammatory effects.",
       "ingredientPicture": "assets/ingredients/paprika.jpg",
@@ -195,7 +195,7 @@
     {
       "ingredientID": 13,
       "ingredientName": "Clove",
-      "price": "1200.0",
+      "price": 1200.0,
       "calories": 274,
       "nutritionalValue": "An excellent source of manganese. Very rich in antioxidants, including eugenol, which has strong anti-inflammatory and antimicrobial properties.",
       "ingredientPicture": "assets/ingredients/clove.jpg",
@@ -211,7 +211,7 @@
     {
       "ingredientID": 14,
       "ingredientName": "Dry mushroom",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 296,
       "nutritionalValue": "Dried form is nutritionally concentrated. High in B-vitamins, vitamin D (if exposed to UV light), copper, selenium, and potassium. A great source of umami flavor.",
       "ingredientPicture": "assets/ingredients/dry_mushroom.jpg",
@@ -227,7 +227,7 @@
     {
       "ingredientID": 15,
       "ingredientName": "Black fungus",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 25,
       "nutritionalValue": "Very low in calories. A good source of iron, fiber, and antioxidants. Valued more for its gelatinous texture in cooking than for dense micronutrient content.",
       "ingredientPicture": "assets/ingredients/black_fungus.jpg",
@@ -243,7 +243,7 @@
     {
       "ingredientID": 16,
       "ingredientName": "Parsley",
-      "price": "400.0",
+      "price": 400.0,
       "calories": 36,
       "nutritionalValue": "Extremely nutrient-dense. An excellent source of vitamin K, vitamin C, and vitamin A (from beta-carotene). Contains antioxidants like flavonoids and volatile oils.",
       "ingredientPicture": "assets/ingredients/parsley.jpg",
@@ -259,7 +259,7 @@
     {
       "ingredientID": 17,
       "ingredientName": "Cilantro",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 23,
       "nutritionalValue": "A good source of vitamin K, vitamin A, and vitamin C. Contains antioxidants that may help protect against cellular damage and support heart health.",
       "ingredientPicture": "assets/ingredients/cilantro.jpg",
@@ -275,7 +275,7 @@
     {
       "ingredientID": 18,
       "ingredientName": "Tofu",
-      "price": "75.0",
+      "price": 75.0,
       "calories": 76,
       "nutritionalValue": "A complete plant-based protein made from soybeans. A good source of iron, calcium, manganese, and phosphorus. Contains isoflavones, which are beneficial phytoestrogens.",
       "ingredientPicture": "assets/ingredients/tofu.jpg",
@@ -291,7 +291,7 @@
     {
       "ingredientID": 19,
       "ingredientName": "Bokchoy",
-      "price": "120.0",
+      "price": 120.0,
       "calories": 13,
       "nutritionalValue": "A nutrient powerhouse. Very low in calories but high in vitamins A, C, and K. Also provides folate, calcium, and potassium. Contains antioxidants like quercetin.",
       "ingredientPicture": "assets/ingredients/bokchoy.jpg",
@@ -307,7 +307,7 @@
     {
       "ingredientID": 20,
       "ingredientName": "Pugo",
-      "price": "29.0",
+      "price": 29.0,
       "calories": 158,
       "nutritionalValue": "Higher in fat and cholesterol than chicken eggs but also more nutrient-dense per gram. Rich in vitamin B12, riboflavin, selenium, and iron.",
       "ingredientPicture": "assets/ingredients/pugo.jpg",
@@ -323,7 +323,7 @@
     {
       "ingredientID": 21,
       "ingredientName": "Tausi",
-      "price": "100.0",
+      "price": 100.0,
       "calories": 170,
       "nutritionalValue": "Fermented black beans are a good source of protein and iron. High in sodium due to the salting process. Contains isoflavones and may have probiotic benefits from fermentation.",
       "ingredientPicture": "assets/ingredients/tausi.jpg",
@@ -339,7 +339,7 @@
     {
       "ingredientID": 22,
       "ingredientName": "Ginamus",
-      "price": "80.0",
+      "price": 80.0,
       "calories": 120,
       "nutritionalValue": "Fermented fish paste. High in protein, sodium, and calcium (from small, edible bones). Contains omega-3 fatty acids but its high salt content should be considered.",
       "ingredientPicture": "assets/ingredients/ginamus_bagoong_isda.jpg",
@@ -355,7 +355,7 @@
     {
       "ingredientID": 23,
       "ingredientName": "Bagoong",
-      "price": "70.0",
+      "price": 70.0,
       "calories": 70,
       "nutritionalValue": "Fermented shrimp or krill. Very high in sodium and cholesterol. Provides some protein, calcium, and iron, but typically used in small amounts as a seasoning.",
       "ingredientPicture": "assets/ingredients/bagoong.jpg",
@@ -371,7 +371,7 @@
     {
       "ingredientID": 24,
       "ingredientName": "Tungkoy",
-      "price": "15.0",
+      "price": 15.0,
       "calories": 80,
       "nutritionalValue": "A type of gourd. Low in calories and a good source of dietary fiber. Provides vitamin C, vitamin A, and minerals like magnesium and potassium.",
       "ingredientPicture": "assets/ingredients/tungkoy.jpg",
@@ -387,7 +387,7 @@
     {
       "ingredientID": 25,
       "ingredientName": "Kamaron",
-      "price": "300.0",
+      "price": 300.0,
       "calories": 85,
       "nutritionalValue": "Very low in fat and calories. An excellent source of lean protein, selenium, vitamin B12, and the antioxidant astaxanthin, which gives it its pink color.",
       "ingredientPicture": "assets/ingredients/kamaron.jpg",
@@ -403,7 +403,7 @@
     {
       "ingredientID": 26,
       "ingredientName": "Oregano",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 306,
       "nutritionalValue": "A herb very high in antioxidants, including rosmarinic acid and thymol. A good source of vitamin K, iron, calcium, and has antimicrobial properties.",
       "ingredientPicture": "assets/ingredients/oregano.jpg",
@@ -419,7 +419,7 @@
     {
       "ingredientID": 27,
       "ingredientName": "Mint",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 70,
       "nutritionalValue": "Contains menthol, which aids digestion and provides a cooling sensation. A good source of vitamin A and antioxidants. Often used medicinally for IBS relief.",
       "ingredientPicture": "assets/ingredients/mint.jpg",
@@ -435,7 +435,7 @@
     {
       "ingredientID": 28,
       "ingredientName": "Basil",
-      "price": "35.0",
+      "price": 35.0,
       "calories": 22,
       "nutritionalValue": "Rich in vitamin K, vitamin A (from beta-carotene), and antioxidants. Contains essential oils like eugenol which have anti-inflammatory properties.",
       "ingredientPicture": "assets/ingredients/basil.jpg",
@@ -451,7 +451,7 @@
     {
       "ingredientID": 29,
       "ingredientName": "French beans",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 31,
       "nutritionalValue": "A good source of vitamin C, vitamin K, and manganese. Provides fiber, folate, and silicon, which is important for bone health and connective tissue formation.",
       "ingredientPicture": "assets/ingredients/french_beans.jpg",
@@ -467,7 +467,7 @@
     {
       "ingredientID": 30,
       "ingredientName": "Sitsaro",
-      "price": "500.0",
+      "price": 500.0,
       "calories": 42,
       "nutritionalValue": "Can be eaten whole. A good source of vitamin C, vitamin K, and vitamin A. Provides fiber and plant-based iron.",
       "ingredientPicture": "assets/ingredients/sitsaro.jpg",
@@ -483,7 +483,7 @@
     {
       "ingredientID": 31,
       "ingredientName": "Romaine lettuce",
-      "price": "240.0",
+      "price": 240.0,
       "calories": 17,
       "nutritionalValue": "A nutritious lettuce variety. A good source of vitamins A and K, and folate. Higher in nutrients and fiber than iceberg lettuce.",
       "ingredientPicture": "assets/ingredients/romaine_lettuce.jpg",
@@ -499,7 +499,7 @@
     {
       "ingredientID": 32,
       "ingredientName": "Beetroot",
-      "price": "260.0",
+      "price": 260.0,
       "calories": 43,
       "nutritionalValue": "Unique source of betalains, powerful antioxidants with anti-inflammatory properties. Rich in folate, manganese, potassium, and dietary nitrates which may improve blood flow.",
       "ingredientPicture": "assets/ingredients/beetroot.jpg",
@@ -515,7 +515,7 @@
     {
       "ingredientID": 33,
       "ingredientName": "Red cabbage",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 31,
       "nutritionalValue": "Packed with antioxidants, including anthocyanins (which give it its color) and vitamin C. A very good source of vitamin K and fiber.",
       "ingredientPicture": "assets/ingredients/red_cabbage.jpg",
@@ -531,7 +531,7 @@
     {
       "ingredientID": 34,
       "ingredientName": "Raddish red",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 16,
       "nutritionalValue": "Very low in calories. A good source of vitamin C and provides small amounts of potassium and folate. Contains compounds that may support liver and digestive health.",
       "ingredientPicture": "assets/ingredients/raddish_red.jpg",
@@ -547,7 +547,7 @@
     {
       "ingredientID": 35,
       "ingredientName": "Cherry tomato",
-      "price": "250.0",
+      "price": 250.0,
       "calories": 18,
       "nutritionalValue": "Concentrated in flavor and nutrients compared to larger tomatoes. An excellent source of the antioxidant lycopene, vitamin C, and vitamin K.",
       "ingredientPicture": "assets/ingredients/cherry_tomato.jpg",
@@ -563,7 +563,7 @@
     {
       "ingredientID": 36,
       "ingredientName": "Baby potato",
-      "price": "80.0",
+      "price": 80.0,
       "calories": 77,
       "nutritionalValue": "Similar nutrition to full-sized potatoes: a good source of potassium, vitamin C, and vitamin B6. The skin provides fiber. They are primarily a starchy carbohydrate.",
       "ingredientPicture": "assets/ingredients/baby_potato.jpg",
@@ -579,7 +579,7 @@
     {
       "ingredientID": 37,
       "ingredientName": "Chicken Neck",
-      "price": "110.0",
+      "price": 110.0,
       "calories": 245,
       "nutritionalValue": "Higher in fat and collagen compared to lean cuts. Provides protein, niacin, and selenium. Often used for flavoring stocks and soups.",
       "ingredientPicture": "assets/ingredients/chicken_neck.jpg",
@@ -595,7 +595,7 @@
     {
       "ingredientID": 38,
       "ingredientName": "Chicken Breast",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 165,
       "nutritionalValue": "A very lean source of high-quality protein. Low in fat and an excellent source of niacin, vitamin B6, selenium, and phosphorus.",
       "ingredientPicture": "assets/ingredients/chicken_breast.jpg",
@@ -611,7 +611,7 @@
     {
       "ingredientID": 39,
       "ingredientName": "Chicken Wings",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 203,
       "nutritionalValue": "Higher in fat than breast meat due to the skin and dark meat. A good source of protein, niacin, and selenium.",
       "ingredientPicture": "assets/ingredients/chicken_wings.jpg",
@@ -627,7 +627,7 @@
     {
       "ingredientID": 40,
       "ingredientName": "Chicken Liver",
-      "price": "250.0",
+      "price": 250.0,
       "calories": 167,
       "nutritionalValue": "An extremely nutrient-dense organ meat. Exceptionally high in vitamin A, vitamin B12, iron, and folate. Also a great source of copper and riboflavin.",
       "ingredientPicture": "assets/ingredients/chicken_liver.jpg",
@@ -643,7 +643,7 @@
     {
       "ingredientID": 41,
       "ingredientName": "Chicken Feet",
-      "price": "100.0",
+      "price": 100.0,
       "calories": 215,
       "nutritionalValue": "Very high in collagen, which converts to gelatin when cooked. Provides protein, calcium, and cartilage. Valued for making rich, gelatinous broths.",
       "ingredientPicture": "assets/ingredients/chicken_feet.jpg",
@@ -659,7 +659,7 @@
     {
       "ingredientID": 42,
       "ingredientName": "Chicken Legs",
-      "price": "230.0",
+      "price": 230.0,
       "calories": 184,
       "nutritionalValue": "A mix of dark meat (thigh and drumstick). Higher in fat and iron than white meat. A good source of protein, zinc, and B vitamins.",
       "ingredientPicture": "assets/ingredients/chicken_legs.jpg",
@@ -675,7 +675,7 @@
     {
       "ingredientID": 43,
       "ingredientName": "Chicken Thigh",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 177,
       "nutritionalValue": "Dark meat that is more flavorful and moist than breast due to higher fat content. A good source of protein, iron, and zinc.",
       "ingredientPicture": "assets/ingredients/chicken_thigh.jpg",
@@ -691,7 +691,7 @@
     {
       "ingredientID": 44,
       "ingredientName": "Chicken Heart",
-      "price": "250.0",
+      "price": 250.0,
       "calories": 153,
       "nutritionalValue": "A lean organ meat. An excellent source of protein, iron, zinc, selenium, and B vitamins, particularly B12. Also a great source of CoQ10.",
       "ingredientPicture": "assets/ingredients/chicken_heart.jpg",
@@ -707,7 +707,7 @@
     {
       "ingredientID": 45,
       "ingredientName": "Chicken Intestines",
-      "price": "150.0",
+      "price": 150.0,
       "calories": 159,
       "nutritionalValue": "A good source of protein and contains some iron and B vitamins. Higher in cholesterol and saturated fat than lean muscle meats.",
       "ingredientPicture": "assets/ingredients/chicken_intestines.jpg",
@@ -723,7 +723,7 @@
     {
       "ingredientID": 46,
       "ingredientName": "Chicken Leg quarter",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 184,
       "nutritionalValue": "Includes the thigh and drumstick. Nutritionally similar to chicken legs and thighs: good protein, higher in fat than breast, source of iron and zinc.",
       "ingredientPicture": "assets/ingredients/chicken_leg_quarter.jpg",
@@ -739,7 +739,7 @@
     {
       "ingredientID": 47,
       "ingredientName": "Chicken Head",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 150,
       "nutritionalValue": "Primarily used for making stock. Provides some protein, collagen, and minerals from the bones and tissues, but little meat.",
       "ingredientPicture": "assets/ingredients/chicken_head.jpg",
@@ -755,7 +755,7 @@
     {
       "ingredientID": 48,
       "ingredientName": "Chicken Gizzard",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 94,
       "nutritionalValue": "A muscular organ meat, very lean and high in protein. A good source of iron, zinc, and B vitamins, particularly B12.",
       "ingredientPicture": "assets/ingredients/chicken_gizzard.jpg",
@@ -771,7 +771,7 @@
     {
       "ingredientID": 49,
       "ingredientName": "Pork Shoulder",
-      "price": "290.0",
+      "price": 290.0,
       "calories": 242,
       "nutritionalValue": "A moderately fatty cut of pork. A good source of high-quality protein, thiamine, niacin, vitamin B6, zinc, and selenium.",
       "ingredientPicture": "assets/ingredients/pork_shoulder.jpg",
@@ -787,7 +787,7 @@
     {
       "ingredientID": 50,
       "ingredientName": "Pork Trotter",
-      "price": "280.0",
+      "price": 280.0,
       "calories": 232,
       "nutritionalValue": "Very high in collagen, connective tissue, and fat. When cooked slowly, it releases gelatin, making broths rich and sticky. Provides some protein and minerals.",
       "ingredientPicture": "assets/ingredients/pork_trotter.jpg",
@@ -803,7 +803,7 @@
     {
       "ingredientID": 51,
       "ingredientName": "Pork Tenderloin",
-      "price": "300.0",
+      "price": 300.0,
       "calories": 143,
       "nutritionalValue": "One of the leanest cuts of pork. An excellent source of high-quality protein, thiamine, vitamin B6, phosphorus, and niacin.",
       "ingredientPicture": "assets/ingredients/pork_tenderloin.jpg",
@@ -819,7 +819,7 @@
     {
       "ingredientID": 52,
       "ingredientName": "Pork Belly",
-      "price": "320.0",
+      "price": 320.0,
       "calories": 518,
       "nutritionalValue": "One of the fattiest cuts of pork. Provides high-quality protein and is rich in B vitamins (especially thiamine) and selenium, but also high in saturated fat.",
       "ingredientPicture": "assets/ingredients/pork_belly.jpg",
@@ -835,7 +835,7 @@
     {
       "ingredientID": 53,
       "ingredientName": "Pork Ribs",
-      "price": "290.0",
+      "price": 290.0,
       "calories": 321,
       "nutritionalValue": "A fatty cut with connective tissue. A good source of protein, zinc, selenium, and B vitamins. The high fat content contributes significantly to its flavor.",
       "ingredientPicture": "assets/ingredients/pork_ribs.jpg",
@@ -851,7 +851,7 @@
     {
       "ingredientID": 54,
       "ingredientName": "Pork Ham",
-      "price": "290.0",
+      "price": 290.0,
       "calories": 216,
       "nutritionalValue": "A lean to moderately fatty cut from the hind leg. A good source of protein, thiamine, niacin, vitamin B6, zinc, and phosphorus.",
       "ingredientPicture": "assets/ingredients/pork_pigue_ham.jpg",
@@ -867,7 +867,7 @@
     {
       "ingredientID": 55,
       "ingredientName": "Pork Head",
-      "price": "180.0",
+      "price": 180.0,
       "calories": 250,
       "nutritionalValue": "Used for dishes like sisig. Fatty and gelatinous. Provides protein, B vitamins, and minerals from the various tissues, but is high in saturated fat and cholesterol.",
       "ingredientPicture": "assets/ingredients/pork_head.jpg",
@@ -883,7 +883,7 @@
     {
       "ingredientID": 56,
       "ingredientName": "Pork Atay Liver",
-      "price": "240.0",
+      "price": 240.0,
       "calories": 165,
       "nutritionalValue": "Extremely nutrient-dense. One of the best dietary sources of vitamin A, vitamin B12, iron, and copper. Also rich in riboflavin and folate.",
       "ingredientPicture": "assets/ingredients/pork_liver.jpg",
@@ -899,7 +899,7 @@
     {
       "ingredientID": 57,
       "ingredientName": "Pork Innards",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 135,
       "nutritionalValue": "Includes various organs (e.g., kidneys, intestines). Generally good sources of protein, iron, and B vitamins. Cholesterol and nutrient content vary by specific organ.",
       "ingredientPicture": "assets/ingredients/pork_innards.jpg",
@@ -915,7 +915,7 @@
     {
       "ingredientID": 58,
       "ingredientName": "Beef Chuck Rib",
-      "price": "340.0",
+      "price": 340.0,
       "calories": 305,
       "nutritionalValue": "A flavorful cut from the shoulder. Moderately fatty with connective tissue, making it good for slow cooking. A good source of protein, iron, zinc, and B12.",
       "ingredientPicture": "assets/ingredients/beef_chuck_rib.jpg",
@@ -931,7 +931,7 @@
     {
       "ingredientID": 59,
       "ingredientName": "Beef Tender Chuck",
-      "price": "345.0",
+      "price": 345.0,
       "calories": 193,
       "nutritionalValue": "A leaner cut from the chuck. A good source of high-quality protein, iron, zinc, vitamin B12, and niacin.",
       "ingredientPicture": "assets/ingredients/beef_tender_chuck.jpg",
@@ -947,7 +947,7 @@
     {
       "ingredientID": 60,
       "ingredientName": "Beef Brisket",
-      "price": "345.0",
+      "price": 345.0,
       "calories": 250,
       "nutritionalValue": "A fatty cut with connective tissue that becomes tender when slow-cooked. Rich in protein, collagen (converts to gelatin), iron, and zinc.",
       "ingredientPicture": "assets/ingredients/beef_brisket.jpg",
@@ -963,7 +963,7 @@
     {
       "ingredientID": 61,
       "ingredientName": "Beef Bone Marrow",
-      "price": "345.0",
+      "price": 345.0,
       "calories": 786,
       "nutritionalValue": "The bone marrow is rich in fat, calories, and collagen. It contains conjugated linoleic acid (CLA) and provides some vitamin B12 and adiponectin.",
       "ingredientPicture": "assets/ingredients/beef_bone_marrow.jpg",
@@ -979,7 +979,7 @@
     {
       "ingredientID": 62,
       "ingredientName": "Beef Blade Clod",
-      "price": "345.0",
+      "price": 345.0,
       "calories": 200,
       "nutritionalValue": "A lean and tough cut that benefits from slow cooking or marinating. A good source of protein, iron, zinc, and creatine.",
       "ingredientPicture": "assets/ingredients/beef_kalitiran_blade_clod.jpg",
@@ -995,7 +995,7 @@
     {
       "ingredientID": 63,
       "ingredientName": "Beef Short Ribs",
-      "price": "345.0",
+      "price": 345.0,
       "calories": 361,
       "nutritionalValue": "A very flavorful and fatty cut. High in protein, iron, zinc, and B vitamins. The high fat content contributes to its rich taste and higher calorie count.",
       "ingredientPicture": "assets/ingredients/beef_short_ribs.jpg",
@@ -1011,7 +1011,7 @@
     {
       "ingredientID": 64,
       "ingredientName": "Beef Sirloin",
-      "price": "345.0",
+      "price": 345.0,
       "calories": 205,
       "nutritionalValue": "A popular, tender, and relatively lean cut. An excellent source of high-quality protein, vitamin B12, zinc, selenium, and iron.",
       "ingredientPicture": "assets/ingredients/beef_sirloin.jpg",
@@ -1027,7 +1027,7 @@
     {
       "ingredientID": 65,
       "ingredientName": "Beef Tenderloin",
-      "price": "345.0",
+      "price": 345.0,
       "calories": 171,
       "nutritionalValue": "The most tender cut of beef, very lean. An excellent source of protein, vitamin B12, niacin, zinc, and selenium.",
       "ingredientPicture": "assets/ingredients/beef_tenderloin.jpg",
@@ -1043,7 +1043,7 @@
     {
       "ingredientID": 66,
       "ingredientName": "Beef Flank Steak",
-      "price": "345.0",
+      "price": 345.0,
       "calories": 192,
       "nutritionalValue": "A lean and flavorful cut, but can be tough. Best when marinated and cooked quickly. A great source of protein, iron, and vitamin B6.",
       "ingredientPicture": "assets/ingredients/beef_flank_steak.jpg",
@@ -1059,7 +1059,7 @@
     {
       "ingredientID": 67,
       "ingredientName": "Beef Head",
-      "price": "345.0",
+      "price": 345.0,
       "calories": 200,
       "nutritionalValue": "Meat from the head is often used in stews and soups. It can be fatty and gelatinous. Provides protein, collagen, and minerals from the cheeks and other tissues.",
       "ingredientPicture": "assets/ingredients/beef_head.jpg",
@@ -1075,7 +1075,7 @@
     {
       "ingredientID": 68,
       "ingredientName": "Beef Tongue",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 224,
       "nutritionalValue": "An organ meat that is high in fat and cholesterol but also very nutritious. An excellent source of vitamin B12, zinc, iron, and choline.",
       "ingredientPicture": "assets/ingredients/beef_tongue.jpg",
@@ -1091,7 +1091,7 @@
     {
       "ingredientID": 69,
       "ingredientName": "Saluyot",
-      "price": "15.0",
+      "price": 15.0,
       "calories": 32,
       "nutritionalValue": "A leafy green rich in mucilage, which aids digestion. An excellent source of vitamin A, vitamin C, calcium, and iron. Also contains antioxidants.",
       "ingredientPicture": "assets/ingredients/saluyot.jpg",
@@ -1107,7 +1107,7 @@
     {
       "ingredientID": 70,
       "ingredientName": "Pako",
-      "price": "15.0",
+      "price": 15.0,
       "calories": 34,
       "nutritionalValue": "A good source of omega-3 and omega-6 fatty acids. Rich in antioxidants, vitamin A, and vitamin C. Also provides iron and manganese.",
       "ingredientPicture": "assets/ingredients/pako.jpg",
@@ -1123,7 +1123,7 @@
     {
       "ingredientID": 71,
       "ingredientName": "Chili leaf",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 40,
       "nutritionalValue": "Edible chili pepper leaves. A good source of vitamins A and C, calcium, and iron. Have a slightly peppery flavor and are used in soups and stews.",
       "ingredientPicture": "assets/ingredients/chili_leaf.jpg",
@@ -1139,7 +1139,7 @@
     {
       "ingredientID": 72,
       "ingredientName": "Sweet Potato",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 35,
       "nutritionalValue": "Highly nutritious leafy green. An excellent source of vitamin K, vitamin A, and antioxidant polyphenols. A good plant-based source of iron and calcium.",
       "ingredientPicture": "assets/ingredients/sweet_potato.jpg",
@@ -1155,7 +1155,7 @@
     {
       "ingredientID": 73,
       "ingredientName": "Ampalaya Leaves",
-      "price": "25.0",
+      "price": 25.0,
       "calories": 30,
       "nutritionalValue": "Used medicinally and in cooking. Like the fruit, they contain compounds like charantin and polypeptide-p that may help lower blood sugar levels. Also provide vitamin A and C.",
       "ingredientPicture": "assets/ingredients/ampalaya_leaves.jpg",
@@ -1171,7 +1171,7 @@
     {
       "ingredientID": 74,
       "ingredientName": "White squid",
-      "price": "450.0",
+      "price": 450.0,
       "calories": 92,
       "nutritionalValue": "Low in fat and calories. An excellent source of protein, vitamin B12, selenium, and riboflavin. Contains antioxidants and is a good source of copper.",
       "ingredientPicture": "assets/ingredients/white_squid.jpg",
@@ -1187,7 +1187,7 @@
     {
       "ingredientID": 75,
       "ingredientName": "Dilis",
-      "price": "140.0",
+      "price": 140.0,
       "calories": 131,
       "nutritionalValue": "Small fish eaten whole, providing calcium from their bones. A good source of omega-3 fatty acids (EPA/DHA), protein, selenium, and niacin.",
       "ingredientPicture": "assets/ingredients/dilis.jpg",
@@ -1203,7 +1203,7 @@
     {
       "ingredientID": 76,
       "ingredientName": "Lato",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 45,
       "nutritionalValue": "A type of seaweed. A good source of vitamins A and C, calcium, iron, and magnesium. Contains natural compounds that may have anti-diabetic and antioxidant effects.",
       "ingredientPicture": "assets/ingredients/lato.jpg",
@@ -1219,7 +1219,7 @@
     {
       "ingredientID": 77,
       "ingredientName": "Agar-agar",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 306,
       "nutritionalValue": "A gelatin substitute derived from seaweed. Almost pure soluble fiber. It is very low in calories, fat-free, and provides no significant vitamins or minerals.",
       "ingredientPicture": "assets/ingredients/agar_agar.jpg",
@@ -1235,7 +1235,7 @@
     {
       "ingredientID": 78,
       "ingredientName": "Oyster",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 81,
       "nutritionalValue": "Exceptionally rich in zinc, which is crucial for immune function. Also an excellent source of vitamin B12, copper, and selenium. Provides high-quality protein.",
       "ingredientPicture": "assets/ingredients/oyster.jpg",
@@ -1251,7 +1251,7 @@
     {
       "ingredientID": 79,
       "ingredientName": "Clams",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 148,
       "nutritionalValue": "An excellent source of lean protein, vitamin B12, and iron. Extremely rich in selenium and also provides potassium and omega-3 fatty acids.",
       "ingredientPicture": "assets/ingredients/clams.jpg",
@@ -1267,7 +1267,7 @@
     {
       "ingredientID": 80,
       "ingredientName": "Tambayangan",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 110,
       "nutritionalValue": "A type of shellfish. Nutritionally similar to clams/mussels: a good source of protein, iron, zinc, selenium, and vitamin B12.",
       "ingredientPicture": "assets/ingredients/tambayangan.jpg",
@@ -1283,7 +1283,7 @@
     {
       "ingredientID": 81,
       "ingredientName": "Shell",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 110,
       "nutritionalValue": "Likely refers to freshwater shellfish. A good source of protein, low in fat. Provides minerals like iron, zinc, and selenium.",
       "ingredientPicture": "assets/ingredients/shell.jpg",
@@ -1299,7 +1299,7 @@
     {
       "ingredientID": 82,
       "ingredientName": "Sikad sikad",
-      "price": "65.0",
+      "price": 65.0,
       "calories": 90,
       "nutritionalValue": "A small sea snail. A lean source of protein. Provides minerals like iron, magnesium, and selenium, and some omega-3 fatty acids.",
       "ingredientPicture": "assets/ingredients/sikad_sikad.jpg",
@@ -1315,7 +1315,7 @@
     {
       "ingredientID": 83,
       "ingredientName": "Five fingers",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 100,
       "nutritionalValue": "Not a common food item. Limited nutritional data. Likely provides protein and some minerals from its tissues.",
       "ingredientPicture": "assets/ingredients/five_fingers.jpg",
@@ -1331,7 +1331,7 @@
     {
       "ingredientID": 84,
       "ingredientName": "Chupa kulo",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 100,
       "nutritionalValue": "A type of shellfish/mollusk. Likely a good source of lean protein, vitamin B12, iron, and other trace minerals like zinc and selenium.",
       "ingredientPicture": "assets/ingredients/chupa_kulo.jpg",
@@ -1347,7 +1347,7 @@
     {
       "ingredientID": 85,
       "ingredientName": "Danggit",
-      "price": "150.0",
+      "price": 150.0,
       "calories": 120,
       "nutritionalValue": "A small dried fish. Concentrated source of protein, calcium (if bones are eaten), and omega-3 fatty acids. High in sodium due to the drying and salting process.",
       "ingredientPicture": "assets/ingredients/danggit.jpg",
@@ -1363,7 +1363,7 @@
     {
       "ingredientID": 86,
       "ingredientName": "Danggit",
-      "price": "250.0",
+      "price": 250.0,
       "calories": 120,
       "nutritionalValue": "A small dried fish. Concentrated source of protein, calcium (if bones are eaten), and omega-3 fatty acids. High in sodium due to the drying and salting process.",
       "ingredientPicture": "assets/ingredients/danggit.jpg",
@@ -1379,7 +1379,7 @@
     {
       "ingredientID": 87,
       "ingredientName": "Lupoy",
-      "price": "280.0",
+      "price": 280.0,
       "calories": 250,
       "nutritionalValue": "A type of dried fish. High in protein and provides calcium and phosphorus from the bones. Very high in sodium due to the preservation process.",
       "ingredientPicture": "assets/ingredients/lupoy.jpg",
@@ -1395,7 +1395,7 @@
     {
       "ingredientID": 88,
       "ingredientName": "Dilis Dried",
-      "price": "300.0",
+      "price": 300.0,
       "calories": 210,
       "nutritionalValue": "Dried form is a concentrated source of protein, calcium (from bones), and omega-3 fatty acids. Very high in sodium and a good source of niacin.",
       "ingredientPicture": "assets/ingredients/dilis_dried.jpg",
@@ -1411,7 +1411,7 @@
     {
       "ingredientID": 89,
       "ingredientName": "Pencil",
-      "price": "120.0",
+      "price": 120.0,
       "calories": 220,
       "nutritionalValue": "A type of small, thin dried fish. High in protein and calcium. Like all dried fish, it is very high in sodium.",
       "ingredientPicture": "assets/ingredients/pencil.jpg",
@@ -1427,7 +1427,7 @@
     {
       "ingredientID": 90,
       "ingredientName": "Lumayagan",
-      "price": "100.0",
+      "price": 100.0,
       "calories": 205,
       "nutritionalValue": "Chewy and flavorful. A good source of protein, low in fat. Contains some copper, selenium, and vitamin B12. High in sodium and cholesterol.",
       "ingredientPicture": "assets/ingredients/lumayagan.jpg",
@@ -1443,7 +1443,7 @@
     {
       "ingredientID": 91,
       "ingredientName": "Katambak",
-      "price": "380.0",
+      "price": 380.0,
       "calories": 180,
       "nutritionalValue": "A type of dried fish. Provides high-quality protein, essential amino acids, and minerals like calcium and phosphorus. High in sodium.",
       "ingredientPicture": "assets/ingredients/katambak.jpg",
@@ -1459,7 +1459,7 @@
     {
       "ingredientID": 92,
       "ingredientName": "Lapu-Lapu Dried",
-      "price": "450.0",
+      "price": 450.0,
       "calories": 118,
       "nutritionalValue": "Dried grouper is a concentrated source of protein and omega-3 fatty acids. Provides selenium, vitamin B6, and potassium. High in sodium.",
       "ingredientPicture": "assets/ingredients/lapu_lapu_dried.jpg",
@@ -1475,7 +1475,7 @@
     {
       "ingredientID": 93,
       "ingredientName": "Dalagang bukid",
-      "price": "280.0",
+      "price": 280.0,
       "calories": 150,
       "nutritionalValue": "A dried fish. Good source of protein and provides some omega-3s, calcium, and iron. The drying process significantly increases its sodium content.",
       "ingredientPicture": "assets/ingredients/dalagang_bukid.jpg",
@@ -1491,7 +1491,7 @@
     {
       "ingredientID": 94,
       "ingredientName": "Mulmul Dried",
-      "price": "380.0",
+      "price": 380.0,
       "calories": 150,
       "nutritionalValue": "Dried parrotfish is a lean source of protein. Provides some vitamins and minerals but is primarily valued for its shelf-stable protein and flavor. High in sodium.",
       "ingredientPicture": "assets/ingredients/mulmul_dried.jpg",
@@ -1507,7 +1507,7 @@
     {
       "ingredientID": 95,
       "ingredientName": "Lambana",
-      "price": "240.0",
+      "price": 240.0,
       "calories": 200,
       "nutritionalValue": "A very small dried fish. Eaten whole, providing an excellent source of calcium from the bones. High in protein and very high in sodium.",
       "ingredientPicture": "assets/ingredients/lambana.jpg",
@@ -1523,7 +1523,7 @@
     {
       "ingredientID": 96,
       "ingredientName": "Endong",
-      "price": "240.0",
+      "price": 240.0,
       "calories": 200,
       "nutritionalValue": "A type of small dried fish. Nutritionally similar to other small dried fish: high in protein, calcium, and sodium.",
       "ingredientPicture": "assets/ingredients/endong.jpg",
@@ -1539,7 +1539,7 @@
     {
       "ingredientID": 97,
       "ingredientName": "Kabalyas",
-      "price": "250.0",
+      "price": 250.0,
       "calories": 220,
       "nutritionalValue": "A type of dried fish. A concentrated source of protein and provides minerals like iron and calcium. The salting process makes it high in sodium.",
       "ingredientPicture": "assets/ingredients/kabalyas.jpg",
@@ -1555,7 +1555,7 @@
     {
       "ingredientID": 98,
       "ingredientName": "Galunggong",
-      "price": "240.0",
+      "price": 240.0,
       "calories": 185,
       "nutritionalValue": "Dried round scad is a good source of protein, omega-3 fatty acids, calcium, and iron. The preservation process makes it very high in sodium.",
       "ingredientPicture": "assets/ingredients/galunggong.jpg",
@@ -1571,7 +1571,7 @@
     {
       "ingredientID": 99,
       "ingredientName": "Tamban Dried",
-      "price": "150.0",
+      "price": 150.0,
       "calories": 250,
       "nutritionalValue": "Dried sardines are nutrient-dense. Eaten whole, they provide excellent calcium and phosphorus. Rich in protein, omega-3s, and vitamin D. Very high in sodium.",
       "ingredientPicture": "assets/ingredients/tamban_dried.jpg",
@@ -1587,7 +1587,7 @@
     {
       "ingredientID": 100,
       "ingredientName": "Sapsap",
-      "price": "250.0",
+      "price": 250.0,
       "calories": 180,
       "nutritionalValue": "A small, flat dried fish. Eaten whole, providing calcium and phosphorus. A good source of protein and omega-3s, but high in sodium.",
       "ingredientPicture": "assets/ingredients/sapsap.jpg",
@@ -1603,7 +1603,7 @@
     {
       "ingredientID": 101,
       "ingredientName": "Pancit bihon",
-      "price": "160.0",
+      "price": 160.0,
       "calories": 364,
       "nutritionalValue": "Made from rice flour. Very high in carbohydrates for energy. Low in fat, fiber, and protein. Typically enriched with iron.",
       "ingredientPicture": "assets/ingredients/pancit_bihon.jpg",
@@ -1619,7 +1619,7 @@
     {
       "ingredientID": 102,
       "ingredientName": "Fresh pancit",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 110,
       "nutritionalValue": "Fresh rice noodles. Lower in calories than dried noodles due to higher water content. A good source of carbohydrates but low in other nutrients.",
       "ingredientPicture": "assets/ingredients/fresh_pancit.jpg",
@@ -1635,7 +1635,7 @@
     {
       "ingredientID": 103,
       "ingredientName": "Lauriat Noodles",
-      "price": "75.0",
+      "price": 75.0,
       "calories": 140,
       "nutritionalValue": "A type of egg noodle. Provides carbohydrates from wheat flour, protein and fat from eggs. Often contains added salt.",
       "ingredientPicture": "assets/ingredients/lauriat_noodles.jpg",
@@ -1651,7 +1651,7 @@
     {
       "ingredientID": 104,
       "ingredientName": "Sotanghon",
-      "price": "90.0",
+      "price": 90.0,
       "calories": 351,
       "nutritionalValue": "Made from mung bean starch. Pure carbohydrate. Gluten-free and virtually fat-free, but also lacks significant protein, vitamins, or minerals.",
       "ingredientPicture": "assets/ingredients/sotanghon_.jpg",
@@ -1667,7 +1667,7 @@
     {
       "ingredientID": 105,
       "ingredientName": "Hobe",
-      "price": "45.0",
+      "price": 45.0,
       "calories": 140,
       "nutritionalValue": "A type of wheat-based noodle. Provides carbohydrates, some protein from wheat gluten, and is often enriched with B vitamins like folate and iron.",
       "ingredientPicture": "assets/ingredients/hobe.jpg",
@@ -1683,7 +1683,7 @@
     {
       "ingredientID": 106,
       "ingredientName": "Odong",
-      "price": "3.0",
+      "price": 3.0,
       "calories": 140,
       "nutritionalValue": "A yellow wheat flour noodle. A source of carbohydrates and some protein. Often fortified with iron and B vitamins.",
       "ingredientPicture": "assets/ingredients/odong.jpg",
@@ -1699,7 +1699,7 @@
     {
       "ingredientID": 107,
       "ingredientName": "Miswa",
-      "price": "6.0",
+      "price": 6.0,
       "calories": 140,
       "nutritionalValue": "Very thin wheat flour noodles. A good source of carbohydrates. Often enriched with iron and B vitamins like niacin and thiamine.",
       "ingredientPicture": "assets/ingredients/miswa.jpg",
@@ -1715,7 +1715,7 @@
     {
       "ingredientID": 108,
       "ingredientName": "Lumpia Wrapper",
-      "price": "100.0",
+      "price": 100.0,
       "calories": 300,
       "nutritionalValue": "Made from wheat flour and water. Primarily a source of carbohydrates. Low in fat, fiber, and protein unless made with egg.",
       "ingredientPicture": "assets/ingredients/lumpia_wrapper.jpg",
@@ -1731,7 +1731,7 @@
     {
       "ingredientID": 109,
       "ingredientName": "Palay",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 130,
       "nutritionalValue": "White rice. A primary source of carbohydrates and energy. The milling process removes the bran and germ, reducing fiber, vitamins, and minerals compared to brown rice.",
       "ingredientPicture": "assets/ingredients/palay.jpg",
@@ -1747,7 +1747,7 @@
     {
       "ingredientID": 110,
       "ingredientName": "Commercial rice",
-      "price": "56.0",
+      "price": 56.0,
       "calories": 130,
       "nutritionalValue": "Typically white rice. A staple food providing energy primarily from carbohydrates. Often enriched with iron and B vitamins to replace some lost nutrients.",
       "ingredientPicture": "assets/ingredients/commercial_rice.jpg",
@@ -1763,7 +1763,7 @@
     {
       "ingredientID": 111,
       "ingredientName": "Yellow corn rice",
-      "price": "38.0",
+      "price": 38.0,
       "calories": 110,
       "nutritionalValue": "Whole grain. Higher in fiber than white rice. A good source of antioxidants like lutein and zeaxanthin, which are good for eye health.",
       "ingredientPicture": "assets/ingredients/yellow_corn_rice.jpg",
@@ -1779,7 +1779,7 @@
     {
       "ingredientID": 112,
       "ingredientName": "White corn rice",
-      "price": "35.0",
+      "price": 35.0,
       "calories": 110,
       "nutritionalValue": "Whole grain. Provides more fiber and nutrients than white rice. A good source of complex carbohydrates, magnesium, and some B vitamins.",
       "ingredientPicture": "assets/ingredients/white_corn_rice.jpg",
@@ -1795,7 +1795,7 @@
     {
       "ingredientID": 113,
       "ingredientName": "Broccoli",
-      "price": "155.0",
+      "price": 155.0,
       "calories": 34,
       "nutritionalValue": "A nutritional powerhouse. Excellent source of vitamins C and K. High in fiber, folate, potassium, and sulforaphane, a potent antioxidant with cancer-fighting properties.",
       "ingredientPicture": "assets/ingredients/broccoli.jpg",
@@ -1811,7 +1811,7 @@
     {
       "ingredientID": 114,
       "ingredientName": "Cabbage",
-      "price": "60.0",
+      "price": 60.0,
       "calories": 25,
       "nutritionalValue": "Low in calories, high in fiber. A good source of vitamin K, vitamin C, and folate. Contains antioxidants like anthocyanins in red cabbage.",
       "ingredientPicture": "assets/ingredients/cabbage.jpg",
@@ -1827,7 +1827,7 @@
     {
       "ingredientID": 115,
       "ingredientName": "Cauliflower",
-      "price": "140.0",
+      "price": 140.0,
       "calories": 25,
       "nutritionalValue": "Very versatile and low in carbs. An excellent source of vitamin C and vitamin K. Contains choline, which is important for brain health, and various antioxidants.",
       "ingredientPicture": "assets/ingredients/cauliflower.jpg",
@@ -1843,7 +1843,7 @@
     {
       "ingredientID": 116,
       "ingredientName": "Lettuce",
-      "price": "160.0",
+      "price": 160.0,
       "calories": 15,
       "nutritionalValue": "Very high in water content, making it low in calories. Provides some vitamin K, vitamin A (from beta-carotene), and folate.",
       "ingredientPicture": "assets/ingredients/lettuce.jpg",
@@ -1859,7 +1859,7 @@
     {
       "ingredientID": 117,
       "ingredientName": "Kangkong",
-      "price": "15.0",
+      "price": 15.0,
       "calories": 19,
       "nutritionalValue": "A popular leafy green. A good source of vitamin A, vitamin C, and iron. Also contains magnesium, potassium, and some calcium.",
       "ingredientPicture": "assets/ingredients/kangkong.jpg",
@@ -1875,7 +1875,7 @@
     {
       "ingredientID": 118,
       "ingredientName": "Mustard",
-      "price": "66.0",
+      "price": 66.0,
       "calories": 27,
       "nutritionalValue": "Leafy greens with a peppery flavor. An excellent source of vitamins K, A, and C. Also provides antioxidants and may have anti-inflammatory effects.",
       "ingredientPicture": "assets/ingredients/mustard.jpg",
@@ -1891,7 +1891,7 @@
     {
       "ingredientID": 119,
       "ingredientName": "Pechay",
-      "price": "60.0",
+      "price": 60.0,
       "calories": 13,
       "nutritionalValue": "A type of Chinese cabbage. Very low in calories. A rich source of vitamins A, C, and K. Also provides calcium, potassium, and folate.",
       "ingredientPicture": "assets/ingredients/pechay.jpg",
@@ -1907,7 +1907,7 @@
     {
       "ingredientID": 120,
       "ingredientName": "Chinese pechay",
-      "price": "65.0",
+      "price": 65.0,
       "calories": 12,
       "nutritionalValue": "Similar to pechay. A cruciferous vegetable rich in vitamins A, C, and K. Provides antioxidants and is a good source of fiber for digestive health.",
       "ingredientPicture": "assets/ingredients/chinese_pechay.jpg",
@@ -1923,7 +1923,7 @@
     {
       "ingredientID": 121,
       "ingredientName": "Ampalaya",
-      "price": "70.0",
+      "price": 70.0,
       "calories": 17,
       "nutritionalValue": "Known for its bitter taste and potential blood sugar-lowering properties (contains charantin and polypeptide-p). A good source of vitamin C and vitamin A.",
       "ingredientPicture": "assets/ingredients/ampalaya_bitter_melon.jpg",
@@ -1939,7 +1939,7 @@
     {
       "ingredientID": 122,
       "ingredientName": "Eggplant",
-      "price": "53.0",
+      "price": 53.0,
       "calories": 25,
       "nutritionalValue": "Low in calories. A good source of fiber, antioxidants, particularly nasunin (in the skin), which protects brain cells, and chlorogenic acid.",
       "ingredientPicture": "assets/ingredients/eggplant.jpg",
@@ -1955,7 +1955,7 @@
     {
       "ingredientID": 123,
       "ingredientName": "Cucumber",
-      "price": "29.0",
+      "price": 29.0,
       "calories": 15,
       "nutritionalValue": "Extremely high in water content (over 95%), making it very hydrating and low in calories. Provides small amounts of vitamin K and potassium.",
       "ingredientPicture": "assets/ingredients/cucumber.jpg",
@@ -1971,7 +1971,7 @@
     {
       "ingredientID": 124,
       "ingredientName": "Patola",
-      "price": "32.0",
+      "price": 32.0,
       "calories": 20,
       "nutritionalValue": "A mild-flavored gourd. Low in calories and a good source of vitamin C, vitamin A, and manganese. Contains dietary fiber.",
       "ingredientPicture": "assets/ingredients/patola.jpg",
@@ -1987,7 +1987,7 @@
     {
       "ingredientID": 125,
       "ingredientName": "Upo",
-      "price": "33.0",
+      "price": 33.0,
       "calories": 15,
       "nutritionalValue": "Very light and low in calories. High in water content, fiber, vitamin C, and calcium. Known for its cooling and diuretic properties.",
       "ingredientPicture": "assets/ingredients/upo.jpg",
@@ -2003,7 +2003,7 @@
     {
       "ingredientID": 126,
       "ingredientName": "Okra",
-      "price": "55.0",
+      "price": 55.0,
       "calories": 33,
       "nutritionalValue": "A good source of fiber, vitamin C, vitamin K, and folate. Contains mucilage, which thickens stews and may aid digestion.",
       "ingredientPicture": "assets/ingredients/okra.jpg",
@@ -2019,7 +2019,7 @@
     {
       "ingredientID": 127,
       "ingredientName": "Red squash",
-      "price": "25.0",
+      "price": 25.0,
       "calories": 34,
       "nutritionalValue": "A winter squash. Rich in beta-carotene (converts to vitamin A), vitamin C, and fiber. Also provides potassium and antioxidants like lutein.",
       "ingredientPicture": "assets/ingredients/red_squash.jpg",
@@ -2035,7 +2035,7 @@
     {
       "ingredientID": 128,
       "ingredientName": "Sayote",
-      "price": "10.0",
+      "price": 10.0,
       "calories": 19,
       "nutritionalValue": "A low-calorie squash. A good source of vitamin C, folate, and fiber. Also provides small amounts of vitamin K and potassium.",
       "ingredientPicture": "assets/ingredients/sayote.jpg",
@@ -2051,7 +2051,7 @@
     {
       "ingredientID": 129,
       "ingredientName": "Tomato",
-      "price": "55.0",
+      "price": 55.0,
       "calories": 18,
       "nutritionalValue": "An excellent source of the antioxidant lycopene, linked to reduced heart disease and cancer risk. Also provides vitamin C, potassium, and folate.",
       "ingredientPicture": "assets/ingredients/tomato.jpg",
@@ -2067,7 +2067,7 @@
     {
       "ingredientID": 130,
       "ingredientName": "Calamansi",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 25,
       "nutritionalValue": "A small citrus fruit. Extremely high in vitamin C. Also provides antioxidants and a small amount of potassium. Used more for juice than eating whole.",
       "ingredientPicture": "assets/ingredients/calamansi.jpg",
@@ -2083,7 +2083,7 @@
     {
       "ingredientID": 131,
       "ingredientName": "Labuyo",
-      "price": "290.0",
+      "price": 290.0,
       "calories": 40,
       "nutritionalValue": "Very high in capsaicin, which boosts metabolism and has pain-relieving properties. An excellent source of vitamins A and C, and antioxidants.",
       "ingredientPicture": "assets/ingredients/labuyo.jpg",
@@ -2099,7 +2099,7 @@
     {
       "ingredientID": 132,
       "ingredientName": "Sili Espada",
-      "price": "175.0",
+      "price": 175.0,
       "calories": 30,
       "nutritionalValue": "A mild to medium chili pepper. A good source of vitamins A and C, and capsaicinoids. Contains antioxidants that can reduce inflammation.",
       "ingredientPicture": "assets/ingredients/sili_espada.jpg",
@@ -2115,7 +2115,7 @@
     {
       "ingredientID": 133,
       "ingredientName": "Bell Pepper",
-      "price": "190.0",
+      "price": 190.0,
       "calories": 20,
       "nutritionalValue": "An excellent source of vitamin C (especially red peppers) and vitamin A. Also provides vitamin E, folate, and fiber. Low in calories.",
       "ingredientPicture": "assets/ingredients/bell_pepper.jpg",
@@ -2131,7 +2131,7 @@
     {
       "ingredientID": 134,
       "ingredientName": "Sitaw",
-      "price": "35.0",
+      "price": 35.0,
       "calories": 31,
       "nutritionalValue": "A good source of fiber, protein, vitamins A, C, and K, and folate. Also provides minerals like manganese and magnesium.",
       "ingredientPicture": "assets/ingredients/sitaw.jpg",
@@ -2147,7 +2147,7 @@
     {
       "ingredientID": 135,
       "ingredientName": "Baguio beans",
-      "price": "80.0",
+      "price": 80.0,
       "calories": 31,
       "nutritionalValue": "A good source of vitamins C, K, and A. Provides fiber, folate, and silicon, which is important for bone health and connective tissue formation.",
       "ingredientPicture": "assets/ingredients/baguio_beans.jpg",
@@ -2163,7 +2163,7 @@
     {
       "ingredientID": 136,
       "ingredientName": "Sitsaro",
-      "price": "300.0",
+      "price": 300.0,
       "calories": 81,
       "nutritionalValue": "A starchy vegetable. Higher in calories than green beans. A good source of protein, fiber, vitamins A, C, and K, and manganese.",
       "ingredientPicture": "assets/ingredients/sitsaro.jpg",
@@ -2179,7 +2179,7 @@
     {
       "ingredientID": 137,
       "ingredientName": "Mungbeans",
-      "price": "85.0",
+      "price": 85.0,
       "calories": 347,
       "nutritionalValue": "When dried, they are a concentrated source of plant-based protein, fiber, and folate. Also provide iron, magnesium, and potassium.",
       "ingredientPicture": "assets/ingredients/mungbeans.jpg",
@@ -2195,7 +2195,7 @@
     {
       "ingredientID": 138,
       "ingredientName": "Peanuts",
-      "price": "105.0",
+      "price": 105.0,
       "calories": 567,
       "nutritionalValue": "High in healthy monounsaturated fats and protein. A good source of biotin, copper, niacin, folate, and manganese. Also contain resveratrol.",
       "ingredientPicture": "assets/ingredients/peanuts.jpg",
@@ -2211,7 +2211,7 @@
     {
       "ingredientID": 139,
       "ingredientName": "Carrot",
-      "price": "120.0",
+      "price": 120.0,
       "calories": 41,
       "nutritionalValue": "Famous for their high beta-carotene (vitamin A) content, which is good for vision. A good source of fiber, vitamin K, and potassium.",
       "ingredientPicture": "assets/ingredients/carrot.jpg",
@@ -2227,7 +2227,7 @@
     {
       "ingredientID": 140,
       "ingredientName": "Raddish",
-      "price": "83.0",
+      "price": 83.0,
       "calories": 16,
       "nutritionalValue": "Very low in calories. A good source of vitamin C and provides small amounts of potassium and folate. Contains compounds that may support liver health.",
       "ingredientPicture": "assets/ingredients/raddish.jpg",
@@ -2243,7 +2243,7 @@
     {
       "ingredientID": 141,
       "ingredientName": "Sprouted mungbeans",
-      "price": "45.0",
+      "price": 45.0,
       "calories": 30,
       "nutritionalValue": "Sprouting increases vitamin content (like vitamin C) and decreases antinutrients. A good source of protein, fiber, and folate.",
       "ingredientPicture": "assets/ingredients/sprouted_mungbeans.jpg",
@@ -2259,7 +2259,7 @@
     {
       "ingredientID": 142,
       "ingredientName": "Singkamas",
-      "price": "65.0",
+      "price": 65.0,
       "calories": 38,
       "nutritionalValue": "A root vegetable with a crisp, juicy texture. Very high in vitamin C and a good source of fiber. Low in calories and starch.",
       "ingredientPicture": "assets/ingredients/singkamas.jpg",
@@ -2275,7 +2275,7 @@
     {
       "ingredientID": 143,
       "ingredientName": "Potato",
-      "price": "80.0",
+      "price": 80.0,
       "calories": 77,
       "nutritionalValue": "A starchy vegetable. A good source of potassium, vitamin C, and vitamin B6. The skin provides fiber.",
       "ingredientPicture": "assets/ingredients/potato.jpg",
@@ -2291,7 +2291,7 @@
     {
       "ingredientID": 144,
       "ingredientName": "Sweet Potato",
-      "price": "45.0",
+      "price": 45.0,
       "calories": 86,
       "nutritionalValue": "An excellent source of beta-carotene (vitamin A). Also high in vitamin C, manganese, and fiber. Has a lower glycemic index than white potatoes.",
       "ingredientPicture": "assets/ingredients/sweet_potato.jpg",
@@ -2307,7 +2307,7 @@
     {
       "ingredientID": 145,
       "ingredientName": "Cassava",
-      "price": "33.0",
+      "price": 33.0,
       "calories": 160,
       "nutritionalValue": "A tropical root vegetable very high in carbohydrates. A source of vitamin C and manganese, but must be cooked properly to remove cyanogenic glycosides.",
       "ingredientPicture": "assets/ingredients/cassava.jpg",
@@ -2323,7 +2323,7 @@
     {
       "ingredientID": 146,
       "ingredientName": "Arrow roots",
-      "price": "45.0",
+      "price": 45.0,
       "calories": 107,
       "nutritionalValue": "A starchy root vegetable. Easily digestible, making it good for weaning babies and those with digestive issues. Provides some potassium and iron.",
       "ingredientPicture": "assets/ingredients/arrow_roots.jpg",
@@ -2339,7 +2339,7 @@
     {
       "ingredientID": 147,
       "ingredientName": "Ube",
-      "price": "70.0",
+      "price": 70.0,
       "calories": 118,
       "nutritionalValue": "Known for its vibrant purple color from antioxidants called anthocyanins. A good source of vitamin C, potassium, and complex carbohydrates.",
       "ingredientPicture": "assets/ingredients/ube.jpg",
@@ -2355,7 +2355,7 @@
     {
       "ingredientID": 148,
       "ingredientName": "Taro",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 112,
       "nutritionalValue": "The corm is high in starch and must be cooked to remove calcium oxalate crystals. A good source of fiber, vitamin E, vitamin B6, and potassium.",
       "ingredientPicture": "assets/ingredients/taro.jpg",
@@ -2371,7 +2371,7 @@
     {
       "ingredientID": 149,
       "ingredientName": "Onion",
-      "price": "150.0",
+      "price": 150.0,
       "calories": 40,
       "nutritionalValue": "Contain quercetin, a flavonoid antioxidant with anti-inflammatory effects. A good source of vitamin C, vitamin B6, and manganese.",
       "ingredientPicture": "assets/ingredients/onions.jpg",
@@ -2387,7 +2387,7 @@
     {
       "ingredientID": 150,
       "ingredientName": "Onions White",
-      "price": "150.0",
+      "price": 150.0,
       "calories": 40,
       "nutritionalValue": "Similar to red onions. Contain antioxidants and organosulfur compounds. A good source of vitamin C, vitamin B6, and manganese.",
       "ingredientPicture": "assets/ingredients/onions_white.jpg",
@@ -2403,7 +2403,7 @@
     {
       "ingredientID": 151,
       "ingredientName": "Spring onion",
-      "price": "55.0",
+      "price": 55.0,
       "calories": 32,
       "nutritionalValue": "The green part is rich in vitamin K. Provides vitamin C, vitamin A, and folate. Has a milder flavor than bulb onions.",
       "ingredientPicture": "assets/ingredients/spring_onion.jpg",
@@ -2418,7 +2418,7 @@
     {
       "ingredientID": 152,
       "ingredientName": "Garlic",
-      "price": "135.0",
+      "price": 135.0,
       "calories": 149,
       "nutritionalValue": "Famous for allicin, a compound with potent medicinal properties, including antibacterial and cardiovascular benefits. A good source of manganese, vitamin B6, and vitamin C.",
       "ingredientPicture": "assets/ingredients/garlic.jpg",
@@ -2433,7 +2433,7 @@
     {
       "ingredientID": 153,
       "ingredientName": "Ginger",
-      "price": "115.0",
+      "price": 115.0,
       "calories": 80,
       "nutritionalValue": "Contains gingerol, a bioactive compound with powerful anti-inflammatory and antioxidant effects. Can help treat nausea and may reduce muscle pain.",
       "ingredientPicture": "assets/ingredients/ginger.jpg",
@@ -2448,7 +2448,7 @@
     {
       "ingredientID": 154,
       "ingredientName": "Saba",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 122,
       "nutritionalValue": "A starchy banana. Higher in calories and carbohydrates than sweet bananas. A good source of potassium, vitamin C, and dietary fiber.",
       "ingredientPicture": "assets/ingredients/saba.jpg",
@@ -2463,7 +2463,7 @@
     {
       "ingredientID": 155,
       "ingredientName": "Latundan Banana",
-      "price": "62.0",
+      "price": 62.0,
       "calories": 89,
       "nutritionalValue": "A common dessert banana. A good source of potassium, which is vital for heart health and blood pressure control. Provides vitamin B6 and vitamin C.",
       "ingredientPicture": "assets/ingredients/latundan_banana.jpg",
@@ -2478,7 +2478,7 @@
     {
       "ingredientID": 156,
       "ingredientName": "Lakatan Banana",
-      "price": "95.0",
+      "price": 95.0,
       "calories": 122,
       "nutritionalValue": "A vitamin-rich banana variety. An excellent source of potassium and vitamin B6. Also provides vitamin C and dietary fiber.",
       "ingredientPicture": "assets/ingredients/lakatan_banana.jpg",
@@ -2493,7 +2493,7 @@
     {
       "ingredientID": 157,
       "ingredientName": "Bungulan Banana",
-      "price": "30.0",
+      "price": 30.0,
       "calories": 121,
       "nutritionalValue": "A sweet, soft banana. A good source of quick energy from carbohydrates. Provides potassium, magnesium, and vitamin B6.",
       "ingredientPicture": "assets/ingredients/bungulan_banana.jpg",
@@ -2508,7 +2508,7 @@
     {
       "ingredientID": 158,
       "ingredientName": "Cardava Banana",
-      "price": "30.0",
+      "price": 30.0,
       "calories": 120,
       "nutritionalValue": "A cooking banana, similar to saba. Starchy and used in savory dishes. A good source of potassium, vitamin A, and vitamin C.",
       "ingredientPicture": "assets/ingredients/cardava_banana.jpg",
@@ -2523,7 +2523,7 @@
     {
       "ingredientID": 159,
       "ingredientName": "Sulay Banana",
-      "price": "33.0",
+      "price": 33.0,
       "calories": 110,
       "nutritionalValue": "A type of banana. Like other varieties, it is a good source of potassium, vitamin B6, and provides sustainable energy from carbohydrates.",
       "ingredientPicture": "assets/ingredients/sulay_banana.jpg",
@@ -2538,7 +2538,7 @@
     {
       "ingredientID": 160,
       "ingredientName": "Apple",
-      "price": "32",
+      "price": 32.0,
       "calories": 52,
       "nutritionalValue": "A good source of fiber, particularly pectin, which is beneficial for gut health. Provides vitamin C and various antioxidants.",
       "ingredientPicture": "assets/ingredients/apple.jpg",
@@ -2553,7 +2553,7 @@
     {
       "ingredientID": 161,
       "ingredientName": "Orange",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 47,
       "nutritionalValue": "Famous for its vitamin C content. Also a good source of fiber, folate, and antioxidants like flavonoids which may improve heart health.",
       "ingredientPicture": "assets/ingredients/orange.jpg",
@@ -2568,7 +2568,7 @@
     {
       "ingredientID": 162,
       "ingredientName": "Lemon",
-      "price": "25.0",
+      "price": 25.0,
       "calories": 29,
       "nutritionalValue": "Primarily used for its juice, which is an excellent source of vitamin C. Also contains antioxidants and may aid iron absorption.",
       "ingredientPicture": "assets/ingredients/lemon.jpg",
@@ -2583,7 +2583,7 @@
     {
       "ingredientID": 163,
       "ingredientName": "Mango Green",
-      "price": "135.0",
+      "price": 135.0,
       "calories": 60,
       "nutritionalValue": "Unripe mango is higher in vitamin C and starch, which converts to sugar as it ripens. A good source of vitamin A and fiber.",
       "ingredientPicture": "assets/ingredients/mango_green.jpg",
@@ -2598,7 +2598,7 @@
     {
       "ingredientID": 164,
       "ingredientName": "Mango Carabao",
-      "price": "135.0",
+      "price": 135.0,
       "calories": 65,
       "nutritionalValue": "A ripe, sweet mango variety. An excellent source of vitamins A and C. Also provides folate, vitamin E, and fiber.",
       "ingredientPicture": "assets/ingredients/mango_carabao.jpg",
@@ -2613,7 +2613,7 @@
     {
       "ingredientID": 165,
       "ingredientName": "Avocado",
-      "price": "90.0",
+      "price": 90.0,
       "calories": 160,
       "nutritionalValue": "Unique for being high in healthy monounsaturated fats. An excellent source of potassium, fiber, and vitamins C, E, and K.",
       "ingredientPicture": "assets/ingredients/avocado.jpg",
@@ -2628,7 +2628,7 @@
     {
       "ingredientID": 166,
       "ingredientName": "Papaya",
-      "price": "55.0",
+      "price": 55.0,
       "calories": 43,
       "nutritionalValue": "Contains papain, an enzyme that aids digestion. An excellent source of vitamin C and a good source of vitamin A (from beta-carotene) and folate.",
       "ingredientPicture": "assets/ingredients/papaya.jpg",
@@ -2643,7 +2643,7 @@
     {
       "ingredientID": 167,
       "ingredientName": "Pineapple",
-      "price": "60.0",
+      "price": 60.0,
       "calories": 50,
       "nutritionalValue": "Contains bromelain, a mixture of enzymes with anti-inflammatory and digestive properties. An excellent source of vitamin C and manganese.",
       "ingredientPicture": "assets/ingredients/pineapple.jpg",
@@ -2658,7 +2658,7 @@
     {
       "ingredientID": 168,
       "ingredientName": "Watermelon",
-      "price": "60.0",
+      "price": 60.0,
       "calories": 30,
       "nutritionalValue": "Very high in water content (92%), making it hydrating. A good source of vitamin C and vitamin A. Contains the antioxidant lycopene.",
       "ingredientPicture": "assets/ingredients/watermelon.jpg",
@@ -2673,7 +2673,7 @@
     {
       "ingredientID": 169,
       "ingredientName": "Watermelon Seedless",
-      "price": "65.0",
+      "price": 65.0,
       "calories": 30,
       "nutritionalValue": "Nutritionally similar to seeded watermelon: high in water, vitamins A and C, and the antioxidant lycopene. The lack of seeds is a convenience trait.",
       "ingredientPicture": "assets/ingredients/watermelon_seedless.jpg",
@@ -2688,7 +2688,7 @@
     {
       "ingredientID": 170,
       "ingredientName": "Lanzones",
-      "price": "90.0",
+      "price": 90.0,
       "calories": 57,
       "nutritionalValue": "A tropical fruit. A good source of fiber, vitamin A, and various antioxidants. Also provides riboflavin and minerals like phosphorus and potassium.",
       "ingredientPicture": "assets/ingredients/lanzones.jpg",
@@ -2703,7 +2703,7 @@
     {
       "ingredientID": 171,
       "ingredientName": "Mangosteen",
-      "price": "135.0",
+      "price": 135.0,
       "calories": 73,
       "nutritionalValue": "The aril is a good source of fiber and vitamin C. The peel is rich in xanthones, powerful antioxidants studied for various health benefits.",
       "ingredientPicture": "assets/ingredients/mangosteen.jpg",
@@ -2718,7 +2718,7 @@
     {
       "ingredientID": 172,
       "ingredientName": "Marang",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 90,
       "nutritionalValue": "A tropical fruit related to jackfruit. A good source of energy from carbohydrates. Provides vitamin C, calcium, and iron.",
       "ingredientPicture": "assets/ingredients/marang.jpg",
@@ -2733,7 +2733,7 @@
     {
       "ingredientID": 173,
       "ingredientName": "Rambutan",
-      "price": "100.0",
+      "price": 100.0,
       "calories": 82,
       "nutritionalValue": "The flesh provides vitamin C and copper. Also contains smaller amounts of other minerals and antioxidants. The seed is not edible.",
       "ingredientPicture": "assets/ingredients/rambutan.jpg",
@@ -2748,7 +2748,7 @@
     {
       "ingredientID": 174,
       "ingredientName": "Durian",
-      "price": "250.0",
+      "price": 250.0,
       "calories": 147,
       "nutritionalValue": "Known as the \"king of fruits.\" High in energy, fiber, and healthy fats. An excellent source of vitamin C, potassium, and B vitamins.",
       "ingredientPicture": "assets/ingredients/durian.jpg",
@@ -2763,7 +2763,7 @@
     {
       "ingredientID": 175,
       "ingredientName": "Jackfruit",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 95,
       "nutritionalValue": "The flesh is rich in carbohydrates and fiber. A good source of vitamin C, vitamin A, and potassium. The seeds are also edible and nutritious.",
       "ingredientPicture": "assets/ingredients/jackfruit.jpg",
@@ -2778,7 +2778,7 @@
     {
       "ingredientID": 176,
       "ingredientName": "Guyabano",
-      "price": "35.0",
+      "price": 35.0,
       "calories": 66,
       "nutritionalValue": "A good source of vitamin C and fiber. Contains various plant compounds (annonaceous acetogenins) studied for potential anti-cancer properties.",
       "ingredientPicture": "assets/ingredients/guyabano.jpg",
@@ -2793,7 +2793,7 @@
     {
       "ingredientID": 177,
       "ingredientName": "Egg",
-      "price": "300.0",
+      "price": 300.0,
       "calories": 90,
       "nutritionalValue": "A complete protein, containing all essential amino acids. Rich in choline (for brain health), lutein/zeaxanthin (for eyes), and vitamins B12 and D.",
       "ingredientPicture": "assets/ingredients/egg.jpg",
@@ -2808,7 +2808,7 @@
     {
       "ingredientID": 178,
       "ingredientName": "Egg",
-      "price": "250.0",
+      "price": 250.0,
       "calories": 54,
       "nutritionalValue": "A complete protein, containing all essential amino acids. Rich in choline (for brain health), lutein/zeaxanthin (for eyes), and vitamins B12 and D.",
       "ingredientPicture": "assets/ingredients/egg.jpg",
@@ -2823,7 +2823,7 @@
     {
       "ingredientID": 179,
       "ingredientName": "Egg",
-      "price": "253.0",
+      "price": 253.0,
       "calories": 63,
       "nutritionalValue": "A complete protein, containing all essential amino acids. Rich in choline (for brain health), lutein/zeaxanthin (for eyes), and vitamins B12 and D.",
       "ingredientPicture": "assets/ingredients/egg.jpg",
@@ -2838,7 +2838,7 @@
     {
       "ingredientID": 180,
       "ingredientName": "Egg",
-      "price": "262.0",
+      "price": 262.0,
       "calories": 72,
       "nutritionalValue": "A complete protein, containing all essential amino acids. Rich in choline (for brain health), lutein/zeaxanthin (for eyes), and vitamins B12 and D.",
       "ingredientPicture": "assets/ingredients/egg.jpg",
@@ -2853,7 +2853,7 @@
     {
       "ingredientID": 181,
       "ingredientName": "Egg",
-      "price": "285.0",
+      "price": 285.0,
       "calories": 80,
       "nutritionalValue": "A complete protein, containing all essential amino acids. Rich in choline (for brain health), lutein/zeaxanthin (for eyes), and vitamins B12 and D.",
       "ingredientPicture": "assets/ingredients/egg.jpg",
@@ -2868,7 +2868,7 @@
     {
       "ingredientID": 182,
       "ingredientName": "Alumahan",
-      "price": "145.0",
+      "price": 145.0,
       "calories": 205,
       "nutritionalValue": "An oily fish, rich in omega-3 fatty acids (EPA and DHA). An excellent source of protein, vitamin D, vitamin B12, and selenium.",
       "ingredientPicture": "assets/ingredients/alumahan.jpg",
@@ -2883,7 +2883,7 @@
     {
       "ingredientID": 183,
       "ingredientName": "Bangus",
-      "price": "170.0",
+      "price": 170.0,
       "calories": 190,
       "nutritionalValue": "The national fish of the Philippines. A fatty fish, rich in omega-3s and protein. A good source of phosphorus, calcium (from bones), and potassium.",
       "ingredientPicture": "assets/ingredients/bangus.jpg",
@@ -2898,7 +2898,7 @@
     {
       "ingredientID": 184,
       "ingredientName": "Yellow Fin Tuna",
-      "price": "225.0",
+      "price": 225.0,
       "calories": 130,
       "nutritionalValue": "A lean fish. An excellent source of high-quality protein, selenium, and vitamin B12. Also contains some omega-3 fatty acids.",
       "ingredientPicture": "assets/ingredients/yellowfin_tuna.jpg",
@@ -2913,7 +2913,7 @@
     {
       "ingredientID": 185,
       "ingredientName": "Culisi",
-      "price": "290.0",
+      "price": 290.0,
       "calories": 100,
       "nutritionalValue": "A type of threadfin bream. A lean source of protein. Provides B vitamins, selenium, and phosphorus.",
       "ingredientPicture": "assets/ingredients/culisi.jpg",
@@ -2928,7 +2928,7 @@
     {
       "ingredientID": 186,
       "ingredientName": "Galunggong",
-      "price": "175.0",
+      "price": 175.0,
       "calories": 124,
       "nutritionalValue": "A common and affordable fish. A good source of protein and omega-3 fatty acids. Also provides calcium, phosphorus, and vitamin D.",
       "ingredientPicture": "assets/ingredients/galunggong.jpg",
@@ -2943,7 +2943,7 @@
     {
       "ingredientID": 187,
       "ingredientName": "Gulyasan",
-      "price": "200.0",
+      "price": 200.0,
       "calories": 103,
       "nutritionalValue": "A type of tuna. A lean source of protein. Rich in selenium, vitamin B12, and provides omega-3 fatty acids.",
       "ingredientPicture": "assets/ingredients/gulyasan.jpg",
@@ -2958,7 +2958,7 @@
     {
       "ingredientID": 188,
       "ingredientName": "Kubal-kubal",
-      "price": "375.0",
+      "price": 375.0,
       "calories": 120,
       "nutritionalValue": "A firm-fleshed fish. A good source of lean protein, B vitamins, and minerals like phosphorus and selenium.",
       "ingredientPicture": "assets/ingredients/kubalkubal.jpg",
@@ -2973,7 +2973,7 @@
     {
       "ingredientID": 189,
       "ingredientName": "Lapu-Lapu ",
-      "price": "375.0",
+      "price": 375.0,
       "calories": 118,
       "nutritionalValue": "A lean, white fish with a firm texture. An excellent source of high-quality protein, phosphorus, and selenium.",
       "ingredientPicture": "assets/ingredients/lapu_lapu.jpg",
@@ -2988,7 +2988,7 @@
     {
       "ingredientID": 190,
       "ingredientName": "Malumbok",
-      "price": "290.0",
+      "price": 290.0,
       "calories": 139,
       "nutritionalValue": "A large, predatory fish. A good source of protein, niacin, vitamin B12, and selenium. Note: can be high in mercury.",
       "ingredientPicture": "assets/ingredients/malumbok.jpg",
@@ -3003,7 +3003,7 @@
     {
       "ingredientID": 191,
       "ingredientName": "Matangbaka",
-      "price": "190.0",
+      "price": 190.0,
       "calories": 124,
       "nutritionalValue": "A small, oily fish. A good source of omega-3 fatty acids, protein, calcium (if eaten with bones), and vitamin D.",
       "ingredientPicture": "assets/ingredients/matangbaka.jpg",
@@ -3018,7 +3018,7 @@
     {
       "ingredientID": 192,
       "ingredientName": "Maya-maya ",
-      "price": "350",
+      "price": 350,
       "calories": 100,
       "nutritionalValue": "A popular white fish. A lean source of high-quality protein. Provides potassium, selenium, and vitamin D.",
       "ingredientPicture": "assets/ingredients/mayamaya.jpg",
@@ -3033,7 +3033,7 @@
     {
       "ingredientID": 193,
       "ingredientName": "Mulmul",
-      "price": "190.0",
+      "price": 190.0,
       "calories": 120,
       "nutritionalValue": "A colorful reef fish. A lean source of protein. Provides various B vitamins and minerals like phosphorus.",
       "ingredientPicture": "assets/ingredients/mulmul.jpg",
@@ -3048,7 +3048,7 @@
     {
       "ingredientID": 194,
       "ingredientName": "Samaral",
-      "price": "190.0",
+      "price": 190.0,
       "calories": 110,
       "nutritionalValue": "A rabbitfish. A good source of protein and omega-3 fatty acids. Also provides calcium and phosphorus.",
       "ingredientPicture": "assets/ingredients/samaral.jpg",
@@ -3063,7 +3063,7 @@
     {
       "ingredientID": 195,
       "ingredientName": "Talakitok",
-      "price": "240.0",
+      "price": 240.0,
       "calories": 139,
       "nutritionalValue": "An oily fish. A good source of omega-3 fatty acids, protein, and vitamin D. Also provides niacin and vitamin B6.",
       "ingredientPicture": "assets/ingredients/talakitok.jpg",
@@ -3078,7 +3078,7 @@
     {
       "ingredientID": 196,
       "ingredientName": "Tamban",
-      "price": "70.0",
+      "price": 70.0,
       "calories": 208,
       "nutritionalValue": "Small, oily fish often eaten whole. An excellent source of omega-3s, calcium, vitamin D, and vitamin B12.",
       "ingredientPicture": "assets/ingredients/tamban.jpg",
@@ -3093,7 +3093,7 @@
     {
       "ingredientID": 197,
       "ingredientName": "Tanigue",
-      "price": "34.0",
+      "price": 34.0,
       "calories": 109,
       "nutritionalValue": "A type of tuna. A lean source of protein. Provides selenium, niacin, and vitamin B12.",
       "ingredientPicture": "assets/ingredients/tanigue.jpg",
@@ -3108,7 +3108,7 @@
     {
       "ingredientID": 198,
       "ingredientName": "Tulingan",
-      "price": "225.0",
+      "price": 225.0,
       "calories": 144,
       "nutritionalValue": "A fatty tuna. A good source of omega-3 fatty acids and high-quality protein. Also rich in selenium and vitamin D.",
       "ingredientPicture": "assets/ingredients/tulingan.jpg",
@@ -3123,7 +3123,7 @@
     {
       "ingredientID": 199,
       "ingredientName": "Sulig",
-      "price": "225.0",
+      "price": 225.0,
       "calories": 130,
       "nutritionalValue": "Likely a local fish name. Generally, fish are good sources of protein, B vitamins, and minerals like selenium and iodine.",
       "ingredientPicture": "assets/ingredients/sulig.jpg",
@@ -3138,7 +3138,7 @@
     {
       "ingredientID": 200,
       "ingredientName": "Shark meat",
-      "price": "40.0",
+      "price": 40.0,
       "calories": 130,
       "nutritionalValue": "A lean source of protein. However, it is often high in mercury and other toxins due to bioaccumulation and is not recommended for frequent consumption.",
       "ingredientPicture": "assets/ingredients/shark_meat.jpg",
@@ -3153,7 +3153,7 @@
     {
       "ingredientID": 201,
       "ingredientName": "Sting ray",
-      "price": "70.0",
+      "price": 70.0,
       "calories": 110,
       "nutritionalValue": "A cartilaginous fish. The meat is lean and a good source of protein. Provides selenium and other minerals.",
       "ingredientPicture": "assets/ingredients/sting_ray.jpg",
@@ -3168,7 +3168,7 @@
     {
       "ingredientID": 202,
       "ingredientName": "Blue crab",
-      "price": "225.0",
+      "price": 225.0,
       "calories": 87,
       "nutritionalValue": "A good source of high-quality protein. Provides vitamin B12, selenium, and zinc. The liver (aligue) is a delicacy and is high in cholesterol.",
       "ingredientPicture": "assets/ingredients/blue_crab.jpg",
@@ -3183,7 +3183,7 @@
     {
       "ingredientID": 203,
       "ingredientName": "Curacha",
-      "price": "636.0",
+      "price": 636.0,
       "calories": 100,
       "nutritionalValue": "A spanner crab or sea cockroach. A delicacy. The meat is a good source of lean protein, iodine, and zinc.",
       "ingredientPicture": "assets/ingredients/curacha.jpg",
@@ -3198,7 +3198,7 @@
     {
       "ingredientID": 204,
       "ingredientName": "Mud crab",
-      "price": "37.0",
+      "price": 37.0,
       "calories": 97,
       "nutritionalValue": "A prized crustacean. The meat is a good source of protein, omega-3 fatty acids, and selenium. The tomalley (liver) is rich but high in cholesterol.",
       "ingredientPicture": "assets/ingredients/mud_crab.jpg",
@@ -3213,7 +3213,7 @@
     {
       "ingredientID": 205,
       "ingredientName": "Prawn",
-      "price": "525.0",
+      "price": 525.0,
       "calories": 106,
       "nutritionalValue": "Larger than shrimp. A lean source of protein. Low in fat and a good source of selenium, vitamin B12, and the antioxidant astaxanthin.",
       "ingredientPicture": "assets/ingredients/prawn.jpg",
@@ -3228,7 +3228,7 @@
     {
       "ingredientID": 206,
       "ingredientName": "Shrimp",
-      "price": "330.0",
+      "price": 330.0,
       "calories": 85,
       "nutritionalValue": "Very low in fat and calories. An excellent source of lean protein, selenium, vitamin B12, and the antioxidant astaxanthin.",
       "ingredientPicture": "assets/ingredients/shrimp.jpg",
@@ -3243,7 +3243,7 @@
     {
       "ingredientID": 207,
       "ingredientName": "Squid",
-      "price": "180.0",
+      "price": 180.0,
       "calories": 92,
       "nutritionalValue": "Low in fat and calories. An excellent source of protein, vitamin B12, riboflavin, and selenium. Contains antioxidants and is a good source of copper.",
       "ingredientPicture": "assets/ingredients/squid.jpg",
@@ -3258,7 +3258,7 @@
     {
       "ingredientID": 208,
       "ingredientName": "Chinese pomelo",
-      "price": "102.0",
+      "price": 102.0,
       "calories": 38,
       "nutritionalValue": "A large citrus fruit. An excellent source of vitamin C. Also provides fiber, potassium, and antioxidants.",
       "ingredientPicture": "assets/ingredients/chinese_pomelo.jpg",
@@ -3273,7 +3273,7 @@
     {
       "ingredientID": 209,
       "ingredientName": "Sweet gold pomelo",
-      "price": "120.0",
+      "price": 120.0,
       "calories": 40,
       "nutritionalValue": "A sweeter pomelo variety. An excellent source of vitamin C and a good source of potassium and fiber.",
       "ingredientPicture": "assets/ingredients/sweet_gold_pomelo.jpg",
@@ -3288,7 +3288,7 @@
     {
       "ingredientID": 210,
       "ingredientName": "Menzi pomelo",
-      "price": "105.0",
+      "price": 105.0,
       "calories": 38,
       "nutritionalValue": "A specific cultivar of pomelo. Like others, it is rich in vitamin C, antioxidants, and fiber.",
       "ingredientPicture": "assets/ingredients/menzipomelo.jpg",
@@ -3303,7 +3303,7 @@
     {
       "ingredientID": 211,
       "ingredientName": "Pomelo",
-      "price": "48.0",
+      "price": 48.0,
       "calories": 38,
       "nutritionalValue": "A smaller pomelo. Nutritionally similar: high in vitamin C, fiber, and potassium.",
       "ingredientPicture": "assets/ingredients/pomelo.jpg",
@@ -3318,7 +3318,7 @@
     {
       "ingredientID": 212,
       "ingredientName": "Melon cantaloupe",
-      "price": "42.0",
+      "price": 42.0,
       "calories": 34,
       "nutritionalValue": "An excellent source of vitamin A (from beta-carotene) and vitamin C. Very hydrating due to high water content.",
       "ingredientPicture": "assets/ingredients/meloncantaloupe.jpg",
@@ -3333,7 +3333,7 @@
     {
       "ingredientID": 213,
       "ingredientName": "Tundan Banana",
-      "price": "43.0",
+      "price": 43.0,
       "calories": 122,
       "nutritionalValue": "A variety of banana. A good source of potassium, vitamin B6, vitamin C, and dietary fiber.",
       "ingredientPicture": "assets/ingredients/tundan_banana.jpg",
@@ -3348,7 +3348,7 @@
     {
       "ingredientID": 214,
       "ingredientName": "Ponkan",
-      "price": "20.0",
+      "price": 20.0,
       "calories": 53,
       "nutritionalValue": "An easy-to-peel citrus fruit. A good source of vitamin C and fiber. Also provides antioxidants like beta-cryptoxanthin.",
       "ingredientPicture": "assets/ingredients/ponkan.jpg",
@@ -3363,7 +3363,7 @@
     {
       "ingredientID": 215,
       "ingredientName": "Dragon fruit",
-      "price": "94.0",
+      "price": 94.0,
       "calories": 60,
       "nutritionalValue": "The flesh is low in calories and contains prebiotic fiber for gut health. A good source of vitamin C, antioxidants, and iron (especially red varieties).",
       "ingredientPicture": "assets/ingredients/dragon_fruit.jpg",
@@ -3378,7 +3378,7 @@
     {
       "ingredientID": 216,
       "ingredientName": "Mango Yellow",
-      "price": "123.0",
+      "price": 123.0,
       "calories": 65,
       "nutritionalValue": "A ripe, sweet mango variety. An excellent source of vitamins A and C. Also provides folate, vitamin E, and fiber.",
       "ingredientPicture": "assets/ingredients/mango_yellow.jpg",
@@ -3393,7 +3393,7 @@
     {
       "ingredientID": 217,
       "ingredientName": "Young corn",
-      "price": "30.0",
+      "price": 30.0,
       "calories": 86,
       "nutritionalValue": "Sweet and tender. A good source of fiber, vitamins A and C, and folate. Higher in sugar than mature corn.",
       "ingredientPicture": "assets/ingredients/young_corn.jpg",
@@ -3408,7 +3408,7 @@
     {
       "ingredientID": 218,
       "ingredientName": "Broccoli",
-      "price": "133.0",
+      "price": 133.0,
       "calories": 34,
       "nutritionalValue": "A nutritional powerhouse. Excellent source of vitamins C and K. High in fiber, folate, potassium, and sulforaphane, a potent antioxidant.",
       "ingredientPicture": "assets/ingredients/broccoli.jpg",
@@ -3423,7 +3423,7 @@
     {
       "ingredientID": 219,
       "ingredientName": "Tambo paklay",
-      "price": "16.0",
+      "price": 16.0,
       "calories": 30,
       "nutritionalValue": "Likely refers to the shoots or young fronds of a plant, possibly fern. Typically low in calories and a good source of fiber and some minerals.",
       "ingredientPicture": "assets/ingredients/tambo_paklay.jpg",
@@ -3438,7 +3438,7 @@
     {
       "ingredientID": 220,
       "ingredientName": "Tambo kudkod",
-      "price": "12.0",
+      "price": 12.0,
       "calories": 30,
       "nutritionalValue": "Likely another type of shoot or young plant stem. Generally provides fiber, some vitamins, and minerals.",
       "ingredientPicture": "assets/ingredients/tambo_kudkod.jpg",
@@ -3453,7 +3453,7 @@
     {
       "ingredientID": 221,
       "ingredientName": "Asparagus",
-      "price": "31.0",
+      "price": 31.0,
       "calories": 20,
       "nutritionalValue": "A good source of fiber, folate, vitamins A, C, E, and K. Contains the amino acid asparagine and is a natural diuretic.",
       "ingredientPicture": "assets/ingredients/asparagus.jpg",
@@ -3468,7 +3468,7 @@
     {
       "ingredientID": 222,
       "ingredientName": "Mustasa",
-      "price": "21.0",
+      "price": 21.0,
       "calories": 27,
       "nutritionalValue": "Leafy greens with a peppery flavor. An excellent source of vitamins K, A, and C. Also provides antioxidants and may have anti-inflammatory effects.",
       "ingredientPicture": "assets/ingredients/mustasa.jpg",
@@ -3483,7 +3483,7 @@
     {
       "ingredientID": 223,
       "ingredientName": "Tanglad",
-      "price": "10.0",
+      "price": 10.0,
       "calories": 99,
       "nutritionalValue": "Primarily used as an aromatic herb. It contains citral, a compound with anti-inflammatory and antimicrobial properties. Not consumed in large quantities.",
       "ingredientPicture": "assets/ingredients/tanglad.jpg",
@@ -3498,7 +3498,7 @@
     {
       "ingredientID": 224,
       "ingredientName": "Atchal",
-      "price": "25.0",
+      "price": 25.0,
       "calories": 300,
       "nutritionalValue": "Likely refers to achar or pickled vegetables. Nutrition depends on the vegetable used. High in sodium due to the pickling process. May provide probiotics.",
       "ingredientPicture": "assets/ingredients/atchal.jpg",
@@ -3513,7 +3513,7 @@
     {
       "ingredientID": 225,
       "ingredientName": "Dried green peas",
-      "price": "84.0",
+      "price": 84.0,
       "calories": 352,
       "nutritionalValue": "A concentrated source of plant-based protein, fiber, and complex carbohydrates. Rich in vitamins A, C, K, and B vitamins, and minerals like iron and manganese.",
       "ingredientPicture": "assets/ingredients/dried_green_peas.jpg",
@@ -3528,7 +3528,7 @@
     {
       "ingredientID": 226,
       "ingredientName": "Red mung bean",
-      "price": "136.0",
+      "price": 136.0,
       "calories": 347,
       "nutritionalValue": "Similar to green mung beans. A good source of protein, fiber, and folate. Also provides iron, magnesium, and potassium.",
       "ingredientPicture": "assets/ingredients/red_mung_beans.jpg",
@@ -3543,7 +3543,7 @@
     {
       "ingredientID": 227,
       "ingredientName": "White beans",
-      "price": "154.0",
+      "price": 154.0,
       "calories": 337,
       "nutritionalValue": "A type of common bean. An excellent source of fiber, plant-based protein, and folate. Also rich in iron, magnesium, and potassium.",
       "ingredientPicture": "assets/ingredients/white_beans.jpg",
@@ -3558,7 +3558,7 @@
     {
       "ingredientID": 228,
       "ingredientName": "Red beans",
-      "price": "176.0",
+      "price": 176.0,
       "calories": 337,
       "nutritionalValue": "A kidney bean variety. High in fiber, protein, and complex carbs. An excellent source of iron, phosphorus, potassium, and folate.",
       "ingredientPicture": "assets/ingredients/red_beans.jpg",
@@ -3573,7 +3573,7 @@
     {
       "ingredientID": 229,
       "ingredientName": "Soy beans",
-      "price": "94.0",
+      "price": 94.0,
       "calories": 446,
       "nutritionalValue": "The basis for tofu and soy milk. A complete protein, containing all essential amino acids. Rich in isoflavones, iron, calcium, and fiber.",
       "ingredientPicture": "assets/ingredients/soybeans.jpg",
@@ -3588,7 +3588,7 @@
     {
       "ingredientID": 230,
       "ingredientName": "Landing red",
-      "price": "86.0",
+      "price": 86.0,
       "calories": 353,
       "nutritionalValue": "Likely refers to lentils. A great source of plant-based protein and fiber. High in folate, iron, and manganese. Cooks faster than other dried legumes.",
       "ingredientPicture": "assets/ingredients/landing_red.jpg",
@@ -3603,7 +3603,7 @@
     {
       "ingredientID": 231,
       "ingredientName": "Landing white",
-      "price": "86.0",
+      "price": 86.0,
       "calories": 353,
       "nutritionalValue": "Likely refers to a variety of lentil. A great source of plant-based protein and fiber. High in folate, iron, and manganese.",
       "ingredientPicture": "assets/ingredients/landing_white.jpg",
@@ -3618,7 +3618,7 @@
     {
       "ingredientID": 232,
       "ingredientName": "Salt",
-      "price": "10.0",
+      "price": 10.0,
       "calories": 0,
       "nutritionalValue": "Provides sodium, an essential electrolyte for nerve function and fluid balance. Excessive intake is linked to high blood pressure.",
       "ingredientPicture": "assets/ingredients/salt.jpg",
@@ -3633,7 +3633,7 @@
     {
       "ingredientID": 233,
       "ingredientName": "Ground pepper",
-      "price": "280.0",
+      "price": 280.0,
       "calories": 251,
       "nutritionalValue": "Contains piperine, which enhances nutrient absorption and has antioxidant and anti-inflammatory properties. A good source of manganese and vitamin K.",
       "ingredientPicture": "assets/ingredients/ground_pepper.jpg",
@@ -3648,7 +3648,7 @@
     {
       "ingredientID": 234,
       "ingredientName": "Bay Leaf",
-      "price": "7.0",
+      "price": 7.0,
       "calories": 313,
       "nutritionalValue": "Not consumed in quantity; used for aromatic flavor. Contains vitamins A, B6, and C, manganese, iron, and calcium in trace amounts. The compound eugenol provides anti-inflammatory properties.",
       "ingredientPicture": "assets/ingredients/bay_leaf.jpg",
@@ -3663,7 +3663,7 @@
     {
       "ingredientID": 235,
       "ingredientName": "Peppercorn",
-      "price": "25.0",
+      "price": 25.0,
       "calories": 251,
       "nutritionalValue": "Rich in the bioactive compound piperine, which enhances nutrient absorption and has anti-inflammatory properties. A good source of manganese, vitamin K, iron, and fiber.",
       "ingredientPicture": "assets/ingredients/peppercorn.jpg",
@@ -3678,7 +3678,7 @@
     {
       "ingredientID": 236,
       "ingredientName": "Cane Vinegar",
-      "price": "30.0",
+      "price": 30.0,
       "calories": 18,
       "nutritionalValue": "Very low in calories. Contains acetic acid, which may help lower blood sugar levels and improve insulin sensitivity. Provides minimal nutrients but is a probiotic food when unpasteurized.",
       "ingredientPicture": "assets/ingredients/cane_vinegar_suka.jpg",
@@ -3693,7 +3693,7 @@
     {
       "ingredientID": 237,
       "ingredientName": "Cooking Oil",
-      "price": "70.0",
+      "price": 70.0,
       "calories": 884,
       "nutritionalValue": "Pure fat and a concentrated source of energy. Typically high in unsaturated fats. Provides vitamin E, an antioxidant. Used for frying and sautéing; not a significant source of other nutrients.",
       "ingredientPicture": "assets/ingredients/cooking_oil.jpg",
@@ -3708,7 +3708,7 @@
     {
       "ingredientID": 238,
       "ingredientName": "Malunggay",
-      "price": "13.0",
+      "price": 13.0,
       "calories": 64,
       "nutritionalValue": "Extremely nutrient-dense. An excellent source of vitamins A, C, and E. Rich in calcium, potassium, and protein. Contains powerful antioxidants and anti-inflammatory compounds.",
       "ingredientPicture": "assets/ingredients/malunggay.jpg",
@@ -3723,7 +3723,7 @@
     {
       "ingredientID": 239,
       "ingredientName": "Soy Sauce",
-      "price": "30.0",
+      "price": 30.0,
       "calories": 53,
       "nutritionalValue": "High in sodium. Provides a small amount of protein and carbohydrates. Contains antioxidants from the fermented soybeans, but its primary nutritional consideration is its high salt content.",
       "ingredientPicture": "assets/ingredients/soy_sauce.jpg",
@@ -3738,7 +3738,7 @@
     {
       "ingredientID": 240,
       "ingredientName": "Bagoong",
-      "price": "80.0",
+      "price": 80.0,
       "calories": 70,
       "nutritionalValue": "Fermented shrimp or krill. Very high in sodium and cholesterol. Provides some protein, calcium, and iron, but typically used in small amounts as a seasoning.",
       "ingredientPicture": "assets/ingredients/bagoong.jpg",
@@ -3753,7 +3753,7 @@
     {
       "ingredientID": 241,
       "ingredientName": "Brown Sugar",
-      "price": "65.0",
+      "price": 65.0,
       "calories": 380,
       "nutritionalValue": "A source of quick energy (sucrose). Contains slightly more minerals (calcium, potassium, iron) than white sugar due to the presence of molasses, but still should be consumed in moderation.",
       "ingredientPicture": "assets/ingredients/brown_sugar.jpg",
@@ -3768,7 +3768,7 @@
     {
       "ingredientID": 242,
       "ingredientName": "Glutinous Rice Malagkit",
-      "price": "60.0",
+      "price": 60.0,
       "calories": 370,
       "nutritionalValue": "A starchy carbohydrate. Higher in amylopectin, making it sticky when cooked. Provides energy, some protein, and small amounts of iron and B vitamins. Low in fiber.",
       "ingredientPicture": "assets/ingredients/glutinous_rice_malagkit.jpg",
@@ -3783,7 +3783,7 @@
     {
       "ingredientID": 243,
       "ingredientName": "Coconut Milk",
-      "price": "35.0",
+      "price": 35.0,
       "calories": 230,
       "nutritionalValue": "High in calories and saturated fat (medium-chain triglycerides). Provides manganese, copper, phosphorus, magnesium, and iron. Adds richness and flavor to dishes.",
       "ingredientPicture": "assets/ingredients/coconut_milk.jpg",
@@ -3798,7 +3798,7 @@
     {
       "ingredientID": 244,
       "ingredientName": "Coconut Cream",
-      "price": "30.0",
+      "price": 30.0,
       "calories": 445,
       "nutritionalValue": "The thicker, richer first extraction of coconut. Very high in calories and saturated fat. Concentrated source of the minerals found in coconut milk. Used to add creaminess and flavor.",
       "ingredientPicture": "assets/ingredients/coconut_cream.jpg",
@@ -3813,7 +3813,7 @@
     {
       "ingredientID": 245,
       "ingredientName": "Tamarind Paste",
-      "price": "25.0",
+      "price": 25.0,
       "calories": 239,
       "nutritionalValue": "A good source of B vitamins and potassium. Contains tartaric acid, which gives it its sour flavor and acts as an antioxidant. Often used in small quantities for flavoring.",
       "ingredientPicture": "assets/ingredients/tamarind_paste.jpg",
@@ -3828,7 +3828,7 @@
     {
       "ingredientID": 246,
       "ingredientName": "Patis",
-      "price": "45.0",
+      "price": 45.0,
       "calories": 6,
       "nutritionalValue": "Very high in sodium. Provides umami flavor from fermented fish. Contains some protein and minerals like iodine and selenium, but its high salt content is the primary consideration.",
       "ingredientPicture": "assets/ingredients/patis.jpg",
@@ -3843,7 +3843,7 @@
     {
       "ingredientID": 247,
       "ingredientName": "Oyster Sauce",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 51,
       "nutritionalValue": "A thick, savory sauce. High in sodium and sugar. Provides a small amount of protein and minerals from oyster extracts, but used primarily for its umami flavor.",
       "ingredientPicture": "assets/ingredients/oyster_sauce.jpg",
@@ -3858,7 +3858,7 @@
     {
       "ingredientID": 248,
       "ingredientName": "Cornstarch",
-      "price": "30.0",
+      "price": 30.0,
       "calories": 381,
       "nutritionalValue": "Almost pure starch (carbohydrate). Used as a thickening agent. Provides energy but is devoid of protein, fat, fiber, vitamins, or minerals.",
       "ingredientPicture": "assets/ingredients/cornstarch.jpg",
@@ -3873,7 +3873,7 @@
     {
       "ingredientID": 249,
       "ingredientName": "Chicken Broth",
-      "price": "65.0",
+      "price": 65.0,
       "calories": 5,
       "nutritionalValue": "Low in calories. Flavor comes from dissolved minerals, collagen, and fat from bones and meat. Very high in sodium. Provides some protein and minerals.",
       "ingredientPicture": "assets/ingredients/chicken_broth.jpg",
@@ -3888,7 +3888,7 @@
     {
       "ingredientID": 250,
       "ingredientName": "Thai Chili",
-      "price": "290.0",
+      "price": 290.0,
       "calories": 40,
       "nutritionalValue": "Very high in capsaicin, which boosts metabolism and has pain-relieving properties. An excellent source of vitamins A and C, and antioxidants.",
       "ingredientPicture": "assets/ingredients/thai_chili.jpg",
@@ -3903,7 +3903,7 @@
     {
       "ingredientID": 251,
       "ingredientName": "All-Purpose Flour",
-      "price": "50.0",
+      "price": 50.0,
       "calories": 364,
       "nutritionalValue": "A refined carbohydrate. Provides energy, some protein (gluten), and is often enriched with B vitamins like folate and iron. Low in fiber and other nutrients.",
       "ingredientPicture": "assets/ingredients/all_purpose_flour.jpg",
@@ -3918,7 +3918,7 @@
     {
       "ingredientID": 252,
       "ingredientName": "White Sugar",
-      "price": "60.0",
+      "price": 60.0,
       "calories": 387,
       "nutritionalValue": "Pure sucrose. Provides empty calories (energy with no essential nutrients). Consumed in moderation as it can affect blood sugar levels and contribute to weight gain.",
       "ingredientPicture": "assets/ingredients/white_sugar.jpg",
@@ -3933,7 +3933,7 @@
     {
       "ingredientID": 253,
       "ingredientName": "Evaporated Milk",
-      "price": "35.0",
+      "price": 35.0,
       "calories": 134,
       "nutritionalValue": "Concentrated milk with about 60% of the water removed. A good source of protein, calcium, vitamin D, and vitamin A. Higher in calories and fat than fresh milk.",
       "ingredientPicture": "assets/ingredients/evaporated.jpg",

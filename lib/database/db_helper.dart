@@ -3282,6 +3282,41 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     };
   }
 
+  // ========== UNIT CONVERSION METHOD ==========
+  static double convertToGrams(double quantity, String unit, Map<String, dynamic> ingredient) {
+    unit = unit.toLowerCase().trim();
+    
+    // Handle common unit conversions
+    switch (unit) {
+      case 'kg':
+        return quantity * 1000;
+      case 'g':
+        return quantity;
+      case 'tbsp':
+        return quantity * (ingredient['unit_density_tbsp'] as double? ?? 15.0);
+      case 'tsp':
+        return quantity * (ingredient['unit_density_tsp'] as double? ?? 5.0);
+      case 'cup':
+        return quantity * (ingredient['unit_density_cup'] as double? ?? 240.0);
+      case 'piece':
+      case 'pcs':
+        return quantity * 100.0; // assumption only
+      case 'pack':
+        return quantity * 250.0; // assumption only
+      case 'tie':
+        return quantity * 250.0; // Based on your unitToGrams assumption
+      case 'bundle':
+        return quantity * 100.0; // Based on your unitToGrams assumption
+      case 'can':
+        return quantity * 370.0; // Based on your unitToGrams assumption
+      case 'bottle':
+        return quantity * 500.0; // Based on your unitToGrams assumption
+      default:
+        // For unknown units, assume grams
+        return quantity;
+    }
+  }
+
   // ========== CUSTOMIZED MEALS OPERATIONS ==========
 
   Future<int> saveCustomizedMeal({

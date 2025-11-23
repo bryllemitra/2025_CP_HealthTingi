@@ -78,6 +78,10 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
 
   // Helper method to parse quantity string to double (handles fractions)
   double _parseQuantity(String quantityStr) {
+    if (quantityStr.contains('.') && double.tryParse(quantityStr) != null) {
+      return double.parse(quantityStr);
+    }
+    
     // First try to parse common fractions
     final fractionMap = {
       '⅛': 0.125, '¼': 0.25, '⅓': 0.333, '⅜': 0.375,
@@ -370,15 +374,9 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         double qtyValue = _parseQuantity(quantity);
         String qtyUnit = unit.toLowerCase();
         
-        double gramsPerUnit = 1.0;
-        if (qtyUnit == 'kg') gramsPerUnit = 1000;
-        else if (qtyUnit == 'g') gramsPerUnit = 1;
-        else if (qtyUnit == 'tbsp') gramsPerUnit = ing['unit_density_tbsp'] as double? ?? 15;
-        else if (qtyUnit == 'tsp') gramsPerUnit = ing['unit_density_tsp'] as double? ?? 5;
-        else if (qtyUnit == 'cup') gramsPerUnit = ing['unit_density_cup'] as double? ?? 240;
-        else if (qtyUnit == 'piece' || qtyUnit == 'pcs') gramsPerUnit = 100;
-        
-        cost = (qtyValue * gramsPerUnit / 100) * price;
+        // Convert to grams using the helper method
+        double grams = DatabaseHelper.convertToGrams(qtyValue, qtyUnit, ing);
+        cost = (grams / 1000) * price;
       }
 
       totalPrice += cost;
@@ -455,19 +453,9 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
               qtyUnit = m.group(2)!.toLowerCase();
             }
 
-            double gramsPerUnit = qtyUnit == 'kg'
-                ? 1000
-                : qtyUnit == 'g'
-                    ? 1
-                    : qtyUnit == 'tbsp'
-                        ? info['unit_density_tbsp'] as double? ?? 15
-                        : qtyUnit == 'tsp'
-                            ? info['unit_density_tsp'] as double? ?? 5
-                            : qtyUnit == 'cup'
-                                ? info['unit_density_cup'] as double? ?? 240
-                                : 100;
-
-            final cost = (qtyValue * gramsPerUnit / 100) * price;
+            // Use the conversion helper
+            double grams = DatabaseHelper.convertToGrams(qtyValue, qtyUnit, info);
+            final cost = (grams / 1000) * price;
             priceText = 'Php ${cost.toStringAsFixed(2)}';
           }
         }
@@ -726,15 +714,10 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                         double qtyValue = _parseQuantity(qty);
                         String unit = ing['unit']?.toString().toLowerCase() ?? '';
                         
-                        double gramsPerUnit = 1.0;
-                        if (unit == 'kg') gramsPerUnit = 1000;
-                        else if (unit == 'g') gramsPerUnit = 1;
-                        else if (unit == 'tbsp') gramsPerUnit = ing['unit_density_tbsp'] as double? ?? 15;
-                        else if (unit == 'tsp') gramsPerUnit = ing['unit_density_tsp'] as double? ?? 5;
-                        else if (unit == 'cup') gramsPerUnit = ing['unit_density_cup'] as double? ?? 240;
-                        else if (unit == 'piece' || unit == 'pcs') gramsPerUnit = 100;
-                        
-                        totalPrice += (qtyValue * gramsPerUnit / 100) * price;
+                        // Use the conversion helper
+                        double grams = DatabaseHelper.convertToGrams(qtyValue, unit, ing);
+                        // CORRECTED: Divide by 1000 since price is per kg
+                        totalPrice += (grams / 1000) * price;
                       }
                     }
 
