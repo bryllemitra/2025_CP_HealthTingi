@@ -1,4 +1,3 @@
-// New file: pages/meal_completion.dart
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:photo_view/photo_view.dart';
@@ -26,8 +25,6 @@ class MealCompletionPage extends StatefulWidget {
 }
 
 class _MealCompletionPageState extends State<MealCompletionPage> {
-  int _rating = 0;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,7 +110,7 @@ class _MealCompletionPageState extends State<MealCompletionPage> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'You’ve just finished cooking ${widget.mealName}! Great job, Chef!',
+                    'You\'ve just finished cooking ${widget.mealName}! Great job, Chef!',
                     style: const TextStyle(
                       fontFamily: 'Orbitron',
                       fontSize: 20,
@@ -141,30 +138,6 @@ class _MealCompletionPageState extends State<MealCompletionPage> {
                       color: Colors.black87,
                     ),
                     textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Rate Your Experience',
-                    style: TextStyle(
-                      fontFamily: 'Orbitron',
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF184E77),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (i) {
-                      return IconButton(
-                        icon: Icon(
-                          i < _rating ? Icons.star : Icons.star_border,
-                          color: Colors.yellow[700],
-                          size: 40,
-                        ),
-                        onPressed: () => setState(() => _rating = i + 1),
-                      );
-                    }),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(

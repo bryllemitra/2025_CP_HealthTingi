@@ -3,7 +3,6 @@ import 'package:path/path.dart';
 import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'dart:convert';
-import 'dart:math';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -2917,7 +2916,7 @@ class DatabaseHelper {
   }
 
   Future<List<Map<String, dynamic>>> getRecentlyViewedMeals(int userId) async {
-    final db = await database;
+    //final db = await database;
     final user = await getUserById(userId);
     if (user == null) return [];
 

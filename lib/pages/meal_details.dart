@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import 'dart:async';
-import 'package:flutter_animate/flutter_animate.dart'; // Added for animations
-import '../searchMeals/history.dart'; // Import HistoryPage to access completed meals list
-import 'reverse_ingredient.dart'; // Add this import for navigation
+import 'package:flutter_animate/flutter_animate.dart';
+import 'reverse_ingredient.dart';
 import 'dart:io';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
-import 'meal_steps.dart'; // Add this import for the new page
+import 'meal_steps.dart';
 
 class MealDetailsPage extends StatefulWidget {
   final int mealId;
@@ -386,31 +385,67 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
 
       widgets.add(
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(
+              // Ingredient details - takes most of the space
+              Expanded(
                 flex: 3,
-                child: Text(
-                  '${displayQuantity.isNotEmpty ? '$displayQuantity ' : ''}${unit.isNotEmpty ? '$unit ' : ''}$displayName${content.isNotEmpty ? ' ($content)' : ''}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'Orbitron',
-                    color: Colors.black87,
-                    fontStyle: substituted != null &&
-                            substituted.containsKey(name) &&
-                            (substituted[name] is Map
-                                ? substituted[name]['value'] != name
-                                : substituted[name] != name)
-                        ? FontStyle.italic
-                        : FontStyle.normal,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Main ingredient line
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'Orbitron',
+                          color: Colors.black87,
+                          fontStyle: substituted != null &&
+                                  substituted.containsKey(name) &&
+                                  (substituted[name] is Map
+                                      ? substituted[name]['value'] != name
+                                      : substituted[name] != name)
+                              ? FontStyle.italic
+                              : FontStyle.normal,
+                        ),
+                        children: [
+                          if (displayQuantity.isNotEmpty)
+                            TextSpan(
+                              text: '$displayQuantity ',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          if (unit.isNotEmpty)
+                            TextSpan(text: '$unit '),
+                          TextSpan(text: displayName),
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    // Content/preparation details on a new line if needed
+                    if (content.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          '($content)',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'Orbitron',
+                            color: Colors.black54,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              Flexible(
-                flex: 1,
+              // Price - fixed width
+              Container(
+                width: 80, // Fixed width for price to ensure alignment
                 child: Text(
                   'Php ${cost.toStringAsFixed(2)}',
                   style: const TextStyle(
@@ -420,6 +455,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     color: Color(0xFF76C893),
                   ),
                   textAlign: TextAlign.right,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -465,25 +502,31 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
 
         widgets.add(
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Flexible(
+                Expanded(
                   flex: 3,
-                  child: Text(
-                    '$displayQty $name',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'Orbitron',
-                      color: Colors.black87,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$displayQty $name',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'Orbitron',
+                          color: Colors.black87,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
-                Flexible(
-                  flex: 1,
+                Container(
+                  width: 80,
                   child: Text(
                     priceText,
                     style: const TextStyle(
@@ -493,6 +536,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                       color: Color(0xFF76C893),
                     ),
                     textAlign: TextAlign.right,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

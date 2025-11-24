@@ -194,7 +194,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(16.0), // Reduced padding
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +215,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           Text(
                             'Welcome, $adminName!',
                             style: const TextStyle(
-                              fontSize: 24,
+                              fontSize: 22, // Slightly smaller
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF184E77),
                               shadows: [
@@ -227,11 +227,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6), // Reduced spacing
                           Text(
                             'User ID: ${widget.userId}',
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 14, // Smaller font
                               color: Colors.black87,
                             ),
                           ),
@@ -240,95 +240,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     ),
                   ),
                   
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16), // Reduced spacing
                   
- // Management Section – Analytics icon fixed to match Quick Stats
-Text(
-  'Management',
-  style: const TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-    shadows: [
-      Shadow(
-        color: Colors.black26,
-        offset: Offset(2, 2),
-        blurRadius: 4,
-      ),
-    ],
-  ),
-),
-const SizedBox(height: 15),
-
-GridView.count(
-  crossAxisCount: 2,
-  crossAxisSpacing: 15,
-  mainAxisSpacing: 15,
-  childAspectRatio: 1.3,
-  shrinkWrap: true,
-  physics: const NeverScrollableScrollPhysics(),
-  children: [
-    _QuickStatButton(
-      title: 'Users',
-      value: totalUsersValue,
-      icon: Icons.people,
-      color: Colors.green,
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AdminUsersPage(userId: widget.userId),
-          ),
-        );
-      },
-    ),
-    _QuickStatButton(
-      title: 'Meals',
-      value: totalMealsValue,
-      icon: Icons.restaurant,
-      color: Colors.green,
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AdminMealsPage(userId: widget.userId),
-          ),
-        );
-      },
-    ),
-    _QuickStatButton(
-      title: 'Ingredients',
-      value: ingredientsValue,
-      icon: Icons.kitchen,
-      color: Colors.orange,
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AdminIngredientsPage(userId: widget.userId),
-          ),
-        );
-      },
-    ),
-    _QuickStatButton(
-      title: 'Analytics',
-      value: activeTodayValue,
-      icon: Icons.bar_chart, // Changed from trending_up to bar_chart
-      color: Colors.purple,   // Purple as requested
-      onTap: () {
-        _showAnalyticsDialog(context);
-      },
-    ),
-  ],
-),
-
-const SizedBox(height: 20),
-
-                  // Analytics Charts Section
+                  // Management Section
                   Text(
-                    'Analytics & Insights',
+                    'Management',
                     style: const TextStyle(
-                      fontSize: 22,
+                      fontSize: 20, // Slightly smaller
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       shadows: [
@@ -340,7 +258,89 @@ const SizedBox(height: 20),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 12), // Reduced spacing
+
+                  GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12, // Reduced spacing
+                    mainAxisSpacing: 12, // Reduced spacing
+                    childAspectRatio: 1.2, // Slightly smaller aspect ratio
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _QuickStatButton(
+                        title: 'Users',
+                        value: totalUsersValue,
+                        icon: Icons.people,
+                        color: Colors.green,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AdminUsersPage(userId: widget.userId),
+                            ),
+                          );
+                        },
+                      ),
+                      _QuickStatButton(
+                        title: 'Meals',
+                        value: totalMealsValue,
+                        icon: Icons.restaurant,
+                        color: Colors.green,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AdminMealsPage(userId: widget.userId),
+                            ),
+                          );
+                        },
+                      ),
+                      _QuickStatButton(
+                        title: 'Ingredients',
+                        value: ingredientsValue,
+                        icon: Icons.kitchen,
+                        color: Colors.orange,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AdminIngredientsPage(userId: widget.userId),
+                            ),
+                          );
+                        },
+                      ),
+                      _QuickStatButton(
+                        title: 'Analytics',
+                        value: activeTodayValue,
+                        icon: Icons.bar_chart,
+                        color: Colors.purple,
+                        onTap: () {
+                          _showAnalyticsDialog(context);
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16), // Reduced spacing
+
+                  // Analytics Charts Section
+                  Text(
+                    'Analytics & Insights',
+                    style: const TextStyle(
+                      fontSize: 20, // Slightly smaller
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black26,
+                          offset: Offset(2, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12), // Reduced spacing
 
                   // User Growth Chart
                   Card(
@@ -354,26 +354,27 @@ const SizedBox(height: 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(Icons.trending_up, color: Colors.green),
-                              SizedBox(width: 8),
+                              const Icon(Icons.trending_up, color: Colors.green, size: 20), // Smaller icon
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'User Growth (Last 6 Months)',
-                                  style: TextStyle(
-                                    fontSize: 18,
+                                  style: const TextStyle(
+                                    fontSize: 16, // Smaller font
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF184E77),
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2, // Allow wrapping
+                                  overflow: TextOverflow.visible,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 12), // Reduced spacing
                           Container(
-                            height: 180, // Increased height to accommodate text
+                            height: 160, // Reduced height
                             child: monthlyUserData.isEmpty
                                 ? const Center(child: CircularProgressIndicator())
                                 : _buildUserGrowthChart(),
@@ -383,7 +384,7 @@ const SizedBox(height: 20),
                     ),
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 12), // Reduced spacing
 
                   // Top Ingredients Chart
                   Card(
@@ -397,26 +398,27 @@ const SizedBox(height: 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(Icons.kitchen, color: Colors.orange),
-                              SizedBox(width: 8),
+                              const Icon(Icons.kitchen, color: Colors.orange, size: 20), // Smaller icon
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'Top 5 Most Used Ingredients',
-                                  style: TextStyle(
-                                    fontSize: 18,
+                                  style: const TextStyle(
+                                    fontSize: 16, // Smaller font
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF184E77),
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2, // Allow wrapping
+                                  overflow: TextOverflow.visible,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 12), // Reduced spacing
                           Container(
-                            height: 220, // Increased height for better spacing
+                            height: 200, // Reduced height
                             child: topIngredientsData.isEmpty
                                 ? const Center(child: CircularProgressIndicator())
                                 : _buildIngredientsChart(),
@@ -426,7 +428,7 @@ const SizedBox(height: 20),
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8), // Small bottom padding
                 ],
               ),
             ),
@@ -436,9 +438,6 @@ const SizedBox(height: 20),
     );
   }
 
-  // ------------------------------------------------------------
-  // NEW: Detail dialog for Quick Stats
-  // ------------------------------------------------------------
   void _showStatDetail(BuildContext context, {required String title, required String description}) {
     showDialog(
       context: context,
@@ -465,11 +464,11 @@ const SizedBox(height: 20),
         final data = monthlyUserData[index];
         final month = data['month'] as String;
         final count = data['count'] as int;
-        final height = (count / maxCount) * 100; // Reduced max height for text space
+        final height = (count / maxCount) * 80; // Reduced max height
 
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12), // Increased margin
-          width: 50, // Fixed width for better spacing
+          margin: const EdgeInsets.symmetric(horizontal: 10), // Reduced margin
+          width: 45, // Slightly smaller width
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -482,7 +481,7 @@ const SizedBox(height: 20),
                 child: Text(
                   count.toString(),
                   style: const TextStyle(
-                    fontSize: 10, // Smaller font
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -491,7 +490,7 @@ const SizedBox(height: 20),
               ),
               const SizedBox(height: 4),
               Container(
-                width: 30,
+                width: 25, // Smaller width
                 height: height,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
@@ -499,16 +498,16 @@ const SizedBox(height: 20),
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Container(
-                height: 32, // Fixed height for month text
+                height: 28, // Slightly smaller height
                 child: Text(
                   _formatMonth(month),
                   style: const TextStyle(
-                    fontSize: 10, // Smaller font
+                    fontSize: 9, // Smaller font
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -526,7 +525,7 @@ const SizedBox(height: 20),
   Widget _buildIngredientsChart() {
     return ListView.builder(
       itemCount: topIngredientsData.length,
-      physics: const BouncingScrollPhysics(), // Better scrolling
+      physics: const BouncingScrollPhysics(),
       itemBuilder: (context, index) {
         final data = topIngredientsData[index];
         final name = data['name'] as String;
@@ -537,10 +536,10 @@ const SizedBox(height: 20),
             : 1;
 
         double percentage = maxCount > 0 ? (count / maxCount) : 0;
-        double availableWidth = MediaQuery.of(context).size.width - 120; // Account for padding and margins
+        double availableWidth = MediaQuery.of(context).size.width - 120;
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 16), // Increased margin
+          margin: const EdgeInsets.only(bottom: 12), // Reduced margin
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -552,30 +551,30 @@ const SizedBox(height: 20),
                     child: Text(
                       name,
                       style: const TextStyle(
-                        fontSize: 14, 
+                        fontSize: 13, // Smaller font
                         fontWeight: FontWeight.bold,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
                     '$count uses',
                     style: const TextStyle(
-                      fontSize: 12, 
+                      fontSize: 11, // Smaller font
                       color: Colors.grey,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Container(
-                height: 20,
+                height: 18, // Smaller height
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   color: Colors.grey[300],
                 ),
                 child: Stack(
@@ -587,18 +586,18 @@ const SizedBox(height: 20),
                         gradient: const LinearGradient(
                           colors: [Color(0xFFFFA726), Color(0xFFF57C00)],
                         ),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     // Percentage text
-                    if (percentage > 0.3) // Only show text if bar is wide enough
+                    if (percentage > 0.3)
                       Positioned(
-                        left: 8,
-                        top: 2,
+                        left: 6,
+                        top: 1,
                         child: Text(
                           '${(percentage * 100).toStringAsFixed(0)}%',
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 9, // Smaller font
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -637,7 +636,7 @@ const SizedBox(height: 20),
         backgroundColor: Colors.white.withOpacity(0.95),
         child: ConstrainedBox(
           constraints: const BoxConstraints(
-            maxHeight: 400, // Limit height to prevent overflow
+            maxHeight: 400,
           ),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -722,9 +721,6 @@ const SizedBox(height: 20),
   }
 }
 
-// -----------------------------------------------------------------
-// NEW: Clickable Quick Stat Card
-// -----------------------------------------------------------------
 class _QuickStatButton extends StatelessWidget {
   final String title;
   final String value;
@@ -750,7 +746,7 @@ class _QuickStatButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0), // Reduced padding
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -760,19 +756,19 @@ class _QuickStatButton extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6), // Reduced padding
                       decoration: BoxDecoration(
                         color: color.withOpacity(0.2),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(icon, color: color, size: 24),
+                      child: Icon(icon, color: color, size: 20), // Smaller icon
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         value,
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 18, // Smaller font
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF184E77),
                         ),
@@ -783,11 +779,11 @@ class _QuickStatButton extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 12, // Smaller font
                   color: Colors.black87,
                 ),
                 maxLines: 2,
@@ -801,9 +797,6 @@ class _QuickStatButton extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------
-// Keep the rest of your widgets exactly as they were
-// -----------------------------------------------------------------
 class _ManagementCard extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -841,14 +834,14 @@ class _ManagementCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 40, color: Colors.black87), // Slightly smaller icon
-              const SizedBox(height: 8),
+              Icon(icon, size: 36, color: Colors.black87), // Smaller icon
+              const SizedBox(height: 6),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 6.0),
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16, // Slightly smaller font
+                    fontSize: 14, // Smaller font
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
@@ -898,7 +891,7 @@ class _AnalyticsItem extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 14, // Smaller font
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,
               ),
@@ -910,7 +903,7 @@ class _AnalyticsItem extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 14, // Smaller font
                 fontWeight: FontWeight.bold,
                 color: color,
               ),

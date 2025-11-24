@@ -255,7 +255,14 @@ class _CategoryPageState extends State<CategoryPage> {
                         ),
                       );
                     },
-                    child: const Text("VIEW INSTRUCTIONS"),
+                    child: const Text(
+                      "VIEW INSTRUCTIONS",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
                   ),
                 ],
               ),

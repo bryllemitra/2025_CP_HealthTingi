@@ -342,7 +342,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       minimumSize: const Size.fromHeight(30),
-                      textStyle: const TextStyle(fontSize: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -359,7 +358,14 @@ class _MealSearchPageState extends State<MealSearchPage> {
                         ),
                       );
                     },
-                    child: const Text("VIEW INSTRUCTIONS"),
+                    child: const Text(
+                      "VIEW INSTRUCTIONS",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -452,7 +458,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 minimumSize: const Size.fromHeight(24),
-                textStyle: const TextStyle(fontSize: 9),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -469,7 +474,14 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   ),
                 );
               },
-              child: const Text("VIEW DETAILS"),
+              child: const Text(
+                "VIEW DETAILS",
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.3,
+                ),
+              ),
             ),
           ),
         ],

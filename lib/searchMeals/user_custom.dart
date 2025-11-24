@@ -222,7 +222,6 @@ class _UserCustomPageState extends State<UserCustomPage> {
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       minimumSize: const Size.fromHeight(30),
-                      textStyle: const TextStyle(fontSize: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -239,7 +238,14 @@ class _UserCustomPageState extends State<UserCustomPage> {
                         ),
                       );
                     },
-                    child: const Text("VIEW INSTRUCTIONS"),
+                    child: const Text(
+                      "VIEW INSTRUCTIONS",
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
                   ),
                 ],
               ),
