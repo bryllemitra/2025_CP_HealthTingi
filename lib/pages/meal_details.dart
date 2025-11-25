@@ -350,6 +350,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
   ) async {
     List<Widget> widgets = [];
     double totalPrice = 0.0;
+    final dbHelper = DatabaseHelper(); // Create instance
 
     for (var ing in ingredients) {
       final name = ing['ingredientName']?.toString() ?? 'Unknown';
@@ -373,8 +374,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         double qtyValue = _parseQuantity(quantity);
         String qtyUnit = unit.toLowerCase();
         
-        // Convert to grams using the helper method
-        double grams = DatabaseHelper.convertToGrams(qtyValue, qtyUnit, ing);
+        // Convert to grams using the helper method - use instance method
+        double grams = dbHelper.convertToGrams(qtyValue, qtyUnit, ing);
         cost = (grams / 1000) * price;
       }
 
@@ -490,8 +491,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
               qtyUnit = m.group(2)!.toLowerCase();
             }
 
-            // Use the conversion helper
-            double grams = DatabaseHelper.convertToGrams(qtyValue, qtyUnit, info);
+            // Use the conversion helper - use instance method
+            double grams = db.convertToGrams(qtyValue, qtyUnit, info);
             final cost = (grams / 1000) * price;
             priceText = 'Php ${cost.toStringAsFixed(2)}';
           }
@@ -568,7 +569,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                 return PhotoViewGalleryPageOptions(
                   imageProvider: isAsset
                       ? AssetImage(path)
-                      : FileImage(File(path)),
+                      : FileImage(File(path)) as ImageProvider,
                   minScale: PhotoViewComputedScale.contained,
                   maxScale: PhotoViewComputedScale.covered * 4,
                 );
@@ -744,6 +745,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     final ingredients = mealData['ingredients'] as List<Map<String, dynamic>>;
                     final categories = (mealData['category'] as String?)?.split(', ') ?? [];
                     double totalPrice = 0.0;
+                    final dbHelper = DatabaseHelper(); // Create instance
 
                     for (var ing in ingredients) {
                       final name = ing['ingredientName']?.toString() ?? '';
@@ -759,8 +761,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                         double qtyValue = _parseQuantity(qty);
                         String unit = ing['unit']?.toString().toLowerCase() ?? '';
                         
-                        // Use the conversion helper
-                        double grams = DatabaseHelper.convertToGrams(qtyValue, unit, ing);
+                        // Use the conversion helper - use instance method
+                        double grams = dbHelper.convertToGrams(qtyValue, unit, ing);
                         // CORRECTED: Divide by 1000 since price is per kg
                         totalPrice += (grams / 1000) * price;
                       }

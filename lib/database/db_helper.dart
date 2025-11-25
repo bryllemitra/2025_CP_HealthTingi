@@ -3177,17 +3177,17 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
       'kg': 1000,
       'g': 1,
       'ml': density,
-      'piece': category.toLowerCase() == 'vegetable' ? 400 : 100, // Banana blossom ~400g, general 100g
-      'pcs': 100,
-      'bottle': 500,
-      'can': 370, // Evaporated milk ~370g
-      'tray': 1800,
-      'tie': 250,
-      'group': 500,
+      'piece': _getIngredientWeight(ingredientName, 'piece', category, 100),
+      'pcs': _getIngredientWeight(ingredientName, 'pcs', category, 100),
+      'bottle': _getIngredientWeight(ingredientName, 'bottle', category, 500),
+      'can': _getIngredientWeight(ingredientName, 'can', category, 370),
+      'tray': _getIngredientWeight(ingredientName, 'tray', category, 1800),
+      'tie': _getIngredientWeight(ingredientName, 'tie', category, 250),
+      'group': _getIngredientWeight(ingredientName, 'group', category, 500),
       'leaves': 1,
-      'pack': category.toLowerCase().contains('vegetable') ? 250 : (category.toLowerCase().contains('spice') ? 100 : 500), // Celery 250g, spices 100g, sago 500g, kidney beans 225g ~250g
+      'pack': _getIngredientWeight(ingredientName, 'pack', category, 500),
       '1/4kg': 250,
-      '1/4': 250, // Assume kg
+      '1/4': 250,
       '350ml bottle': 350 * density,
       '500ml': 500 * density,
       '250ml pack': 250 * density,
@@ -3196,8 +3196,9 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
       '200g pack': 200,
       '370ml can': 370 * density,
       '50g pack': 50,
-      'bundle': ingredientName.toLowerCase().contains('malunggay') ? 100.0 : 50.0, // Malunggay ~100g/bundle
-      'head': 500.0, // E.g., pork head ~500g average portion
+      'bundle': _getIngredientWeight(ingredientName, 'bundle', category, 50),
+      'head': 500.0,
+      'cube': 10.0,
     };
 
     // Handle multiple prices (e.g., "400/kg, 20-25/pack") - prefer kg if present, else last
@@ -3281,11 +3282,91 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     };
   }
 
-  // ========== UNIT CONVERSION METHOD ==========
-  static double convertToGrams(double quantity, String unit, Map<String, dynamic> ingredient) {
-    unit = unit.toLowerCase().trim();
+  Map<String, Map<String, double>> _getIngredientSpecificWeights() {
+    return {
+      // Eggs - use piece count
+      'egg': {'tray': 24, 'piece': 1, 'pack': 24, 'pcs': 1},
+      'pugo': {'pack': 12, 'piece': 1, 'pcs': 1},
+      
+      // Fruits - average weights in grams
+      'apple': {'piece': 150, 'pcs': 150},
+      'orange': {'piece': 130, 'pcs': 130},
+      'lemon': {'piece': 60, 'pcs': 60},
+      'calamansi': {'piece': 10, 'pcs': 10},
+      'sayote': {'piece': 250, 'pcs': 250},
+      'watermelon': {'piece': 2000, 'pcs': 2000}, // approximate slice
+      
+      // Vegetables - pack sizes in grams
+      'celery': {'pack': 250},
+      'cilantro': {'pack': 50},
+      'parsley': {'pack': 50},
+      'kangkong': {'tie': 200},
+      'malunggay': {'bundle': 100},
+      'pechay': {'tie': 300},
+      'mustasa': {'tie': 200},
+      
+      // Proteins
+      'tofu': {'pack': 350},
+      'tokwa': {'pack': 350},
+      'kidney beans': {'pack': 400},
+      'mungbeans': {'pack': 400},
+      
+      // Liquids - volumes in ml
+      'cane vinegar': {'bottle': 350, '350ml bottle': 350},
+      'soy sauce': {'bottle': 350, '350ml bottle': 350},
+      'patis': {'bottle': 350, '350ml bottle': 350},
+      'cooking oil': {'500ml': 500, 'bottle': 500},
+      'coconut milk': {'250ml pack': 250, 'pack': 250},
+      'coconut cream': {'250ml pack': 250, 'pack': 250},
+      'evaporated milk': {'370ml can': 370, 'can': 370},
+      
+      // Packaged goods in grams
+      'lumpia wrapper': {'piece': 8, 'pcs': 8},
+      'pancit bihon': {'pack': 400},
+      'sotanghon': {'piece': 100},
+      'miswa': {'piece': 50},
+      'odong': {'piece': 100},
+      
+      // Spices and condiments
+      'atsuete': {'pack': 10},
+      'cinnamon': {'pack': 50},
+      'paprika': {'pack': 50},
+    };
+  }
+
+  double _getIngredientWeight(String ingredientName, String unit, String category, double defaultWeight) {
+    final specificWeights = _getIngredientSpecificWeights();
     
-    // Handle common unit conversions
+    // Look for exact match first, then partial match
+    for (var key in specificWeights.keys) {
+      if (ingredientName.toLowerCase().contains(key)) {
+        return specificWeights[key]?[unit] ?? defaultWeight;
+      }
+    }
+    
+    // Fallback to category-based defaults (your existing logic)
+    switch (unit) {
+      case 'piece':
+      case 'pcs':
+        return category.toLowerCase() == 'vegetable' ? 400 : 100;
+      case 'pack':
+        if (category.toLowerCase().contains('vegetable')) return 250;
+        if (category.toLowerCase().contains('spice')) return 100;
+        return 500;
+      case 'bundle':
+        return ingredientName.toLowerCase().contains('malunggay') ? 100.0 : 50.0;
+      default:
+        return defaultWeight;
+    }
+  }
+
+  // ========== UNIT CONVERSION METHOD ==========
+  double convertToGrams(double quantity, String unit, Map<String, dynamic> ingredient) {
+    unit = unit.toLowerCase().trim();
+    String ingredientName = ingredient['ingredientName']?.toString() ?? '';
+    String category = ingredient['category']?.toString() ?? '';
+    
+    // Handle common unit conversions with ingredient-specific weights
     switch (unit) {
       case 'kg':
         return quantity * 1000;
@@ -3299,20 +3380,24 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
         return quantity * (ingredient['unit_density_cup'] as double? ?? 240.0);
       case 'piece':
       case 'pcs':
-        return quantity * 100.0; // assumption only
+        return quantity * _getIngredientWeight(ingredientName, 'piece', category, 100.0);
       case 'pack':
-        return quantity * 250.0; // assumption only
+        return quantity * _getIngredientWeight(ingredientName, 'pack', category, 500.0);
       case 'tie':
-        return quantity * 250.0; // Based on your unitToGrams assumption
+        return quantity * _getIngredientWeight(ingredientName, 'tie', category, 250.0);
       case 'bundle':
-        return quantity * 100.0; // Based on your unitToGrams assumption
+        return quantity * _getIngredientWeight(ingredientName, 'bundle', category, 50.0);
       case 'can':
-        return quantity * 370.0; // Based on your unitToGrams assumption
+        return quantity * _getIngredientWeight(ingredientName, 'can', category, 370.0);
       case 'bottle':
-        return quantity * 500.0; // Based on your unitToGrams assumption
+        return quantity * _getIngredientWeight(ingredientName, 'bottle', category, 500.0);
+      case 'tray':
+        return quantity * _getIngredientWeight(ingredientName, 'tray', category, 1800.0);
+      case 'group':
+        return quantity * _getIngredientWeight(ingredientName, 'group', category, 500.0);
       default:
-        // For unknown units, assume grams
-        return quantity;
+        // For unknown units, try ingredient-specific or assume grams
+        return quantity * _getIngredientWeight(ingredientName, unit, category, 100.0);
     }
   }
 
@@ -3408,6 +3493,83 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
       where: 'id = ?',
       whereArgs: [customizedMealId],
     );
+  }
+
+  // Add this to your DatabaseHelper class
+
+  // Precise mapping based on your specific meat cuts
+  final Map<String, List<String>> _ingredientVariations = {
+    'Chicken': [
+      'Chicken (neck/wings)', 'Chicken neck', 'Chicken breast', 'Chicken wings', 
+      'Chicken leg', 'Chicken feet', 'Chicken thigh', 'Chicken leg quarter',
+      'Ground Chicken', 'Chicken'
+    ],
+    'Pork': [
+      'Pork shoulder', 'Pork trotter', 'Pork tenderloin', 'Pork belly', 
+      'Pork ribs', 'Ground Pork', 'Pork'
+    ],
+    'Beef': [
+      'Beef chuck rib', 'Beef tender chuck', 'Beef brisket', 'Beef blade clod',
+      'Beef short ribs', 'Beef sirloin', 'Beef tenderloin', 'Beef flank steak',
+      'Ground Beef', 'Beef'
+    ],
+    'Fish': [
+      'Tilapia', 'Bangus', 'Salmon', 'Tuna', 'Fish'
+    ],
+    
+  };
+
+  // Method to expand general ingredients to specific variations
+  Future<List<String>> expandIngredientVariations(List<String> detectedIngredients) async {
+    List<String> expandedIngredients = [];
+    
+    for (var ingredient in detectedIngredients) {
+      // Add the original detected ingredient
+      expandedIngredients.add(ingredient);
+      
+      // Check if this ingredient has variations (case-insensitive)
+      final normalizedIngredient = ingredient.toLowerCase();
+      final matchingKey = _ingredientVariations.keys.firstWhere(
+        (key) => key.toLowerCase() == normalizedIngredient,
+        orElse: () => '',
+      );
+      
+      if (matchingKey.isNotEmpty) {
+        // Add all variations for this ingredient
+        expandedIngredients.addAll(_ingredientVariations[matchingKey]!);
+        print('Expanded $ingredient to: ${_ingredientVariations[matchingKey]}');
+      }
+    }
+    
+    // Remove duplicates and return
+    return expandedIngredients.toSet().toList();
+  }
+
+  // Enhanced matching method
+  bool _isIngredientMatch(String scannedIngredient, String recipeIngredient) {
+    final scanned = scannedIngredient.toLowerCase().trim();
+    final recipe = recipeIngredient.toLowerCase().trim();
+    
+    // Exact match
+    if (scanned == recipe) return true;
+    
+    // Direct variation match using our mapping
+    for (var variations in _ingredientVariations.values) {
+      if (variations.any((v) => v.toLowerCase() == scanned) &&
+          variations.any((v) => v.toLowerCase() == recipe)) {
+        return true;
+      }
+    }
+    
+    // Contains match for general categories
+    if ((scanned == 'chicken' && recipe.contains('chicken')) ||
+        (scanned == 'pork' && recipe.contains('pork')) ||
+        (scanned == 'beef' && recipe.contains('beef')) ||
+        (scanned == 'fish' && recipe.contains('fish'))) {
+      return true;
+    }
+    
+    return false;
   }
 
 }

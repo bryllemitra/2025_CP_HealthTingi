@@ -121,7 +121,6 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
     return results;
   }
 
-  // NEW: Enhanced recipe suggestion algorithm with first ingredient priority
   Future<void> _loadRecipeSuggestions() async {
     setState(() {
       _isLoadingRecipes = true;
@@ -135,13 +134,17 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
           ? user['dietaryRestriction']?.toString().toLowerCase().trim() ?? ''
           : '';
 
+      // EXPAND INGREDIENTS WITH SPECIFIC CUTS
+      final expandedIngredients = await dbHelper.expandIngredientVariations(ingredients);
+      print('Originally scanned: $ingredients');
+      print('Expanded to: $expandedIngredients');
+
       Map<int, List<Map<String, dynamic>>> multiGroups = {};
       Map<String, List<Map<String, dynamic>>> singleGroups = {};
 
       for (var meal in allMeals) {
         final mealIngredients = await dbHelper.getMealIngredients(meal['mealID']);
         
-        // NEW: Check if meal has ingredients and get the first one
         String? firstIngredientName;
         if (mealIngredients.isNotEmpty) {
           firstIngredientName = mealIngredients.first['ingredientName']?.toString().toLowerCase();
@@ -152,7 +155,14 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
             .where((name) => name != null)
             .toSet();
 
-        final matchingIng = ingredients.where((ing) => mealIngredientNames.contains(ing.toLowerCase())).toList();
+        // USE EXPANDED INGREDIENTS FOR MATCHING
+        final matchingIng = expandedIngredients.where((ing) {
+          final ingLower = ing.toLowerCase();
+          return mealIngredientNames.any((mealIng) => 
+              mealIng!.toLowerCase() == ingLower || // Exact match
+              _isIngredientVariationMatch(ing, mealIng!)); // Variation match
+        }).toList();
+        
         final matchingIngredients = matchingIng.length;
 
         if (matchingIngredients > 0) {
@@ -163,12 +173,12 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                   mealRestriction.contains(userRestriction) ||
                   userRestriction.contains(mealRestriction));
 
-          // NEW: Calculate if scanned ingredient is the FIRST ingredient in the meal
           bool isMainIngredient = false;
           for (var scannedIng in matchingIng) {
             final scannedIngLower = scannedIng.toLowerCase();
-            // Check if this scanned ingredient is the FIRST ingredient in the meal
-            if (firstIngredientName != null && firstIngredientName == scannedIngLower) {
+            if (firstIngredientName != null && 
+                (firstIngredientName == scannedIngLower || 
+                _isIngredientVariationMatch(scannedIng, firstIngredientName))) {
               isMainIngredient = true;
               break;
             }
@@ -179,27 +189,32 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
             'matchingIngredients': matchingIngredients,
             'matchingList': matchingIng,
             'hasConflict': hasConflict,
-            'isMainIngredient': isMainIngredient, // NEW: Flag for main ingredient (first in list)
-            'firstIngredient': firstIngredientName, // NEW: Store for debugging/display
+            'isMainIngredient': isMainIngredient,
+            'firstIngredient': firstIngredientName,
           };
 
           if (matchingIngredients > 1) {
             multiGroups.putIfAbsent(matchingIngredients, () => []).add(recipeData);
           } else if (matchingIngredients == 1) {
-            final ing = matchingIng[0];
-            singleGroups.putIfAbsent(ing, () => []).add(recipeData);
+            // Find which original ingredient caused this match
+            final originalMatch = ingredients.firstWhere(
+              (originalIng) => matchingIng.any((match) => 
+                  _isIngredientVariationMatch(originalIng, match)),
+              orElse: () => matchingIng[0]
+            );
+            singleGroups.putIfAbsent(originalMatch, () => []).add(recipeData);
           }
         }
       }
 
       List<Map<String, dynamic>> orderedGroups = [];
 
-      // Sort multi groups by match count descending, then by main ingredient priority
+      // Sort multi groups by match count descending
       final matchKeys = multiGroups.keys.toList()..sort((a, b) => b.compareTo(a));
       for (var key in matchKeys) {
         var groupRecipes = multiGroups[key]!;
         
-        // NEW: Enhanced sorting - prioritize meals where scanned ingredients are FIRST ingredients
+        // Enhanced sorting - prioritize main ingredients and no conflicts
         groupRecipes.sort((a, b) {
           // First, prioritize meals where scanned ingredients are first ingredients
           if (a['isMainIngredient'] && !b['isMainIngredient']) return -1;
@@ -209,10 +224,11 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
           if (a['hasConflict'] && !b['hasConflict']) return 1;
           if (!a['hasConflict'] && b['hasConflict']) return -1;
           
-          return 0;
+          // Finally, by match count (should already be grouped by this)
+          return b['matchingIngredients'].compareTo(a['matchingIngredients']);
         });
         
-        // NEW: Limit to 5 meals per group
+        // Limit to 5 meals per group
         if (groupRecipes.length > 5) {
           groupRecipes = groupRecipes.sublist(0, 5);
         }
@@ -224,19 +240,16 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
         });
       }
 
-      // Add single groups in order of ingredients
-      for (var ing in ingredients) {
-        var groupRecipes = singleGroups[ing] ?? [];
+      // Add single groups in order of originally scanned ingredients
+      for (var originalIng in ingredients) {
+        var groupRecipes = singleGroups[originalIng] ?? [];
         
-        // NEW: Enhanced sorting for single groups - prioritize if this ingredient is FIRST
+        // Enhanced sorting for single groups
         groupRecipes.sort((a, b) {
-          final ingLower = ing.toLowerCase();
+          final isFirstIngredientA = a['isMainIngredient'];
+          final isFirstIngredientB = b['isMainIngredient'];
           
-          // Check if this specific ingredient is the FIRST ingredient in each meal
-          final isFirstIngredientA = a['firstIngredient'] == ingLower;
-          final isFirstIngredientB = b['firstIngredient'] == ingLower;
-          
-          // First, prioritize meals where this specific ingredient is the FIRST ingredient
+          // First, prioritize meals where this specific ingredient is the main ingredient
           if (isFirstIngredientA && !isFirstIngredientB) return -1;
           if (!isFirstIngredientA && isFirstIngredientB) return 1;
           
@@ -247,16 +260,18 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
           return 0;
         });
         
-        // NEW: Limit to 5 meals per group
+        // Limit to 5 meals per group
         if (groupRecipes.length > 5) {
           groupRecipes = groupRecipes.sublist(0, 5);
         }
         
-        orderedGroups.add({
-          'type': 'single',
-          'ingredient': ing,
-          'recipes': groupRecipes,
-        });
+        if (groupRecipes.isNotEmpty) {
+          orderedGroups.add({
+            'type': 'single',
+            'ingredient': originalIng,
+            'recipes': groupRecipes,
+          });
+        }
       }
 
       setState(() {
@@ -269,6 +284,25 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
         _isLoadingRecipes = false;
       });
     }
+  }
+
+  // Helper method for ingredient variation matching
+  bool _isIngredientVariationMatch(String ingredient1, String ingredient2) {
+    final ing1 = ingredient1.toLowerCase();
+    final ing2 = ingredient2.toLowerCase();
+    
+    // Exact match
+    if (ing1 == ing2) return true;
+    
+    // Check if they're variations of the same base ingredient
+    final baseIngredients = ['chicken', 'pork', 'beef', 'fish', 'shrimp', 'egg'];
+    for (var base in baseIngredients) {
+      if (ing1.contains(base) && ing2.contains(base)) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   @override
@@ -869,13 +903,28 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                   children: [
                                                                     Expanded(
-                                                                      child: Text(
-                                                                        '${recipe['matchingIngredients']} matching ingredient${recipe['matchingIngredients'] == 1 ? '' : 's'}',
-                                                                        style: const TextStyle(
-                                                                          fontSize: 12,
-                                                                          color: Colors.grey,
-                                                                        ),
-                                                                        overflow: TextOverflow.ellipsis,
+                                                                      child: Column(
+                                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                                        children: [
+                                                                          Text(
+                                                                            '${recipe['matchingIngredients']} matching ingredient${recipe['matchingIngredients'] == 1 ? '' : 's'}',
+                                                                            style: const TextStyle(
+                                                                              fontSize: 12,
+                                                                              color: Colors.grey,
+                                                                            ),
+                                                                          ),
+                                                                          if (recipe['matchingList'] != null && recipe['matchingList'].isNotEmpty)
+                                                                            Text(
+                                                                              'Matches: ${(recipe['matchingList'] as List).take(2).join(', ')}${(recipe['matchingList'] as List).length > 2 ? '...' : ''}',
+                                                                              style: const TextStyle(
+                                                                                fontSize: 10,
+                                                                                color: Color(0xFF184E77),
+                                                                                fontWeight: FontWeight.w500,
+                                                                              ),
+                                                                              maxLines: 1,
+                                                                              overflow: TextOverflow.ellipsis,
+                                                                            ),
+                                                                        ],
                                                                       ),
                                                                     ),
                                                                     ElevatedButton(

@@ -31,7 +31,7 @@ dependencies:
   timezone: ^0.9.1
   flutter:
     sdk: flutter
-  camera: ^0.10.5+2 # check for latest version
+  camera: ^0.11.3
   path_provider: ^2.1.2
   sqflite: ^2.3.0
   path: ^1.8.0
@@ -39,7 +39,7 @@ dependencies:
   http: ^1.2.1
   font_awesome_flutter: ^10.6.0
   image_picker: ^1.0.4
-  image: ^4.0.15
+  image: ^4.5.4
   tflite_flutter: ^0.11.0
   currency_code_to_currency_symbol: ^0.0.4
   carousel_slider: ^5.1.1
@@ -49,6 +49,7 @@ dependencies:
   fl_chart: ^0.68.0
   animate_do: ^3.3.4
   photo_view: ^0.15.0
+
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -171,6 +172,7 @@ flutter:
     - assets/models/class_info.json
     - assets/models/healthtingi_update2.tflite
     - assets/models/threeokclock_final.tflite
+    - assets/models/notsofinalmodel.tflite
   fonts:
     - family: Orbitron
       fonts:
