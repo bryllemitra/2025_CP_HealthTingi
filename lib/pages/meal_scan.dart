@@ -24,7 +24,7 @@ class MealScanPage extends StatefulWidget {
 
 class _MealScanPageState extends State<MealScanPage> {
   CameraController? _controller;
-  late Future<void> _initializeControllerFuture;
+  Future<void>? _initializeControllerFuture; // Fixed: Changed from late to nullable
   bool _isFlashOn = false;
   bool _showInfo = false;
   List<dynamic> _recognitions = [];
@@ -111,6 +111,7 @@ class _MealScanPageState extends State<MealScanPage> {
         enableAudio: false,
       );
       
+      // Fixed: Initialize the future here instead of using late
       _initializeControllerFuture = _controller!.initialize();
 
       if (mounted) {
@@ -143,7 +144,12 @@ class _MealScanPageState extends State<MealScanPage> {
 
   Future<void> _captureImage() async {
     try {
-      await _initializeControllerFuture;
+      // Fixed: Check if controller future is initialized
+      if (_initializeControllerFuture == null) {
+        throw Exception('Camera not ready');
+      }
+      
+      await _initializeControllerFuture!;
       
       // Ensure camera is ready and focused
       if (_controller != null && _controller!.value.isInitialized) {
@@ -452,29 +458,36 @@ class _MealScanPageState extends State<MealScanPage> {
           Column(
             children: [
               Expanded(
-                child: FutureBuilder<void>(
-                  future: _initializeControllerFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      if (_controller != null && _controller!.value.isInitialized) {
-                        return CameraPreview(_controller!);
-                      } else {
-                        return const Center(
-                          child: Text(
-                            'Camera not available',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        );
-                      }
-                    } else {
-                      return const Center(
+                // Fixed: Added null check for _initializeControllerFuture
+                child: _initializeControllerFuture == null 
+                    ? const Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
-                      );
-                    }
-                  },
-                ),
+                      )
+                    : FutureBuilder<void>(
+                        future: _initializeControllerFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.done) {
+                            if (_controller != null && _controller!.value.isInitialized) {
+                              return CameraPreview(_controller!);
+                            } else {
+                              return const Center(
+                                child: Text(
+                                  'Camera not available',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              );
+                            }
+                          } else {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            );
+                          }
+                        },
+                      ),
               ),
               if (_isModelLoading)
                 const Padding(
