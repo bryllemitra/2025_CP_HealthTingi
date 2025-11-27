@@ -173,6 +173,10 @@ flutter:
     - assets/models/healthtingi_update2.tflite
     - assets/models/threeokclock_final.tflite
     - assets/models/notsofinalmodel.tflite
+    - assets/models/colab_single.tflite
+    - assets/models/kaggle_single.tflite
+
+
   fonts:
     - family: Orbitron
       fonts:

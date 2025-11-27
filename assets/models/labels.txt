@@ -4,11 +4,11 @@ Atsal
 BaguioBeans
 Banana
 Beef
-Broccoli
+Beetroot
+Brocolli
 Cabbage
 Calamansi
 Carrot
-Cassava
 Cauliflower
 Celery
 Chicken
@@ -28,7 +28,6 @@ Kamote
 Kangkong
 Lettuce
 Malunggay
-Munggo
 Mustasa
 Octopus
 Okra
@@ -39,7 +38,6 @@ Pork
 Potato
 Pumpkin
 Radish
-Saluyot
 Sayote
 Shrimp
 Sigarilyas
@@ -47,10 +45,7 @@ Sili
 Singkamas
 Sitaw
 Sitsaro
-SpringOnion
 Squid
-Tofu
-Toge
 Tomato
 Ube
 Upo

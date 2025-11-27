@@ -43,8 +43,8 @@ class _MealScanPageState extends State<MealScanPage> {
   Future<void> _loadModel() async {
     setState(() => _isModelLoading = true);
     try {
-      // Create interpreter from asset
-      _interpreter = await tfl.Interpreter.fromAsset('assets/models/healthtingi_update2.tflite');
+      // Create interpreter from asset - UPDATED MODEL NAME
+      _interpreter = await tfl.Interpreter.fromAsset('assets/models/kaggle_single.tflite');
       
       // Create isolate interpreter for async inference (prevents UI blocking)
       _isolateInterpreter = await tfl.IsolateInterpreter.create(
@@ -261,21 +261,26 @@ class _MealScanPageState extends State<MealScanPage> {
       // Get input tensor info
       final inputTensor = _interpreter!.getInputTensor(0);
       final inputShape = inputTensor.shape; // This should be [1, 224, 224, 3]
-      final inputSize = inputShape[1]; // Assuming square input [1, size, size, 3]
+      final inputSize = inputShape[1]; // This should be 224 for your new model
       
       debugPrint('Processing image with input size: $inputSize');
       debugPrint('Model input shape: $inputShape');
 
-      // Preprocess image with better interpolation
+      // Validate expected input size - UPDATED FOR 224x224
+      if (inputSize != 224) {
+        debugPrint('WARNING: Model expects $inputSize but training used 224x224');
+      }
+
+      // Preprocess image with better interpolation - MATCHES YOUR TRAINING SIZE
       final resizedImage = img.copyResize(
         image, 
-        width: inputSize, 
-        height: inputSize,
+        width: 224,  // FIXED: Hardcoded to match your training size
+        height: 224, // FIXED: Hardcoded to match your training size
         interpolation: img.Interpolation.cubic
       );
       
-      // FIXED: Use preprocessing that matches training (simple [0,1] normalization)
-      final inputBuffer = _imageToByteListFloat32(resizedImage, inputSize);
+      // CORRECT: Preprocessing that matches your training (simple [0,1] normalization)
+      final inputBuffer = _imageToByteListFloat32(resizedImage, 224); // FIXED: Use 224
 
       // Reshape the 1D buffer to match the model's 4D input shape [1, 224, 224, 3]
       final input = inputBuffer.reshape(inputShape); 
@@ -332,7 +337,7 @@ class _MealScanPageState extends State<MealScanPage> {
     }
   }
 
-  // FIXED: Preprocessing that matches your training (simple [0,1] normalization)
+  // CORRECT: Preprocessing that matches your training (simple [0,1] normalization)
   Float32List _imageToByteListFloat32(img.Image image, int inputSize) {
     final convertedBytes = Float32List(1 * inputSize * inputSize * 3);
     final buffer = Float32List.view(convertedBytes.buffer);

@@ -696,7 +696,7 @@ class DatabaseHelper {
         'mealID': tinolangId,
         'ingredientID': 128, // Sayote
         'quantity': 1,
-        'unit': 'small',
+        'unit': 'piece',
         'content': 'peeled and wedged'
       });
       await db.insert('meal_ingredients', {
@@ -731,7 +731,7 @@ class DatabaseHelper {
         'mealID': tinolangId,
         'ingredientID': 238, // Malunggay
         'quantity': 1,
-        'unit': 'small bundle',
+        'unit': 'bundle',
         'content': 'leaves separated'
       });
 
