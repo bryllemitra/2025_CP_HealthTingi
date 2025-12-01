@@ -370,18 +370,18 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       double cost = 0.0;
 
       if (price != null && quantity.isNotEmpty) {
-        // Parse the quantity for calculation (using the original decimal value)
+        
         double qtyValue = _parseQuantity(quantity);
         String qtyUnit = unit.toLowerCase();
-        
-        // Convert to grams using the helper method - use instance method
         double grams = dbHelper.convertToGrams(qtyValue, qtyUnit, ing);
-        cost = (grams / 1000) * price;
+        double baseUnitGrams = dbHelper.convertToGrams(1.0, ing['base_unit']?.toString().toLowerCase() ?? 'piece', ing);
+        if (baseUnitGrams > 0) {
+          double pricePerGram = price / baseUnitGrams;
+          cost = grams * pricePerGram;
+        }
       }
-
       totalPrice += cost;
 
-      // Format the display quantity with fractions
       String displayQuantity = _formatQuantityForDisplay(quantity);
 
       widgets.add(
@@ -446,7 +446,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
               ),
               // Price - fixed width
               Container(
-                width: 80, // Fixed width for price to ensure alignment
+                width: 110, // Fixed width for price to ensure alignment
                 child: Text(
                   'Php ${cost.toStringAsFixed(2)}',
                   style: const TextStyle(
@@ -493,8 +493,15 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
 
             // Use the conversion helper - use instance method
             double grams = db.convertToGrams(qtyValue, qtyUnit, info);
-            final cost = (grams / 1000) * price;
-            priceText = 'Php ${cost.toStringAsFixed(2)}';
+            
+            // FIXED: Get the base unit grams to calculate price per gram
+            double baseUnitGrams = db.convertToGrams(1.0, info['unit']?.toString().toLowerCase() ?? 'piece', info);
+            
+            if (baseUnitGrams > 0) {
+              double pricePerGram = price / baseUnitGrams;
+              final cost = grams * pricePerGram;
+              priceText = 'Php ${cost.toStringAsFixed(2)}';
+            }
           }
         }
 
@@ -763,8 +770,14 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                         
                         // Use the conversion helper - use instance method
                         double grams = dbHelper.convertToGrams(qtyValue, unit, ing);
-                        // CORRECTED: Divide by 1000 since price is per kg
-                        totalPrice += (grams / 1000) * price;
+                        
+                        // FIXED: Get the base unit grams to calculate price per gram
+                        double baseUnitGrams = dbHelper.convertToGrams(1.0, ing['unit']?.toString().toLowerCase() ?? 'piece', ing);
+                        
+                        if (baseUnitGrams > 0) {
+                          double pricePerGram = price / baseUnitGrams;
+                          totalPrice += grams * pricePerGram;
+                        }
                       }
                     }
 

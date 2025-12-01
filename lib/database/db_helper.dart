@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:flutter/services.dart';
@@ -816,8 +818,8 @@ class DatabaseHelper {
       await db.insert('meal_ingredients', {
         'mealID': ginisangId,
         'ingredientID': 237, // Cooking oil
-        'quantity': 0.125,
-        'unit': 'cup',
+        'quantity': 1,
+        'unit': 'tbsp',
         'content': null
       });
       await db.insert('meal_ingredients', {
@@ -1074,14 +1076,14 @@ class DatabaseHelper {
     });
     await db.insert('meal_ingredients', {
       'mealID': binignitId,
-      'ingredientID': 216, // Coconut milk
+      'ingredientID': 243, // Coconut milk
       'quantity': 4,
       'unit': 'cups',
       'content': null
     });
     await db.insert('meal_ingredients', {
       'mealID': binignitId,
-      'ingredientID': 217, // Brown sugar
+      'ingredientID': 241, // Brown sugar
       'quantity': 0.5,
       'unit': 'cup',
       'content': null
@@ -2805,6 +2807,7 @@ class DatabaseHelper {
       i.ingredientID,
       i.ingredientName,
       i.price,  -- This fetches the per-unit price
+      i.unit AS base_unit,
       i.category,
       i.ingredientPicture,
       mi.quantity,
@@ -3154,28 +3157,39 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     }
   }
 
-  Map<String, dynamic> parsePriceString(String priceStr, String ingredientName, String category) {
-    priceStr = priceStr.trim().toLowerCase();
-    RegExp rangePat = RegExp(r'(\d+)-(\d+)');
-    RegExp qtyPat = RegExp(r'(\d+(?:\.\d+)?|1/4|1/2|3/4)');
-    RegExp unitPat = RegExp(r'(kg|g|ml|pack|piece|pcs|bottle|can|tray|tie|group|leaves|for|each|/pack|350ml bottle|500ml|250ml pack|10g cube|150g bottle|200g pack|370ml can|50g pack|1/4kg|1/4|100pcs/100 pesos|3 for 120|6 each|12-45/pack|20-25/pack|20-30/pack|70-80/pack)', caseSensitive: false);
-
+  Map<String, dynamic> getPriceInfo(Map<String, dynamic> ingredient) {
+    String ingredientName = ingredient['ingredientName']?.toString() ?? '';
+    String category = ingredient['category']?.toString() ?? '';
+    
+    // Use the direct price and unit fields
+    double price = (ingredient['price'] as num?)?.toDouble() ?? 0.0;
+    String unit = ingredient['unit']?.toString().toLowerCase() ?? 'unit';
+    
     // Densities (g/ml) by category
     Map<String, double> densities = {
-      'dairy': 1.03, // Milk
-      'pantry': 1.1, // Sauces
+      'dairy': 1.03,
+      'pantry': 1.1,
       'vegetable': 1.0,
-      'spice': 0.5, // Lighter for powders
+      'spice': 0.5,
       'legume': 1.0,
-      'starch': 0.8, // For sago, etc.
+      'starch': 0.8,
       'condiment': 1.05,
+      'seafood': 1.0,
+      'protein, animal': 1.0,
+      'protein, plant-based': 1.0,
+      'herb': 0.3,
+      'fruit': 1.0,
+      'carbohydrate, grain': 0.85,
+      'carbohydrate, noodle': 0.6,
     };
     double density = densities[category.toLowerCase()] ?? 1.0;
 
-    // Unit to grams (refined with web averages)
+    // Unit to grams mapping
     Map<String, double> unitToGrams = {
       'kg': 1000,
       'g': 1,
+      'l': 1000,
+      'L': 1000,
       'ml': density,
       'piece': _getIngredientWeight(ingredientName, 'piece', category, 100),
       'pcs': _getIngredientWeight(ingredientName, 'pcs', category, 100),
@@ -3186,107 +3200,31 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
       'group': _getIngredientWeight(ingredientName, 'group', category, 500),
       'leaves': 1,
       'pack': _getIngredientWeight(ingredientName, 'pack', category, 500),
-      '1/4kg': 250,
-      '1/4': 250,
-      '350ml bottle': 350 * density,
-      '500ml': 500 * density,
-      '250ml pack': 250 * density,
-      '10g cube': 10,
-      '150g bottle': 150,
-      '200g pack': 200,
-      '370ml can': 370 * density,
-      '50g pack': 50,
       'bundle': _getIngredientWeight(ingredientName, 'bundle', category, 50),
       'head': 500.0,
       'cube': 10.0,
+      'tundan': _getIngredientWeight(ingredientName, 'piece', category, 100),
     };
 
-    // Handle multiple prices (e.g., "400/kg, 20-25/pack") - prefer kg if present, else last
-    List<String> parts = priceStr.split(',');
-    String selectedPart = parts.firstWhere((p) => p.contains('/kg'), orElse: () => parts.last.trim());
+    // Get grams per unit
+    double gramsPerUnit = unitToGrams[unit] ?? 100;
 
-    // Split by '/' for price/qtyunit
-    List<String> subParts = selectedPart.split('/');
-    String pricePart = subParts[0].trim();
-    String qtyUnitPart = subParts.length > 1 ? subParts[1].trim() : '';
-
-    // Extract avg price from pricePart
-    var rangeMatch = rangePat.firstMatch(pricePart);
-    double avgPrice = rangeMatch != null
-        ? (double.parse(rangeMatch.group(1)!) + double.parse(rangeMatch.group(2)!)) / 2
-        : (qtyPat.firstMatch(pricePart)?.group(1) != null ? double.parse(qtyPat.firstMatch(pricePart)!.group(1)!) : 0);
-
-    // Extract qty (handle fractions like 1/4)
-    var qtyMatch = qtyPat.firstMatch(qtyUnitPart) ?? qtyPat.firstMatch(pricePart);
-    double qty = 1.0;
-    if (qtyMatch != null) {
-      String qtyStr = qtyMatch.group(1)!;
-      if (qtyStr.contains('/')) {
-        var frac = qtyStr.split('/');
-        qty = double.parse(frac[0]) / double.parse(frac[1]);
-      } else {
-        qty = double.parse(qtyStr);
-      }
-    }
-
-    // Extract unit
-    var unitMatch = unitPat.firstMatch(qtyUnitPart) ?? unitPat.firstMatch(pricePart);
-    String unit = unitMatch?.group(1)?.toLowerCase() ?? 'unit';
-
-    // Special handling for "qty for total"
-    if (priceStr.contains('for')) {
-      var forMatch = RegExp(r'(\d+/\d+|\d+(?:\.\d+)?|1/4|1/2|3/4)\s*for\s*(\d+(?:\.\d+)?)').firstMatch(priceStr);
-      if (forMatch != null) {
-        String qtyStr = forMatch.group(1)!;
-        double total = double.parse(forMatch.group(2)!);
-        if (qtyStr.contains('/')) {
-          var frac = qtyStr.split('/');
-          qty = double.parse(frac[0]) / double.parse(frac[1]);
-        } else {
-          qty = double.parse(qtyStr);
-        }
-        avgPrice = total / qty; // Price per unit qty
-      }
-    }
-
-    // For ranges like "20-25/pack"
-    if (priceStr.contains('/pack') && rangeMatch != null) {
-      avgPrice = (double.parse(rangeMatch.group(1)!) + double.parse(rangeMatch.group(2)!)) / 2;
-      unit = 'pack';
-      qty = 1;
-    }
-
-    // For "100pcs/100 pesos"
-    if (priceStr.contains('pcs/')) {
-      var pcsMatch = RegExp(r'(\d+)pcs/(\d+)').firstMatch(priceStr);
-      if (pcsMatch != null) {
-        double count = double.parse(pcsMatch.group(1)!);
-        double total = double.parse(pcsMatch.group(2)!);
-        avgPrice = total / count;
-        qty = 1;
-        unit = 'pcs';
-      }
-    }
-
-    // Get grams
-    double gramsPerUnit = unitToGrams[unit] ?? 100; // Default 100g
-    double qtyGrams = qty * gramsPerUnit;
-
-    // Price per 100g
-    double pricePer100g = (qtyGrams > 0) ? (avgPrice / (qtyGrams / 100)) : 0;
+    // Calculate price per 100g
+    double pricePer100g = (gramsPerUnit > 0) ? (price / (gramsPerUnit / 100)) : 0;
 
     return {
       'price_per_100g': pricePer100g,
       'unit': unit,
-      'price_text': priceStr,
+      'price': price,
+      'grams_per_unit': gramsPerUnit,
     };
   }
 
   Map<String, Map<String, double>> _getIngredientSpecificWeights() {
     return {
-      // Eggs - use piece count
-      'egg': {'tray': 24, 'piece': 1, 'pack': 24, 'pcs': 1},
-      'pugo': {'pack': 12, 'piece': 1, 'pcs': 1},
+      // Eggs
+      'egg': {'tray': 24 * 50, 'piece': 50, 'pack': 24 * 50, 'pcs': 50}, // 50g per egg average
+      'pugo': {'pack': 12 * 10, 'piece': 10, 'pcs': 10}, // 10g per quail egg
       
       // Fruits - average weights in grams
       'apple': {'piece': 150, 'pcs': 150},
@@ -3294,43 +3232,60 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
       'lemon': {'piece': 60, 'pcs': 60},
       'calamansi': {'piece': 10, 'pcs': 10},
       'sayote': {'piece': 250, 'pcs': 250},
-      'watermelon': {'piece': 2000, 'pcs': 2000}, // approximate slice
+      'watermelon': {'piece': 2000, 'pcs': 2000},
+      'mango': {'piece': 200, 'pcs': 200},
+      'banana': {'piece': 120, 'pcs': 120},
+      'saba': {'piece': 150, 'pcs': 150},
+      'lakatan': {'piece': 120, 'pcs': 120},
+      'latundan': {'piece': 100, 'pcs': 100},
       
-      // Vegetables - pack sizes in grams
-      'celery': {'pack': 250},
-      'cilantro': {'pack': 50},
-      'parsley': {'pack': 50},
-      'kangkong': {'tie': 200},
-      'malunggay': {'bundle': 100},
-      'pechay': {'tie': 300},
-      'mustasa': {'tie': 200},
+      // Vegetables
+      'celery': {'pack': 250, 'kg': 1000},
+      'cilantro': {'pack': 50, 'kg': 1000},
+      'parsley': {'pack': 50, 'kg': 1000},
+      'kangkong': {'tie': 200, 'kg': 1000},
+      'malunggay': {'bundle': 100, 'kg': 1000},
+      'pechay': {'tie': 300, 'kg': 1000},
+      'mustasa': {'tie': 200, 'kg': 1000},
+      'broccoli': {'piece': 300, 'kg': 1000},
+      'cabbage': {'piece': 800, 'kg': 1000},
+      'potato': {'piece': 150, 'kg': 1000},
       
       // Proteins
-      'tofu': {'pack': 350},
-      'tokwa': {'pack': 350},
-      'kidney beans': {'pack': 400},
-      'mungbeans': {'pack': 400},
+      'tofu': {'pack': 350, 'kg': 1000},
+      'tokwa': {'pack': 350, 'kg': 1000},
+      'chicken': {'kg': 1000, 'pack': 1000},
+      'pork': {'kg': 1000, 'pack': 1000},
+      'beef': {'kg': 1000, 'pack': 1000},
       
-      // Liquids - volumes in ml
-      'cane vinegar': {'bottle': 350, '350ml bottle': 350},
-      'soy sauce': {'bottle': 350, '350ml bottle': 350},
-      'patis': {'bottle': 350, '350ml bottle': 350},
-      'cooking oil': {'500ml': 500, 'bottle': 500},
-      'coconut milk': {'250ml pack': 250, 'pack': 250},
-      'coconut cream': {'250ml pack': 250, 'pack': 250},
-      'evaporated milk': {'370ml can': 370, 'can': 370},
+      // Legumes and beans
+      'kidney beans': {'pack': 400, 'kg': 1000},
+      'mungbeans': {'pack': 400, 'kg': 1000},
+      'peanuts': {'pack': 500, 'kg': 1000},
       
-      // Packaged goods in grams
-      'lumpia wrapper': {'piece': 8, 'pcs': 8},
-      'pancit bihon': {'pack': 400},
-      'sotanghon': {'piece': 100},
-      'miswa': {'piece': 50},
-      'odong': {'piece': 100},
+      // Liquids
+      'vinegar': {'bottle': 350, '350ml bottle': 350, 'ml': 1},
+      'soy sauce': {'bottle': 350, '350ml bottle': 350, 'ml': 1},
+      'patis': {'bottle': 350, '350ml bottle': 350, 'ml': 1},
+      'cooking oil': {'500ml': 500, 'bottle': 500, 'ml': 1},
+      'coconut milk': {'250ml pack': 250, 'pack': 250, 'ml': 1},
+      'coconut cream': {'250ml pack': 250, 'pack': 250, 'ml': 1},
+      'evaporated milk': {'370ml can': 370, 'can': 370, 'ml': 1},
+      
+      // Packaged goods
+      'lumpia wrapper': {'piece': 8, 'pcs': 8, 'pack': 100 * 8}, // 100 pieces
+      'pancit bihon': {'pack': 400, 'kg': 1000},
+      'sotanghon': {'piece': 100, 'kg': 1000},
+      'miswa': {'piece': 50, 'kg': 1000},
+      'odong': {'piece': 100, 'kg': 1000},
+      'rice': {'kg': 1000, 'pack': 1000},
       
       // Spices and condiments
-      'atsuete': {'pack': 10},
-      'cinnamon': {'pack': 50},
-      'paprika': {'pack': 50},
+      'atsuete': {'pack': 10, 'kg': 1000},
+      'cinnamon': {'pack': 50, 'kg': 1000},
+      'paprika': {'pack': 50, 'kg': 1000},
+      'salt': {'kg': 1000, 'pack': 1000},
+      'sugar': {'kg': 1000, 'pack': 1000},
     };
   }
 
@@ -3344,62 +3299,185 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
       }
     }
     
-    // Fallback to category-based defaults (your existing logic)
+    // Fallback to category-based defaults
     switch (unit) {
       case 'piece':
       case 'pcs':
-        return category.toLowerCase() == 'vegetable' ? 400 : 100;
+        if (category.toLowerCase().contains('fruit')) return 150;
+        if (category.toLowerCase().contains('vegetable')) return 200;
+        return 100;
       case 'pack':
         if (category.toLowerCase().contains('vegetable')) return 250;
-        if (category.toLowerCase().contains('spice')) return 100;
+        if (category.toLowerCase().contains('spice')) return 50;
+        if (category.toLowerCase().contains('herb')) return 50;
         return 500;
       case 'bundle':
-        return ingredientName.toLowerCase().contains('malunggay') ? 100.0 : 50.0;
+        return category.toLowerCase().contains('leafy') ? 100.0 : 50.0;
+      case 'tie':
+        return category.toLowerCase().contains('vegetable') ? 250.0 : 200.0;
+      case 'bottle':
+      case 'can':
+        return 500.0;
+      case 'tray':
+        return 1800.0;
+      case 'group':
+        return 500.0;
       default:
         return defaultWeight;
     }
   }
 
   // ========== UNIT CONVERSION METHOD ==========
-  double convertToGrams(double quantity, String unit, Map<String, dynamic> ingredient) {
-    unit = unit.toLowerCase().trim();
-    String ingredientName = ingredient['ingredientName']?.toString() ?? '';
-    String category = ingredient['category']?.toString() ?? '';
-    
-    // Handle common unit conversions with ingredient-specific weights
-    switch (unit) {
-      case 'kg':
-        return quantity * 1000;
-      case 'g':
-        return quantity;
-      case 'tbsp':
-        return quantity * (ingredient['unit_density_tbsp'] as double? ?? 15.0);
-      case 'tsp':
-        return quantity * (ingredient['unit_density_tsp'] as double? ?? 5.0);
-      case 'cup':
-        return quantity * (ingredient['unit_density_cup'] as double? ?? 240.0);
-      case 'piece':
-      case 'pcs':
-        return quantity * _getIngredientWeight(ingredientName, 'piece', category, 100.0);
-      case 'pack':
-        return quantity * _getIngredientWeight(ingredientName, 'pack', category, 500.0);
-      case 'tie':
-        return quantity * _getIngredientWeight(ingredientName, 'tie', category, 250.0);
-      case 'bundle':
-        return quantity * _getIngredientWeight(ingredientName, 'bundle', category, 50.0);
-      case 'can':
-        return quantity * _getIngredientWeight(ingredientName, 'can', category, 370.0);
-      case 'bottle':
-        return quantity * _getIngredientWeight(ingredientName, 'bottle', category, 500.0);
-      case 'tray':
-        return quantity * _getIngredientWeight(ingredientName, 'tray', category, 1800.0);
-      case 'group':
-        return quantity * _getIngredientWeight(ingredientName, 'group', category, 500.0);
-      default:
-        // For unknown units, try ingredient-specific or assume grams
-        return quantity * _getIngredientWeight(ingredientName, unit, category, 100.0);
+  // Enhanced unit conversion with more comprehensive support
+double convertToGrams(double quantity, String unit, Map<String, dynamic> ingredient) {
+  unit = unit.toLowerCase().trim();
+  String ingredientName = ingredient['ingredientName']?.toString().toLowerCase() ?? '';
+  String category = ingredient['category']?.toString() ?? '';
+
+    if (unit == 'cloves') unit = 'clove';
+    if (unit == 'thumbs') unit = 'thumb';
+    if (unit == 'pieces') unit = 'piece'; // Good practice to add this too
+
+    // Add Thumb Unit logic
+    if (unit.contains('thumb')) {
+      // "Small thumb" is often used for ginger.
+      // If "small" is present, the size logic below will multiply by 0.7.
+      // Base weight for a thumb of ginger is approx 15g.
+      unit = 'thumb'; // Standardize to just 'thumb' so it falls through or we handle it here
+      // We can actually return here, or let it flow if we want size modifiers.
+      // Let's handle the specific calculation here to be safe, but apply size modifiers first.
+       if (unit.contains('small')) {
+          quantity *= 0.7;
+       } else if (unit.contains('large')) {
+          quantity *= 1.3;
+       }
+       return quantity * 15.0; // Average weight of a ginger thumb
     }
+  
+  // Handle size descriptors first
+  if (unit.contains('small')) {
+    quantity *= 0.7; // small is 70% of standard
+    unit = 'piece';   //unit.replaceAll('small', '').trim();
+  } else if (unit.contains('large')) {
+    quantity *= 1.3; // large is 130% of standard  
+    unit = 'piece';   //unit.replaceAll('large', '').trim();
+  } else if (unit.contains('medium')) {
+    quantity *= 1.0; // medium is standard
+    unit = 'piece';   //unit.replaceAll('medium', '').trim();
   }
+
+  switch (unit) {
+    // Standard weight/volume units
+    case 'kg': return quantity * 1000;
+    case 'g': return quantity;
+    case 'mg': return quantity / 1000;
+    case 'oz': return quantity * 28.35;
+    case 'lb': return quantity * 453.6;
+    
+    // Volume units with density
+    case 'tbsp': return quantity * (ingredient['unit_density_tbsp'] as double? ?? 15.0);
+    case 'tsp': return quantity * (ingredient['unit_density_tsp'] as double? ?? 5.0);
+    case 'cup': return quantity * (ingredient['unit_density_cup'] as double? ?? 240.0);
+    case 'l':
+    case 'liter':
+      // Use density if available, otherwise default to 1000g
+      double d = (ingredient['unit_density_cup'] as double? ?? 240.0) / 240.0;
+      return quantity * 1000 ;
+    
+    // Countable items with specific weights
+    case 'piece': 
+    case 'pcs':
+    case 'pc': 
+      return quantity * _getPieceWeight(ingredientName, category);
+    
+    case 'clove':
+      if (ingredientName.contains('garlic')) return quantity * 5.0; // avg garlic clove
+      return quantity * 2.0; // default for other cloves
+    
+    case 'head':
+      if (ingredientName.contains('garlic')) return quantity * 50.0; // avg garlic head
+      if (ingredientName.contains('cabbage')) return quantity * 800.0;
+      return quantity * 500.0; // default head weight
+    
+    case 'bulb':
+      if (ingredientName.contains('onion')) return quantity * 150.0;
+      return quantity * 100.0;
+    
+    // Packaging units
+    case 'pack': 
+    case 'package': 
+      return quantity * _getIngredientWeight(ingredientName, 'pack', category, 500.0);
+    
+    case 'bottle': 
+      return quantity * _getIngredientWeight(ingredientName, 'bottle', category, 500.0);
+    
+    case 'can': 
+      return quantity * _getIngredientWeight(ingredientName, 'can', category, 370.0);
+    
+    // Produce units  
+    case 'bunch':
+      if (ingredientName.contains('parsley') || ingredientName.contains('cilantro')) return quantity * 50.0;
+      if (ingredientName.contains('green onion')) return quantity * 100.0;
+      return quantity * 200.0; // default bunch
+    
+    case 'stalk':
+      if (ingredientName.contains('celery')) return quantity * 40.0;
+      if (ingredientName.contains('rhubarb')) return quantity * 150.0;
+      return quantity * 50.0;
+    
+    case 'slice':
+      if (ingredientName.contains('bread')) return quantity * 30.0;
+      if (ingredientName.contains('cheese')) return quantity * 20.0;
+      return quantity * 25.0;
+    
+    case 'wedge':
+      if (ingredientName.contains('lemon') || ingredientName.contains('lime')) return quantity * 10.0;
+      return quantity * 50.0;
+    
+    // Bulk units
+    case 'pinch': return quantity * 0.3;
+    case 'dash': return quantity * 0.6;
+    case 'handful': return quantity * 30.0;
+    
+    // Default fallback
+    default: 
+      return quantity * _getIngredientWeight(ingredientName, unit, category, 100.0);
+  }
+}
+
+// Enhanced piece weight helper
+double _getPieceWeight(String ingredientName, String category, [String size = 'standard']) {
+  ingredientName = ingredientName.toLowerCase();
+  double baseWeight;
+  
+  // Fruits
+  if (ingredientName.contains('apple')) return 150.0;
+  else if (ingredientName.contains('banana')) return 120.0;
+  else if (ingredientName.contains('orange')) return 130.0;
+  else if (ingredientName.contains('lemon')) return 60.0;
+  else if (ingredientName.contains('lime')) return 50.0;
+  else if (ingredientName.contains('tomato')) return 120.0;
+  else if (ingredientName.contains('potato')) return 150.0;
+  else if (ingredientName.contains('onion')) return 110.0;
+  else if (ingredientName.contains('sayote')) return 250.0;
+  
+  // Vegetables
+  else if (ingredientName.contains('carrot')) return 60.0;
+  else if (ingredientName.contains('bell pepper')) return 120.0;
+  else if (ingredientName.contains('eggplant')) return 250.0;
+  else if (ingredientName.contains('cucumber')) return 200.0;
+  
+  // Eggs
+  if (ingredientName.contains('egg')) return 50.0;
+  if (ingredientName.contains('pugo')) return 10.0;
+  
+  // Category-based defaults
+  else if (category.toLowerCase().contains('fruit')) return 120.0;
+  else if (category.toLowerCase().contains('vegetable')) return 100.0;
+  else if (category.toLowerCase().contains('protein')) return 150.0;
+  
+  return 100.0; // general default
+}
 
   // ========== CUSTOMIZED MEALS OPERATIONS ==========
 
