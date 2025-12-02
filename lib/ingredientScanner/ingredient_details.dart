@@ -29,32 +29,52 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
     _ingredientFuture = _fetchIngredientDetails();
   }
 
+  // --- FIX 2: PREVENT DUPLICATES USING SET<INT> ---
   Future<List<Map<String, dynamic>>> _fetchRelatedMeals() async {
     try {
       final allMeals = await _dbHelper.getAllMeals();
-      final relatedMeals = allMeals.where((meal) {
+      final List<Map<String, dynamic>> distinctMeals = [];
+      final Set<int> addedMealIds = {}; // Track IDs to prevent duplicates
+
+      // Helper function to safely add meals
+      void addMealIfUnique(Map<String, dynamic> meal) {
+        final id = meal['mealID'] as int;
+        if (!addedMealIds.contains(id)) {
+          addedMealIds.add(id);
+          distinctMeals.add(meal);
+        }
+      }
+
+      // 1. Check Meal Name, Category, or Content string match
+      for (var meal in allMeals) {
         final mealName = meal['mealName']?.toString().toLowerCase() ?? '';
         final categories = meal['category']?.toString().toLowerCase() ?? '';
         final content = meal['content']?.toString().toLowerCase() ?? '';
         final ingredientLower = widget.ingredientName.toLowerCase();
-        return mealName.contains(ingredientLower) ||
-               categories.contains(ingredientLower) ||
-               content.contains(ingredientLower);
-      }).toList();
 
-      for (var meal in allMeals) {
-        if (!relatedMeals.contains(meal)) {
-          final mealIngredients = await _dbHelper.getMealIngredients(meal['mealID']);
-          final hasIngredient = mealIngredients.any((ingredient) {
-            final ingName = ingredient['ingredientName']?.toString().toLowerCase() ?? '';
-            return ingName.contains(widget.ingredientName.toLowerCase());
-          });
-          if (hasIngredient && !relatedMeals.contains(meal)) {
-            relatedMeals.add(meal);
-          }
+        if (mealName.contains(ingredientLower) ||
+            categories.contains(ingredientLower) ||
+            content.contains(ingredientLower)) {
+          addMealIfUnique(meal);
         }
       }
-      return relatedMeals;
+
+      // 2. Check Database Ingredient Relationships
+      for (var meal in allMeals) {
+        // Skip if we already added this meal to save processing time
+        if (addedMealIds.contains(meal['mealID'])) continue;
+
+        final mealIngredients = await _dbHelper.getMealIngredients(meal['mealID']);
+        final hasIngredient = mealIngredients.any((ingredient) {
+          final ingName = ingredient['ingredientName']?.toString().toLowerCase() ?? '';
+          return ingName.contains(widget.ingredientName.toLowerCase());
+        });
+
+        if (hasIngredient) {
+          addMealIfUnique(meal);
+        }
+      }
+      return distinctMeals;
     } catch (e) {
       print('Error fetching related meals: $e');
       return [];
@@ -75,7 +95,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
     }
   }
 
-  // === FULL-SCREEN IMAGE VIEWER ===
+  // === FULL-SCREEN IMAGE VIEWER (Unchanged) ===
   void _showFullScreenImage(String imagePath) {
     showDialog(
       context: context,
@@ -158,44 +178,11 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
         future: _ingredientFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFFB5E48C),
-                    Color(0xFF76C893),
-                    Color(0xFF184E77),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              ),
-            );
+            return _buildLoadingBackground();
           }
 
           if (snapshot.hasError) {
-            return Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFFB5E48C),
-                    Color(0xFF76C893),
-                    Color(0xFF184E77),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  'Error: ${snapshot.error}',
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-            );
+            return _buildErrorBackground(snapshot.error.toString());
           }
 
           final ingredient = snapshot.data;
@@ -251,7 +238,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                               ),
                             ),
                           ),
-                          // Optional: Add zoom icon
                           const Positioned(
                             bottom: 16,
                             right: 16,
@@ -344,7 +330,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 20),
-
                                   _buildDetailRow(
                                     icon: Icons.monetization_on,
                                     iconColor: Colors.green,
@@ -352,7 +337,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                     value: _getCostEstimate(ingredient),
                                   ),
                                   const SizedBox(height: 16),
-
                                   _buildDetailRow(
                                     icon: Icons.local_fire_department,
                                     iconColor: Colors.orange,
@@ -360,7 +344,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                     value: _getCalories(ingredient),
                                   ),
                                   const SizedBox(height: 20),
-
                                   Container(
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
@@ -466,8 +449,9 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                           ),
                                         );
                                       }
+                                      // --- FIX 1 PART A: Increased Height ---
                                       return SizedBox(
-                                        height: 220,
+                                        height: 250, // Increased from 220 to 250 to prevent overflow
                                         child: ListView.builder(
                                           scrollDirection: Axis.horizontal,
                                           itemCount: relatedMeals.length,
@@ -485,7 +469,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
 
                           const SizedBox(height: 20),
 
-                          // === FOOTER ===
                           const Center(
                             child: Text(
                               'Discover more ingredients',
@@ -510,7 +493,33 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
     );
   }
 
-  // === HELPER WIDGETS (unchanged) ===
+  // Helper widgets for loading/error
+  Widget _buildLoadingBackground() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFB5E48C), Color(0xFF76C893), Color(0xFF184E77)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+    );
+  }
+
+  Widget _buildErrorBackground(String error) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFB5E48C), Color(0xFF76C893), Color(0xFF184E77)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(child: Text('Error: $error', style: const TextStyle(color: Colors.white))),
+    );
+  }
+
   Widget _buildDetailRow({
     required IconData icon,
     required Color iconColor,
@@ -634,7 +643,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
       },
       child: Container(
         width: 180,
-        margin: const EdgeInsets.only(right: 16),
+        margin: const EdgeInsets.only(right: 16, bottom: 8), // Added bottom margin for shadow
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -647,6 +656,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min, // Use minimum necessary space
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
@@ -680,39 +690,45 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    mealName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF184E77),
-                      fontFamily: 'Orbitron',
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFB5E48C),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'}',
+            // --- FIX 1 PART B: Expanded/Flexible ---
+            // Use Flexible or Expanded so the text column takes up available space
+            // without pushing boundaries if content is large.
+            Flexible(
+              fit: FlexFit.loose,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      mealName,
                       style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                         color: Color(0xFF184E77),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontFamily: 'Orbitron',
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFB5E48C),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'}',
+                        style: const TextStyle(
+                          color: Color(0xFF184E77),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

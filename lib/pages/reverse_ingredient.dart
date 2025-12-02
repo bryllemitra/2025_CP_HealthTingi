@@ -21,6 +21,11 @@ class ReverseIngredientPage extends StatefulWidget {
 class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
   late List<String> allIngredients;
   Set<String> crossedOutIngredients = {};
+  
+  // Stores details (quantity/unit) for ingredients.
+  // Key: Ingredient Name (Original name for substitutions, New name for additions)
+  Map<String, Map<String, String>> ingredientDetails = {}; 
+
   List<Map<String, dynamic>> recentChanges = [];
   Map<String, String?> selectedAlternatives = {};
   Map<String, String> ingredientDisplay = {};
@@ -90,6 +95,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         final Set<String> newCrossedOut = {};
         final Map<String, String?> newSelectedAlternatives = {};
         final Map<String, String> newIngredientDisplay = {};
+        final Map<String, Map<String, String>> newIngredientDetails = {}; 
         final List<String> newAllIngredients = List.from(widget.ingredients ?? []);
         
         // Process all entries in substituted_ingredients
@@ -99,25 +105,38 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
           final substituteType = substituteData['type'] as String;
           final substituteValue = substituteData['value'] as String;
           
+          // Helper to parse "2 cups" into qty="2", unit="cups"
+          Map<String, String> parseQuantity(String? quantityStr) {
+             String qStr = quantityStr?.toString() ?? '1 piece';
+             List<String> parts = qStr.split(' ');
+             String qty = parts.isNotEmpty ? parts[0] : '1';
+             String unit = parts.length > 1 ? parts.sublist(1).join(' ') : 'piece';
+             return {'qty': qty, 'unit': unit};
+          }
+
           // Check if this ingredient was in the original meal
           final wasInOriginal = (widget.ingredients ?? []).contains(original);
           
           if (!wasInOriginal && substituteType == 'new') {
-            // This is a newly added ingredient
+            // Case 1: NEW Ingredient
             if (!newAllIngredients.contains(original)) {
               newAllIngredients.add(original);
             }
             newIngredientDisplay[original] = original;
+            newIngredientDetails[original] = parseQuantity(substituteData['quantity']);
+
           } else if (substituteType == 'removed') {
-            // Original ingredient was removed
+            // Case 2: REMOVED Ingredient
             newCrossedOut.add(original);
-            newIngredientDisplay[original] = original; // Still show it but crossed out
+            newIngredientDisplay[original] = original; 
           } else if (substituteType == 'substituted') {
-            // Original ingredient was substituted
+            // Case 3: SUBSTITUTED Ingredient
             newSelectedAlternatives[original] = substituteValue;
             newIngredientDisplay[original] = substituteValue;
+            // Load the saved quantity for the substitution
+            newIngredientDetails[original] = parseQuantity(substituteData['quantity']);
           } else {
-            // Original ingredient kept as is
+            // Case 4: Original kept
             newIngredientDisplay[original] = original;
           }
         }
@@ -128,18 +147,15 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
           crossedOutIngredients = newCrossedOut;
           selectedAlternatives = newSelectedAlternatives;
           ingredientDisplay = newIngredientDisplay;
+          ingredientDetails = newIngredientDetails; 
           
-          // Show alternatives if any ingredients are crossed out
           showAlternatives = newCrossedOut.isNotEmpty;
         });
         
-        // Reload similar meals with current state
         _loadSimilarMeals();
-        
-        // Reload ingredient alternatives for the updated ingredient list
         _loadIngredientAlternatives();
       } else {
-        // No customization found, initialize with default display
+        // No customization found, initialize default
         setState(() {
           for (final ingredient in allIngredients) {
             ingredientDisplay[ingredient] = ingredient;
@@ -148,7 +164,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       }
     } catch (e) {
       print('Error loading existing customization: $e');
-      // Fallback: initialize display with default values
       setState(() {
         for (final ingredient in allIngredients) {
           ingredientDisplay[ingredient] = ingredient;
@@ -201,26 +216,121 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     });
   }
 
-  void _addIngredient(String ingredientName) {
-    if (!allIngredients.contains(ingredientName)) {
-      setState(() {
+  // UPDATED: Logic to add ingredient with specific quantity and unit
+  void _addIngredient(String ingredientName, {String qty = '1', String unit = 'piece'}) {
+    setState(() {
+      // 1. Check if the ingredient exists but is currently crossed out (REMOVED)
+      if (crossedOutIngredients.contains(ingredientName)) {
+        // Un-cross it
+        crossedOutIngredients.remove(ingredientName);
+        
+        // UPDATE the details with the NEW quantity and unit from the dialog
+        ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
+        
+        // Log this change so the "Undo" button works correctly
+        recentChanges.add({'type': 'add_back', 'ingredient': ingredientName});
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Restored $ingredientName with new quantity', style: const TextStyle(fontFamily: 'Orbitron')),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } 
+      // 2. If it is a completely new ingredient
+      else if (!allIngredients.contains(ingredientName)) {
         allIngredients.add(ingredientName);
+        
+        // Store the user's specific input
+        ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
+        
         ingredientDisplay[ingredientName] = ingredientName;
-        _searchController.clear();
-        showAddIngredient = false;
-      });
-      
-      // Reload similar meals with new ingredient
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Added $qty $unit of $ingredientName', style: const TextStyle(fontFamily: 'Orbitron')),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        // 3. Optional: If it exists and is NOT crossed out, maybe just update the quantity?
+        ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Updated $ingredientName to $qty $unit', style: const TextStyle(fontFamily: 'Orbitron')),
+            backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Common cleanup actions
+      _searchController.clear();
+      showAddIngredient = false;
       _loadSimilarMeals();
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Added $ingredientName', style: const TextStyle(fontFamily: 'Orbitron')),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+    });
+  }
+
+  // Dialog to ask user for Quantity and Unit (Used for Add & Substitute)
+  Future<void> _showAddIngredientDialog(String ingredientName) async {
+    String selectedQty = '1';
+    String selectedUnit = 'piece';
+    final List<String> units = ['piece', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'pack', 'can', 'clove', 'head', 'bottle']; 
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder( 
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Add $ingredientName', style: const TextStyle(fontFamily: 'Orbitron')),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(labelText: 'Quantity'),
+                    keyboardType: TextInputType.number,
+                    onChanged: (val) => selectedQty = val,
+                    controller: TextEditingController(text: selectedQty),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButton<String>(
+                    value: selectedUnit,
+                    isExpanded: true,
+                    items: units.map((String unit) {
+                      return DropdownMenuItem<String>(
+                        value: unit,
+                        child: Text(unit),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setDialogState(() {
+                        selectedUnit = newValue!;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _addIngredient(ingredientName, qty: selectedQty, unit: selectedUnit);
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _removeIngredient(String ingredient) {
@@ -228,7 +338,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       crossedOutIngredients.add(ingredient);
       recentChanges.add({'type': 'remove', 'ingredient': ingredient});
 
-      // Ensure the ingredient stays in the display
       if (!ingredientDisplay.containsKey(ingredient)) {
         ingredientDisplay[ingredient] = ingredient;
       }
@@ -255,6 +364,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     _loadSimilarMeals();
   }
 
+  // Not strictly used anymore since we use _confirmSubstitution, but good to keep
   void _setReplacement(String original, String alt) {
     setState(() {
       selectedAlternatives[original] = alt;
@@ -271,6 +381,9 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       selectedAlternatives.remove(original);
       ingredientDisplay.remove(original);
       crossedOutIngredients.remove(original);
+      // Also clear the details for this substitution
+      ingredientDetails.remove(original);
+      
       recentChanges.removeWhere((change) =>
           change['type'] == 'replace' && change['original'] == original);
 
@@ -331,7 +444,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     try {
       final dbHelper = DatabaseHelper();
       
-      // Get the original meal ingredients
       final originalMeal = await dbHelper.getMealById(widget.mealId);
       final originalIngredients = await dbHelper.getMealIngredients(widget.mealId);
       final originalIngredientNames = originalIngredients
@@ -339,36 +451,45 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
           .where((name) => name.isNotEmpty)
           .toList();
       
-      // Create maps for original and substituted ingredients
       Map<String, String> originalIngredientsMap = {};
       Map<String, Map<String, dynamic>> substitutedIngredientsMap = {};
       
-      // Process ALL current ingredients (original + added)
       for (final ingredientName in allIngredients) {
         originalIngredientsMap[ingredientName] = ingredientName;
         
         if (selectedAlternatives.containsKey(ingredientName)) {
-          // This ingredient was substituted
+          // SUBSTITUTED INGREDIENT CASE
+          
+          // UPDATED: Retrieve the specific details (Qty/Unit) for substitution
+          final details = ingredientDetails[ingredientName];
+          String userQty = details?['qty'] ?? '1';
+          String userUnit = details?['unit'] ?? 'piece';
+
           substitutedIngredientsMap[ingredientName] = {
             'type': 'substituted',
             'value': selectedAlternatives[ingredientName]!,
-            'quantity': '1 piece'
+            'quantity': '$userQty $userUnit' // Uses your specific input now
           };
         } else if (crossedOutIngredients.contains(ingredientName)) {
-          // This ingredient was removed
+          // REMOVED INGREDIENT CASE
           substitutedIngredientsMap[ingredientName] = {
             'type': 'removed',
             'value': 'REMOVED'
           };
         } else if (!originalIngredientNames.contains(ingredientName)) {
-          // This is a newly added ingredient that wasn't removed or substituted
+          // NEW INGREDIENT CASE
+          
+          final details = ingredientDetails[ingredientName];
+          String userQty = details?['qty'] ?? '1';
+          String userUnit = details?['unit'] ?? 'piece';
+          
           substitutedIngredientsMap[ingredientName] = {
             'type': 'new',
             'value': ingredientName,
-            'quantity': '1 piece'
+            'quantity': '$userQty $userUnit' 
           };
         } else {
-          // Original ingredient kept as is
+          // ORIGINAL KEPT CASE
           substitutedIngredientsMap[ingredientName] = {
             'type': 'original',
             'value': ingredientName
@@ -376,7 +497,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         }
       }
       
-      // Also include original ingredients that might have been completely removed from the list
+      // Handle originals that were completely removed from list
       for (final originalName in originalIngredientNames) {
         if (!allIngredients.contains(originalName)) {
           originalIngredientsMap[originalName] = originalName;
@@ -503,7 +624,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                             return ListTile(
                               title: Text(name, style: const TextStyle(fontFamily: 'Orbitron')),
                               trailing: ElevatedButton(
-                                onPressed: () => _addIngredient(name),
+                                onPressed: () => _showAddIngredientDialog(name),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF76C893),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -620,56 +741,97 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     );
   }
 
-  // New: Confirm substitution with simple dialog
+  // UPDATED: Confirm substitution with QUANTITY and UNIT input
   Future<void> _confirmSubstitution(String original, String alternative) async {
+    String selectedQty = '1';
+    String selectedUnit = 'piece';
+    final List<String> units = ['piece', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'pack', 'can', 'clove', 'head', 'bottle'];
+
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Confirm Substitution',
-          style: TextStyle(fontFamily: 'Orbitron'),
-        ),
-        content: Text(
-          'Are you sure you want to replace $original with $alternative?',
-          style: const TextStyle(fontFamily: 'Orbitron'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              'Cancel',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text(
+              'Confirm Substitution',
               style: TextStyle(fontFamily: 'Orbitron'),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF76C893),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Replace $original with $alternative?',
+                  style: const TextStyle(fontFamily: 'Orbitron'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Quantity of new ingredient'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => selectedQty = val,
+                  controller: TextEditingController(text: selectedQty),
+                ),
+                const SizedBox(height: 8),
+                DropdownButton<String>(
+                  value: selectedUnit,
+                  isExpanded: true,
+                  items: units.map((String unit) {
+                    return DropdownMenuItem<String>(
+                      value: unit,
+                      child: Text(unit),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setDialogState(() {
+                      selectedUnit = newValue!;
+                    });
+                  },
+                ),
+              ],
             ),
-            child: const Text(
-              'Confirm',
-              style: TextStyle(fontFamily: 'Orbitron', color: Colors.white),
-            ),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(fontFamily: 'Orbitron'),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF76C893),
+                ),
+                child: const Text(
+                  'Confirm',
+                  style: TextStyle(fontFamily: 'Orbitron', color: Colors.white),
+                ),
+              ),
+            ],
+          );
+        }
       ),
     );
 
     if (result == true) {
-      _applySimpleSubstitution(original, alternative);
+      _applySimpleSubstitution(original, alternative, qty: selectedQty, unit: selectedUnit);
     }
   }
 
-  // Simplified substitution application
-  void _applySimpleSubstitution(String original, String alternative) {
+  // UPDATED: Substitution now accepts and stores quantity/unit
+  void _applySimpleSubstitution(String original, String alternative, {String qty = '1', String unit = 'piece'}) {
     setState(() {
       ingredientDisplay[original] = alternative;
       selectedAlternatives[original] = alternative;
       crossedOutIngredients.remove(original);
+      
+      // Store the quantity details for this original ingredient key
+      ingredientDetails[original] = {'qty': qty, 'unit': unit};
+
       recentChanges.add({'type': 'replace', 'original': original, 'alt': alternative});
     });
     
-    _loadSimilarMeals(); // Reload meals with new ingredients
+    _loadSimilarMeals(); 
   }
 
   @override
@@ -682,7 +844,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         ),
         backgroundColor: const Color(0xFF184E77),
         actions: [
-          // Add this save button
           IconButton(
             icon: const Icon(Icons.save, color: Colors.white),
             onPressed: _saveCustomizedMeal,
@@ -762,7 +923,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                         decoration: isCrossed
                                             ? TextDecoration.lineThrough
                                             : TextDecoration.none,
-                                        color: isCrossed ? Colors.grey : Color(0xFF184E77),
+                                        color: isCrossed ? Colors.grey : const Color(0xFF184E77),
                                         fontSize: constraints.maxWidth > 600 ? 16 : 14,
                                         shadows: const [
                                           Shadow(color: Colors.black26, offset: Offset(1, 1), blurRadius: 3),
@@ -814,7 +975,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                       style: TextStyle(
                                         fontFamily: 'Orbitron',
                                         fontSize: constraints.maxWidth > 600 ? 14 : 12,
-                                        color: Color(0xFF184E77),
+                                        color: const Color(0xFF184E77),
                                       ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -902,7 +1063,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                               alternative, 
                                               style: TextStyle(
                                                 fontFamily: 'Orbitron', 
-                                                color: Color(0xFF184E77),
+                                                color: const Color(0xFF184E77),
                                                 fontSize: constraints.maxWidth > 600 ? 16 : 14,
                                               ),
                                             ),

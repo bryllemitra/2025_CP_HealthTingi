@@ -265,6 +265,107 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     }
   }
 
+  // === NEW METHOD: Calculate total price adjusting for Substitutions/Removals/Additions ===
+  Future<double> _calculateAdjustedTotal(List<Map<String, dynamic>> originalIngredients) async {
+    double total = 0.0;
+    final dbHelper = DatabaseHelper();
+
+    // 1. Get Customizations
+    Map<String, dynamic> subs = {};
+    if (_showCustomized && _customizedMeal != null) {
+      subs = _customizedMeal!['substituted_ingredients'] ?? {};
+    }
+
+    // 2. Process ORIGINAL Ingredients
+    for (var ing in originalIngredients) {
+      String name = ing['ingredientName']?.toString() ?? '';
+
+      // CHECK: Is this ingredient modified?
+      if (_showCustomized && subs.containsKey(name)) {
+        final subData = subs[name];
+        String type = subData['type'];
+
+        if (type == 'removed') {
+          continue; // Skip cost completely
+        } 
+        else if (type == 'substituted') {
+          // Calculate cost of the SUBSTITUTE instead of original
+          String newName = subData['value'];
+          String qtyStr = subData['quantity'] ?? '1 piece';
+          
+          // Parse "2 cups" -> qty: 2.0, unit: "cups"
+          double qty = 1.0;
+          String unit = 'piece';
+          final match = RegExp(r'^((?:\d*\.?\d+)|(?:\d+\s*/\s*\d+)|[⅛¼⅓⅜½⅝⅔¾⅞])\s*(.*)$').firstMatch(qtyStr);
+          if (match != null) {
+             qty = _parseQuantity(match.group(1) ?? '1');
+             unit = match.group(2)?.trim() ?? 'piece';
+          }
+
+          // Fetch price of the NEW ingredient from DB
+          final newIng = await dbHelper.getIngredientByName(newName);
+          if (newIng != null) {
+             double grams = dbHelper.convertToGrams(qty, unit, newIng);
+             // For ingredients table, 'unit' column IS the base unit
+             double baseGrams = dbHelper.convertToGrams(1.0, newIng['unit'] ?? 'piece', newIng);
+             double price = newIng['price'] as double? ?? 0.0;
+             
+             if (baseGrams > 0) {
+               total += (grams * price) / baseGrams;
+             }
+          }
+          continue; // Done with this ingredient
+        }
+      }
+
+      // Handle UNTOUCHED Original Ingredients (Apply the Unit Fix here too)
+      double price = ing['price'] as double? ?? 0.0;
+      double qty = _parseQuantity(ing['quantity']?.toString() ?? '0');
+      String unit = ing['unit']?.toString() ?? 'piece';
+      // Use base_unit from the joined query, or fallback to 'unit'
+      String baseUnit = ing['base_unit']?.toString() ?? ing['unit']?.toString() ?? 'piece'; 
+
+      double grams = dbHelper.convertToGrams(qty, unit, ing);
+      double baseGrams = dbHelper.convertToGrams(1.0, baseUnit, ing);
+      
+      if (baseGrams > 0) {
+        total += (grams * price) / baseGrams;
+      }
+    }
+
+    // 3. Process NEWLY ADDED Ingredients
+    if (_showCustomized) {
+      for (var entry in subs.entries) {
+        if (entry.value['type'] == 'new') {
+          String name = entry.key;
+          String qtyStr = entry.value['quantity'] ?? '1 piece';
+
+          // Parse quantity
+          double qty = 1.0;
+          String unit = 'piece';
+          final match = RegExp(r'^((?:\d*\.?\d+)|(?:\d+\s*/\s*\d+)|[⅛¼⅓⅜½⅝⅔¾⅞])\s*(.*)$').firstMatch(qtyStr);
+          if (match != null) {
+             qty = _parseQuantity(match.group(1) ?? '1');
+             unit = match.group(2)?.trim() ?? 'piece';
+          }
+
+          final newIng = await dbHelper.getIngredientByName(name);
+          if (newIng != null) {
+             double grams = dbHelper.convertToGrams(qty, unit, newIng);
+             double baseGrams = dbHelper.convertToGrams(1.0, newIng['unit'] ?? 'piece', newIng);
+             double price = newIng['price'] as double? ?? 0.0;
+
+             if (baseGrams > 0) {
+               total += (grams * price) / baseGrams;
+             }
+          }
+        }
+      }
+    }
+
+    return total;
+  }
+
   Future<void> _toggleFavorite() async {
     if (_isLoading || widget.userId == 0) return;
     setState(() => _isLoading = true);
@@ -349,7 +450,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     Map<String, dynamic>? substituted,
   ) async {
     List<Widget> widgets = [];
-    double totalPrice = 0.0;
     final dbHelper = DatabaseHelper(); // Create instance
 
     for (var ing in ingredients) {
@@ -370,7 +470,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       double cost = 0.0;
 
       if (price != null && quantity.isNotEmpty) {
-        
         double qtyValue = _parseQuantity(quantity);
         String qtyUnit = unit.toLowerCase();
         double grams = dbHelper.convertToGrams(qtyValue, qtyUnit, ing);
@@ -380,7 +479,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
           cost = grams * pricePerGram;
         }
       }
-      totalPrice += cost;
 
       String displayQuantity = _formatQuantityForDisplay(quantity);
 
@@ -473,7 +571,23 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         final isNew = data is Map && data['type'] == 'new' && !ingredients.any((i) => i['ingredientName'] == name);
         if (!isNew) continue;
 
+        // Retrieve the combined string "2 cups"
         final qty = data['quantity'] ?? '1 piece';
+        
+        // --- Parse Quantity and Unit ---
+        String qtyNumberStr = '1';
+        String qtyUnit = 'piece';
+
+        final match = RegExp(r'^((?:\d*\.?\d+)|(?:\d+\s*/\s*\d+)|[⅛¼⅓⅜½⅝⅔¾⅞])\s*(.*)$').firstMatch(qty.toString());
+        
+        if (match != null) {
+          qtyNumberStr = match.group(1) ?? '1';
+          qtyUnit = match.group(2)?.trim() ?? 'piece';
+          if (qtyUnit.isEmpty) qtyUnit = 'piece';
+        } else {
+           qtyNumberStr = qty.toString(); 
+        }
+
         final db = DatabaseHelper();
         final info = await db.getIngredientByName(name);
         String priceText = 'Php ?';
@@ -481,20 +595,8 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
         if (info != null) {
           double? price = info['price'] as double?;
           if (price != null) {
-            // Parse quantity for new ingredients
-            double qtyValue = _parseQuantity(qty);
-            String qtyUnit = 'piece'; // Default unit
-            
-            // Extract unit from quantity string if present
-            final m = RegExp(r'(\d+\.?\d*|\d+\/\d+|[⅛¼⅓⅜½⅝⅔¾⅞])\s*(\w+)').firstMatch(qty);
-            if (m != null) {
-              qtyUnit = m.group(2)!.toLowerCase();
-            }
-
-            // Use the conversion helper - use instance method
+            double qtyValue = _parseQuantity(qtyNumberStr);
             double grams = db.convertToGrams(qtyValue, qtyUnit, info);
-            
-            // FIXED: Get the base unit grams to calculate price per gram
             double baseUnitGrams = db.convertToGrams(1.0, info['unit']?.toString().toLowerCase() ?? 'piece', info);
             
             if (baseUnitGrams > 0) {
@@ -505,8 +607,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
           }
         }
 
-        // Format display quantity for new ingredients
-        String displayQty = _formatQuantityForDisplay(qty);
+        String displayQtyNum = _formatQuantityForDisplay(qtyNumberStr);
 
         widgets.add(
           Padding(
@@ -520,7 +621,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$displayQty $name',
+                        '$displayQtyNum $qtyUnit $name',
                         style: const TextStyle(
                           fontSize: 14,
                           fontFamily: 'Orbitron',
@@ -751,35 +852,6 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     final mealRestrictions = mealData['mealRestrictions'] ?? '';
                     final ingredients = mealData['ingredients'] as List<Map<String, dynamic>>;
                     final categories = (mealData['category'] as String?)?.split(', ') ?? [];
-                    double totalPrice = 0.0;
-                    final dbHelper = DatabaseHelper(); // Create instance
-
-                    for (var ing in ingredients) {
-                      final name = ing['ingredientName']?.toString() ?? '';
-                      if (_showCustomized && _customizedMeal != null) {
-                        final sub = _customizedMeal!['substituted_ingredients'] as Map<String, dynamic>;
-                        final val = sub[name] is Map ? sub[name]['value'] : sub[name];
-                        if (sub.containsKey(name) && val == 'REMOVED') continue;
-                      }
-
-                      final qty = ing['quantity']?.toString() ?? '';
-                      final price = ing['price'] as double?;
-                      if (price != null && qty.isNotEmpty) {
-                        double qtyValue = _parseQuantity(qty);
-                        String unit = ing['unit']?.toString().toLowerCase() ?? '';
-                        
-                        // Use the conversion helper - use instance method
-                        double grams = dbHelper.convertToGrams(qtyValue, unit, ing);
-                        
-                        // FIXED: Get the base unit grams to calculate price per gram
-                        double baseUnitGrams = dbHelper.convertToGrams(1.0, ing['unit']?.toString().toLowerCase() ?? 'piece', ing);
-                        
-                        if (baseUnitGrams > 0) {
-                          double pricePerGram = price / baseUnitGrams;
-                          totalPrice += grams * pricePerGram;
-                        }
-                      }
-                    }
 
                     return Stack(
                       children: [
@@ -823,15 +895,29 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
+                                  // --- UPDATED PRICE DISPLAY ---
                                   Center(
-                                    child: Text(
-                                      'Price: Php ${totalPrice.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontFamily: 'Orbitron',
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF76C893),
-                                      ),
+                                    child: FutureBuilder<double>(
+                                      future: _calculateAdjustedTotal(ingredients),
+                                      initialData: 0.0,
+                                      builder: (context, priceSnapshot) {
+                                        if (priceSnapshot.connectionState == ConnectionState.waiting) {
+                                          return const SizedBox(
+                                            height: 20, 
+                                            width: 20, 
+                                            child: CircularProgressIndicator(strokeWidth: 2)
+                                          );
+                                        }
+                                        return Text(
+                                          'Price: Php ${priceSnapshot.data?.toStringAsFixed(2) ?? "0.00"}',
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontFamily: 'Orbitron',
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF76C893),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                   if (categories.isNotEmpty) ...[
@@ -927,8 +1013,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-                                  // Only show the Change Ingredients button for logged-in users
-                                  if (widget.userId != 0) // This condition hides the button for guest users
+                                  if (widget.userId != 0)
                                     Center(
                                       child: ElevatedButton.icon(
                                         icon: const Icon(Icons.edit, size: 20),
