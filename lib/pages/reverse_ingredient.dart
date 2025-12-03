@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
-import 'meal_details.dart'; // Import your meal details page
+import 'meal_details.dart';
 
 class ReverseIngredientPage extends StatefulWidget {
   final List<String>? ingredients;
-  final int userId; // Required for logging
-  final int mealId; // Add mealId for logging
+  final int userId;
+  final int mealId;
 
   const ReverseIngredientPage({
     super.key,
@@ -23,8 +23,10 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
   Set<String> crossedOutIngredients = {};
   
   // Stores details (quantity/unit) for ingredients.
-  // Key: Ingredient Name (Original name for substitutions, New name for additions)
-  Map<String, Map<String, String>> ingredientDetails = {}; 
+  Map<String, Map<String, String>> ingredientDetails = {};
+  
+  // Stores original recipe values to use as fallbacks
+  Map<String, Map<String, String>> originalDefaults = {};
 
   List<Map<String, dynamic>> recentChanges = [];
   Map<String, String?> selectedAlternatives = {};
@@ -56,19 +58,21 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       'Soy Sauce',
     ];
     
-    // Initialize display with default values first
+    // Initialize display and safe defaults
     for (final ingredient in allIngredients) {
       ingredientDisplay[ingredient] = ingredient;
+      if (!ingredientDetails.containsKey(ingredient)) {
+        ingredientDetails[ingredient] = {'qty': '1', 'unit': 'piece'};
+      }
     }
     
     selectedAlternatives = {};
-    
-    // Load data in proper sequence
     _initializeData();
   }
 
   Future<void> _initializeData() async {
     await _loadAvailableIngredients();
+    await _loadOriginalMealIngredients(); // Load real recipe quantities first
     await _loadExistingCustomization(); 
     await _loadIngredientAlternatives();
     await _loadSimilarMeals();
@@ -77,10 +81,136 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Refresh data when the page becomes visible again
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadExistingCustomization();
     });
+  }
+
+  // --- NEW: Load Original Quantities from DB ---
+  Future<void> _loadOriginalMealIngredients() async {
+    try {
+      final dbHelper = DatabaseHelper();
+      final originalIngredients = await dbHelper.getMealIngredients(widget.mealId);
+      
+      final Map<String, Map<String, String>> defaults = {};
+
+      for (var ing in originalIngredients) {
+        final name = ing['ingredientName'] as String;
+        
+        // Format quantity (e.g., 0.25 -> "0.25", 2.0 -> "2")
+        dynamic rawQty = ing['quantity'];
+        String qty = '1';
+        if (rawQty != null) {
+           if (rawQty is num) {
+             qty = rawQty == rawQty.toInt() ? rawQty.toInt().toString() : rawQty.toString();
+           } else {
+             qty = rawQty.toString();
+           }
+        }
+        
+        final unit = ing['unit']?.toString() ?? 'piece';
+        defaults[name] = {'qty': qty, 'unit': unit};
+      }
+
+      if (mounted) {
+        setState(() {
+          originalDefaults = defaults;
+          
+          // Apply these defaults to our current list
+          for (var entry in defaults.entries) {
+            if (allIngredients.contains(entry.key)) {
+               ingredientDetails[entry.key] = entry.value;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      print('Error loading original meal ingredients: $e');
+    }
+  }
+
+  // --- NEW: Edit Quantity Logic ---
+  void _updateIngredientDetails(String ingredientName, String qty, String unit) {
+    setState(() {
+      ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
+      recentChanges.add({'type': 'edited', 'ingredient': ingredientName});
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Updated $ingredientName to $qty $unit', style: const TextStyle(fontFamily: 'Orbitron')),
+        backgroundColor: Colors.blue,
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  Future<void> _showEditQtyDialog(String ingredientName) async {
+    final currentDetails = ingredientDetails[ingredientName] ?? {'qty': '1', 'unit': 'piece'};
+    String selectedQty = currentDetails['qty']!;
+    String selectedUnit = currentDetails['unit']!;
+    
+    final List<String> units = ['piece', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'pack', 'can', 'clove', 'head', 'bottle']; 
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder( 
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Edit $ingredientName', style: const TextStyle(fontFamily: 'Orbitron', fontSize: 18)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Quantity',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    controller: TextEditingController(text: selectedQty),
+                    onChanged: (val) => selectedQty = val,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Unit',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: units.contains(selectedUnit) ? selectedUnit : units[0],
+                    items: units.map((String unit) {
+                      return DropdownMenuItem<String>(
+                        value: unit,
+                        child: Text(unit),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setDialogState(() {
+                        selectedUnit = newValue!;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _updateIngredientDetails(ingredientName, selectedQty, selectedUnit);
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF184E77)),
+                  child: const Text('Save', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _loadExistingCustomization() async {
@@ -122,13 +252,23 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
 
           } else if (substituteType == 'removed') {
             newCrossedOut.add(original);
-            newIngredientDisplay[original] = original; 
+            newIngredientDisplay[original] = original;
+            // Keep original details for reference even if removed
+            newIngredientDetails[original] = originalDefaults[original] ?? {'qty': '1', 'unit': 'piece'};
           } else if (substituteType == 'substituted') {
             newSelectedAlternatives[original] = substituteValue;
             newIngredientDisplay[original] = substituteValue;
             newIngredientDetails[original] = parseQuantity(substituteData['quantity']);
           } else {
+            // TYPE == 'ORIGINAL'
             newIngredientDisplay[original] = original;
+            
+            // Priority: 1. Saved Quantity, 2. Original Recipe Default, 3. '1 piece' fallback
+            if (substituteData['quantity'] != null) {
+               newIngredientDetails[original] = parseQuantity(substituteData['quantity']);
+            } else {
+               newIngredientDetails[original] = originalDefaults[original] ?? {'qty': '1', 'unit': 'piece'};
+            }
           }
         }
         
@@ -143,34 +283,17 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         
         _loadSimilarMeals();
         _loadIngredientAlternatives();
-      } else {
-        setState(() {
-          for (final ingredient in allIngredients) {
-            ingredientDisplay[ingredient] = ingredient;
-          }
-        });
       }
     } catch (e) {
       print('Error loading existing customization: $e');
-      setState(() {
-        for (final ingredient in allIngredients) {
-          ingredientDisplay[ingredient] = ingredient;
-        }
-      });
     }
   }
 
   Future<void> _loadAvailableIngredients() async {
-    if (mounted) {
-      setState(() {
-        isLoadingIngredients = true;
-      });
-    }
-
+    if (mounted) setState(() => isLoadingIngredients = true);
     try {
       final dbHelper = DatabaseHelper();
       final ingredients = await dbHelper.getAllIngredients();
-      
       if (mounted) {
         setState(() {
           availableIngredients = ingredients;
@@ -179,23 +302,15 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         });
       }
     } catch (e) {
-      print('Error loading ingredients: $e');
-      if (mounted) {
-        setState(() {
-          isLoadingIngredients = false;
-        });
-      }
+      if (mounted) setState(() => isLoadingIngredients = false);
     }
   }
 
   void _filterIngredients(String query) {
     if (query.isEmpty) {
-      setState(() {
-        filteredIngredients = availableIngredients;
-      });
+      setState(() => filteredIngredients = availableIngredients);
       return;
     }
-
     setState(() {
       filteredIngredients = availableIngredients.where((ingredient) {
         final name = ingredient['ingredientName']?.toString().toLowerCase() ?? '';
@@ -210,38 +325,14 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         crossedOutIngredients.remove(ingredientName);
         ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
         recentChanges.add({'type': 'add_back', 'ingredient': ingredientName});
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Restored $ingredientName', style: const TextStyle(fontFamily: 'Orbitron')),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
       } 
       else if (!allIngredients.contains(ingredientName)) {
         allIngredients.add(ingredientName);
         ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
         ingredientDisplay[ingredientName] = ingredientName;
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Added $qty $unit of $ingredientName', style: const TextStyle(fontFamily: 'Orbitron')),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
       } else {
         ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Updated $ingredientName', style: const TextStyle(fontFamily: 'Orbitron')),
-            backgroundColor: Colors.blue,
-            duration: const Duration(seconds: 2),
-          ),
-        );
       }
-
       _searchController.clear();
       showAddIngredient = false;
       _loadSimilarMeals();
@@ -364,17 +455,11 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         ingredientAlternatives[ingredient] = alts;
       }
     }
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadSimilarMeals() async {
-    if (mounted) {
-      setState(() {
-        isLoadingSimilarMeals = true;
-      });
-    }
+    if (mounted) setState(() => isLoadingSimilarMeals = true);
 
     try {
       final dbHelper = DatabaseHelper();
@@ -391,7 +476,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         });
       }
     } catch (e) {
-      print('Error loading similar meals: $e');
       if (mounted) {
         setState(() {
           isLoadingSimilarMeals = false;
@@ -404,12 +488,10 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
   Future<void> _saveCustomizedMeal() async {
     try {
       final dbHelper = DatabaseHelper();
-      
       final originalMeal = await dbHelper.getMealById(widget.mealId);
       final originalIngredients = await dbHelper.getMealIngredients(widget.mealId);
       final originalIngredientNames = originalIngredients
           .map((ing) => ing['ingredientName']?.toString() ?? '')
-          .where((name) => name.isNotEmpty)
           .toList();
       
       Map<String, String> originalIngredientsMap = {};
@@ -444,9 +526,15 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
             'quantity': '$userQty $userUnit' 
           };
         } else {
+          // ORIGINAL INGREDIENT (Possibly Edited)
+          final details = ingredientDetails[ingredientName];
+          String userQty = details?['qty'] ?? '1';
+          String userUnit = details?['unit'] ?? 'piece';
+          
           substitutedIngredientsMap[ingredientName] = {
             'type': 'original',
-            'value': ingredientName
+            'value': ingredientName,
+            'quantity': '$userQty $userUnit' // Save the current quantity state
           };
         }
       }
@@ -478,12 +566,8 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       );
       
     } catch (e) {
-      print('Error saving customized meal: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving customized meal: $e', style: const TextStyle(fontFamily: 'Orbitron')),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error saving: $e', style: const TextStyle(fontFamily: 'Orbitron')), backgroundColor: Colors.red),
       );
     }
   }
@@ -500,17 +584,9 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
           ),
         ),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to open meal details', style: TextStyle(fontFamily: 'Orbitron')),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
-  // --- FIXED SECTION: ADD INGREDIENTS LAYOUT ---
   Widget _buildAddIngredientSection() {
     return Card(
       elevation: 10,
@@ -521,7 +597,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // FIXED: Using Expanded ensures text wraps instead of overflowing
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start, 
@@ -541,7 +616,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                 IconButton(
                   icon: const Icon(Icons.close, color: Color(0xFF184E77)),
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(), // Minimizes button padding
+                  constraints: const BoxConstraints(),
                   onPressed: () {
                     setState(() {
                       showAddIngredient = false;
@@ -577,7 +652,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                         ),
                       )
                     : Container(
-                        constraints: const BoxConstraints(maxHeight: 250), // Responsive constraint
+                        constraints: const BoxConstraints(maxHeight: 250),
                         child: ListView.builder(
                           shrinkWrap: true,
                           itemCount: filteredIngredients.length,
@@ -589,7 +664,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                               title: Text(
                                 name, 
                                 style: const TextStyle(fontFamily: 'Orbitron'),
-                                overflow: TextOverflow.ellipsis, // Protects list items from overflow
+                                overflow: TextOverflow.ellipsis,
                               ),
                               trailing: ElevatedButton(
                                 onPressed: () => _showAddIngredientDialog(name),
@@ -649,7 +724,11 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                         itemBuilder: (context, index) {
                           final meal = similarMeals[index];
                           final name = meal['mealName'] as String? ?? 'Unknown Meal';
-                          final matchPercentage = meal['match_percentage'] as double? ?? 0.0;
+                          
+                          // CHANGED: Use Counts instead of Percentage
+                          final matching = meal['matching_ingredients'] ?? 0;
+                          final total = meal['total_ingredients'] ?? 0;
+                          
                           final mealPicture = meal['mealPicture'] as String?;
                           
                           return Container(
@@ -687,7 +766,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 subtitle: Text(
-                                  '${matchPercentage.toStringAsFixed(1)}% match',
+                                  '$matching/$total match', // CHANGED DISPLAY
                                   style: const TextStyle(
                                     fontFamily: 'Orbitron',
                                     fontSize: 12,
@@ -720,18 +799,12 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            title: const Text(
-              'Confirm Substitution',
-              style: TextStyle(fontFamily: 'Orbitron'),
-            ),
+            title: const Text('Confirm Substitution', style: TextStyle(fontFamily: 'Orbitron')),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Replace $original with $alternative?',
-                  style: const TextStyle(fontFamily: 'Orbitron'),
-                ),
+                Text('Replace $original with $alternative?', style: const TextStyle(fontFamily: 'Orbitron')),
                 const SizedBox(height: 16),
                 TextField(
                   decoration: const InputDecoration(labelText: 'Quantity of new ingredient'),
@@ -760,20 +833,12 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(fontFamily: 'Orbitron'),
-                ),
+                child: const Text('Cancel', style: TextStyle(fontFamily: 'Orbitron')),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF76C893),
-                ),
-                child: const Text(
-                  'Confirm',
-                  style: TextStyle(fontFamily: 'Orbitron', color: Colors.white),
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF76C893)),
+                child: const Text('Confirm', style: TextStyle(fontFamily: 'Orbitron', color: Colors.white)),
               ),
             ],
           );
@@ -880,29 +945,57 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                   
                                   return ListTile(
                                     contentPadding: EdgeInsets.zero,
-                                    title: Text(
-                                      displayText,
-                                      style: TextStyle(
-                                        fontFamily: 'Orbitron',
-                                        decoration: isCrossed
-                                            ? TextDecoration.lineThrough
-                                            : TextDecoration.none,
-                                        color: isCrossed ? Colors.grey : const Color(0xFF184E77),
-                                        fontSize: constraints.maxWidth > 600 ? 16 : 14,
-                                        shadows: const [
-                                          Shadow(color: Colors.black26, offset: Offset(1, 1), blurRadius: 3),
-                                        ],
-                                      ),
-                                    ),
-                                    trailing: isCrossed
-                                        ? IconButton(
-                                            icon: const Icon(Icons.undo, color: Color(0xFF76C893)),
-                                            onPressed: () => _undoRemoveIngredient(ingredient),
-                                          )
-                                        : IconButton(
-                                            icon: const Icon(Icons.close, color: Colors.red),
-                                            onPressed: () => _removeIngredient(ingredient),
+                                    title: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          displayText,
+                                          style: TextStyle(
+                                            fontFamily: 'Orbitron',
+                                            decoration: isCrossed
+                                                ? TextDecoration.lineThrough
+                                                : TextDecoration.none,
+                                            color: isCrossed ? Colors.grey : const Color(0xFF184E77),
+                                            fontSize: constraints.maxWidth > 600 ? 16 : 14,
+                                            fontWeight: FontWeight.bold,
+                                            shadows: const [
+                                              Shadow(color: Colors.black26, offset: Offset(1, 1), blurRadius: 3),
+                                            ],
                                           ),
+                                        ),
+                                        // --- UPDATED: Show subtitle if not crossed out ---
+                                        if (!isCrossed && ingredientDetails.containsKey(ingredient))
+                                          Text(
+                                            "${ingredientDetails[ingredient]!['qty']} ${ingredientDetails[ingredient]!['unit']}",
+                                            style: const TextStyle(
+                                              fontFamily: 'Orbitron',
+                                              fontSize: 10,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // --- UPDATED: Edit Button ---
+                                        if (!isCrossed)
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, color: Colors.blueAccent, size: 20),
+                                            tooltip: 'Edit Quantity',
+                                            onPressed: () => _showEditQtyDialog(ingredient),
+                                          ),
+                                        isCrossed
+                                            ? IconButton(
+                                                icon: const Icon(Icons.undo, color: Color(0xFF76C893)),
+                                                onPressed: () => _undoRemoveIngredient(ingredient),
+                                              )
+                                            : IconButton(
+                                                icon: const Icon(Icons.close, color: Colors.red),
+                                                onPressed: () => _removeIngredient(ingredient),
+                                              ),
+                                      ],
+                                    ),
                                   );
                                 }).toList(),
                               ),
@@ -911,13 +1004,11 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                         ),
                       ),
                       
-                      // Add Ingredient Section
                       if (showAddIngredient) ...[
                         const SizedBox(height: 16),
                         _buildAddIngredientSection(),
                       ],
                       
-                      // Recent Changes Card
                       if (recentChanges.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 12),
@@ -933,9 +1024,12 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      recentChanges.map((change) => change['type'] == 'remove'
-                                          ? 'Removed ${change['ingredient']}'
-                                          : 'Replaced ${change['original']} with ${change['alt']}').join(', '),
+                                      recentChanges.map((change) {
+                                        if (change['type'] == 'remove') return 'Removed ${change['ingredient']}';
+                                        if (change['type'] == 'replace') return 'Replaced ${change['original']} with ${change['alt']}';
+                                        if (change['type'] == 'edited') return 'Edited ${change['ingredient']}';
+                                        return 'Modified ingredient';
+                                      }).join(', '),
                                       style: TextStyle(
                                         fontFamily: 'Orbitron',
                                         fontSize: constraints.maxWidth > 600 ? 14 : 12,
@@ -950,7 +1044,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                       final lastChange = recentChanges.last;
                                       if (lastChange['type'] == 'remove') {
                                         _undoRemoveIngredient(lastChange['ingredient']);
-                                      } else {
+                                      } else if (lastChange['type'] == 'replace') {
                                         _undoReplace(lastChange['original']);
                                       }
                                       setState(() {
@@ -975,7 +1069,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                           ),
                         ),
                       
-                      // Alternatives Section
                       if (showAlternatives)
                         Padding(
                           padding: const EdgeInsets.only(top: 16),
@@ -1050,7 +1143,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                           ),
                         ),
                       
-                      // Similar Meals Section
                       Padding(
                         padding: const EdgeInsets.only(top: 16),
                         child: _buildSimilarMealsSection(),
