@@ -41,6 +41,148 @@ class _MealSearchPageState extends State<MealSearchPage> {
     super.dispose();
   }
 
+  // --- START NEW LOGIC FROM BUDGET_PLAN ---
+
+  // Helper: Parse Quantity
+  double _parseQuantity(String quantityStr) {
+    if (quantityStr.contains('.') && double.tryParse(quantityStr) != null) {
+      return double.parse(quantityStr);
+    }
+    
+    final fractionMap = {
+      '⅛': 0.125, '¼': 0.25, '⅓': 0.333, '⅜': 0.375,
+      '½': 0.5, '⅝': 0.625, '⅔': 0.666, '¾': 0.75, '⅞': 0.875
+    };
+    
+    if (fractionMap.containsKey(quantityStr.trim())) {
+      return fractionMap[quantityStr.trim()]!;
+    }
+    
+    if (quantityStr.contains('/')) {
+      List<String> parts = quantityStr.split('/');
+      if (parts.length == 2) {
+        double numerator = double.tryParse(parts[0].trim()) ?? 1.0;
+        double denominator = double.tryParse(parts[1].trim()) ?? 1.0;
+        return numerator / denominator;
+      }
+    }
+    return double.tryParse(quantityStr) ?? 1.0;
+  }
+
+  // Helper: Calculate Real Cost
+  Future<double> _calculateRealMealCost(int mealId) async {
+    double total = 0.0;
+    
+    final originalIngredients = await _dbHelper.getMealIngredients(mealId);
+    Map<String, dynamic> subs = {};
+    
+    if (widget.userId != 0) {
+      final customizedMeal = await _dbHelper.getActiveCustomizedMeal(mealId, widget.userId);
+      if (customizedMeal != null) {
+        subs = customizedMeal['substituted_ingredients'] ?? {};
+      }
+    }
+
+    for (var ing in originalIngredients) {
+      String name = ing['ingredientName']?.toString() ?? '';
+
+      if (subs.containsKey(name)) {
+        final subData = subs[name];
+        String type = subData['type'];
+
+        if (type == 'removed') {
+          continue; 
+        } 
+        else if (type == 'substituted') {
+          String newName = subData['value'];
+          String qtyStr = subData['quantity'] ?? '1 piece';
+          
+          double qty = 1.0;
+          String unit = 'piece';
+          final match = RegExp(r'^((?:\d*\.?\d+)|(?:\d+\s*/\s*\d+)|[⅛¼⅓⅜½⅝⅔¾⅞])\s*(.*)$').firstMatch(qtyStr);
+          if (match != null) {
+             qty = _parseQuantity(match.group(1) ?? '1');
+             unit = match.group(2)?.trim() ?? 'piece';
+          }
+
+          final newIng = await _dbHelper.getIngredientByName(newName);
+          if (newIng != null) {
+             double grams = _dbHelper.convertToGrams(qty, unit, newIng);
+             double baseGrams = _dbHelper.convertToGrams(1.0, newIng['unit'] ?? 'piece', newIng);
+             double price = newIng['price'] as double? ?? 0.0;
+             
+             if (baseGrams > 0) {
+               total += (grams * price) / baseGrams;
+             }
+          }
+          continue; 
+        }
+      }
+
+      double price = ing['price'] as double? ?? 0.0;
+      double qty = _parseQuantity(ing['quantity']?.toString() ?? '0');
+      String unit = ing['unit']?.toString() ?? 'piece';
+      String baseUnit = ing['base_unit']?.toString() ?? ing['unit']?.toString() ?? 'piece'; 
+
+      double grams = _dbHelper.convertToGrams(qty, unit, ing);
+      double baseGrams = _dbHelper.convertToGrams(1.0, baseUnit, ing);
+      
+      if (baseGrams > 0) {
+        total += (grams * price) / baseGrams;
+      }
+    }
+
+    for (var entry in subs.entries) {
+      if (entry.value['type'] == 'new') {
+        String name = entry.key;
+        String qtyStr = entry.value['quantity'] ?? '1 piece';
+
+        double qty = 1.0;
+        String unit = 'piece';
+        final match = RegExp(r'^((?:\d*\.?\d+)|(?:\d+\s*/\s*\d+)|[⅛¼⅓⅜½⅝⅔¾⅞])\s*(.*)$').firstMatch(qtyStr);
+        if (match != null) {
+           qty = _parseQuantity(match.group(1) ?? '1');
+           unit = match.group(2)?.trim() ?? 'piece';
+        }
+
+        final newIng = await _dbHelper.getIngredientByName(name);
+        if (newIng != null) {
+           double grams = _dbHelper.convertToGrams(qty, unit, newIng);
+           double baseGrams = _dbHelper.convertToGrams(1.0, newIng['unit'] ?? 'piece', newIng);
+           double price = newIng['price'] as double? ?? 0.0;
+
+           if (baseGrams > 0) {
+             total += (grams * price) / baseGrams;
+           }
+        }
+      }
+    }
+
+    return total;
+  }
+
+  // Updated _fetchMeals to use the calculation logic
+  Future<List<Map<String, dynamic>>> _fetchMeals() async {
+    final meals = await _dbHelper.getAllMeals();
+    final List<Map<String, dynamic>> updatedMeals = [];
+
+    for (var meal in meals) {
+      var mealMap = Map<String, dynamic>.from(meal);
+      
+      double calculatedPrice = await _calculateRealMealCost(meal['mealID']);
+      
+      if (calculatedPrice > 0) {
+        mealMap['price'] = calculatedPrice;
+      } else {
+        mealMap['price'] = (meal['price'] as num).toDouble();
+      }
+      
+      updatedMeals.add(mealMap);
+    }
+    return updatedMeals;
+  }
+  // --- END NEW LOGIC ---
+
   Future<List<Map<String, dynamic>>> _fetchIngredients() async {
     final ingredients = await _dbHelper.getAllIngredients();
     return ingredients;
@@ -56,11 +198,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _fetchMeals() async {
-    final meals = await _dbHelper.getAllMeals();
-    return meals;
-  }
-
+  // ... (rest of the file remains exactly the same: _toggleFavorite, _onSearchChanged, build, etc.)
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text.toLowerCase();
@@ -268,7 +406,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   ),
                 ),
               ),
-              // NEW HEART — MATCHES POPULAR RECIPES
               if (widget.userId != 0)
                 Positioned(
                   top: 6,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'database/db_helper.dart';
 import 'pages/home.dart';
 import 'pages/reverse_ingredient.dart';
 import 'pages/index.dart';
@@ -6,9 +7,17 @@ import 'pages/login.dart';
 import 'pages/register.dart';
 import 'pages/meal_scan.dart';
 import 'searchMeals/categories.dart';
-//test
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  /*
+  try {
+    await DatabaseHelper().updateAllMealPrices();
+    print("Meal prices updated successfully on startup.");
+  } catch (e) {
+    print("Error updating meal prices: $e");
+  }
+  */
   runApp(const MyApp());
 }
 
@@ -47,7 +56,7 @@ class MyApp extends StatelessWidget {
           return ReverseIngredientPage(
             ingredients: args['ingredients'],
             userId: args['userId'] ?? 0,
-            mealId: args['mealId'] ?? 0, // Default to 0 (guest) if not provided
+            mealId: args['mealId'] ?? 0, 
           );
         },
         '/searchIngredient/categories': (context) {

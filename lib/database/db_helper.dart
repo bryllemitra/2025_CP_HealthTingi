@@ -3479,6 +3479,102 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
   return 100.0; // general default
 }
 
+  // --- Helper: Parse Quantity Strings (e.g., "1/2", "1.5", "¼") ---
+  double _parseQuantity(String quantityStr) {
+    if (quantityStr.trim().isEmpty) return 0.0;
+    
+    // Handle decimals immediately
+    if (double.tryParse(quantityStr) != null) {
+      return double.parse(quantityStr);
+    }
+    
+    // Map of common fraction characters
+    final fractionMap = {
+      '⅛': 0.125, '¼': 0.25, '⅓': 0.333, '⅜': 0.375,
+      '½': 0.5, '⅝': 0.625, '⅔': 0.666, '¾': 0.75, '⅞': 0.875
+    };
+    
+    String cleanStr = quantityStr.trim();
+    
+    // Check for single fraction characters
+    if (fractionMap.containsKey(cleanStr)) {
+      return fractionMap[cleanStr]!;
+    }
+    
+    // Handle text fractions like "1/2"
+    if (cleanStr.contains('/')) {
+      List<String> parts = cleanStr.split('/');
+      if (parts.length == 2) {
+        double numerator = double.tryParse(parts[0].trim()) ?? 1.0;
+        double denominator = double.tryParse(parts[1].trim()) ?? 1.0;
+        if (denominator != 0) return numerator / denominator;
+      }
+    }
+    
+    // Fallback: try to extract the first number found
+    final match = RegExp(r'\d+(\.\d+)?').firstMatch(cleanStr);
+    if (match != null) {
+      return double.tryParse(match.group(0)!) ?? 0.0;
+    }
+
+    return 0.0;
+  }
+
+  // --- Main Function: Recalculate and Save All Meal Prices ---
+  Future<void> updateAllMealPrices() async {
+    final db = await database;
+    
+    // 1. Get all meals
+    final meals = await getAllMeals();
+    print('Starting price update for ${meals.length} meals...');
+
+    int updatedCount = 0;
+
+    for (var meal in meals) {
+      int mealId = meal['mealID'];
+      double totalCost = 0.0;
+
+      // 2. Get ingredients for this meal (joins with ingredients table)
+      final ingredients = await getMealIngredients(mealId);
+
+      // 3. Calculate total cost based on ingredients
+      for (var ing in ingredients) {
+        // Get price per base unit from ingredients table
+        double basePrice = ing['price'] as double? ?? 0.0;
+        
+        // Parse the recipe quantity (e.g., "1/2" -> 0.5)
+        double qty = _parseQuantity(ing['quantity']?.toString() ?? '0');
+        String recipeUnit = ing['unit']?.toString() ?? 'piece';
+        
+        // Determine the base unit for the price (e.g., price is per 'kg')
+        String baseUnit = ing['base_unit']?.toString() ?? recipeUnit;
+
+        // Convert both to grams to compare apples-to-apples
+        double recipeGrams = convertToGrams(qty, recipeUnit, ing);
+        double baseUnitGrams = convertToGrams(1.0, baseUnit, ing);
+
+        // Calculate proportional cost: (Recipe Weight / Base Weight) * Base Price
+        if (baseUnitGrams > 0) {
+          totalCost += (recipeGrams * basePrice) / baseUnitGrams;
+        }
+      }
+
+      // 4. Update the meal record with the new computed price
+      // Only update if we calculated a valid cost > 0 to avoid zeroing out data accidentally
+      if (totalCost > 0) {
+        await db.update(
+          'meals',
+          {'price': double.parse(totalCost.toStringAsFixed(2))}, // Round to 2 decimals
+          where: 'mealID = ?',
+          whereArgs: [mealId],
+        );
+        updatedCount++;
+      }
+    }
+    
+    print('Successfully updated prices for $updatedCount meals.');
+  }
+
   // ========== CUSTOMIZED MEALS OPERATIONS ==========
 
   Future<int> saveCustomizedMeal({
