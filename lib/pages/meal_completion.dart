@@ -36,7 +36,7 @@ class _MealCompletionPageState extends State<MealCompletionPage> {
           'Quest Completed!',
           style: TextStyle(
             color: Colors.white,
-            fontFamily: 'Orbitron',
+            fontFamily: 'Exo', // Updated to Exo
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -112,7 +112,7 @@ class _MealCompletionPageState extends State<MealCompletionPage> {
                   Text(
                     'You\'ve just finished cooking ${widget.mealName}! Great job, Chef!',
                     style: const TextStyle(
-                      fontFamily: 'Orbitron',
+                      fontFamily: 'Exo', // Updated to Exo
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF184E77),
@@ -123,7 +123,7 @@ class _MealCompletionPageState extends State<MealCompletionPage> {
                   Text(
                     'Time Taken: ${widget.timeTaken} minutes (estimated: ${widget.estimatedTime} minutes)',
                     style: const TextStyle(
-                      fontFamily: 'Orbitron',
+                      fontFamily: 'Poppins', // Updated to Poppins
                       fontSize: 16,
                       color: Colors.black87,
                     ),
@@ -133,7 +133,7 @@ class _MealCompletionPageState extends State<MealCompletionPage> {
                   Text(
                     'Calories: ${widget.calories} | Servings: ${widget.servings}',
                     style: const TextStyle(
-                      fontFamily: 'Orbitron',
+                      fontFamily: 'Poppins', // Updated to Poppins
                       fontSize: 16,
                       color: Colors.black87,
                     ),
@@ -153,7 +153,7 @@ class _MealCompletionPageState extends State<MealCompletionPage> {
                     child: const Text(
                       'Back to Meal Details',
                       style: TextStyle(
-                        fontFamily: 'Orbitron',
+                        fontFamily: 'Poppins', // Updated to Poppins
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),

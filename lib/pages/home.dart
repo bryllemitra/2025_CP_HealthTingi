@@ -200,7 +200,7 @@ class _HomePageState extends State<HomePage> {
                       return const Icon(Icons.fastfood);
                     },
                   ),
-                  title: Text(meal['mealName']),
+                  title: Text(meal['mealName'], style: const TextStyle(fontFamily: 'Poppins')),
                   trailing: widget.userId != 0 
                       ? IconButton(
                           icon: Icon(
@@ -354,6 +354,7 @@ class _HomePageState extends State<HomePage> {
             child: Text(
               recipe['name'],
               style: const TextStyle(
+                fontFamily: 'Poppins', // Updated to Poppins
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
                 color: Color(0xFF184E77),
@@ -434,6 +435,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 ingredientName,
                 style: const TextStyle(
+                  fontFamily: 'Poppins', // Updated to Poppins
                   fontWeight: FontWeight.bold, 
                   fontSize: 12,
                   color: Color(0xFF184E77),
@@ -448,6 +450,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 'Php $price',
                 style: TextStyle(
+                  fontFamily: 'Poppins', // Updated to Poppins
                   fontSize: 11,
                   color: Colors.grey[700],
                   fontWeight: FontWeight.w500,
@@ -508,7 +511,7 @@ class _HomePageState extends State<HomePage> {
         }
         
         if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Text('No categories found');
+          return const Text('No categories found', style: TextStyle(fontFamily: 'Poppins'));
         }
         
         _cachedCategories = snapshot.data!;
@@ -530,7 +533,7 @@ class _HomePageState extends State<HomePage> {
               'Recipe Categories',
               style: TextStyle(
                 fontSize: 20,
-                fontFamily: 'Orbitron',
+                fontFamily: 'Exo', // Updated to EXO
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 shadows: [
@@ -554,6 +557,7 @@ class _HomePageState extends State<HomePage> {
                   style: const TextStyle(
                     fontSize: 14,
                     color: Colors.white70,
+                    fontFamily: 'Poppins', // Updated to Poppins
                   ),
                 ),
               ),
@@ -596,7 +600,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 category.toUpperCase(),
                 style: const TextStyle(
-                  fontFamily: 'Orbitron',
+                  fontFamily: 'Poppins', // Updated to Poppins
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
@@ -639,7 +643,7 @@ class _HomePageState extends State<HomePage> {
           'Check Your Ingredients',
           style: TextStyle(
             fontSize: 20,
-            fontFamily: 'Orbitron',
+            fontFamily: 'Exo', // Updated to EXO
             fontWeight: FontWeight.bold,
             color: Colors.white,
             shadows: [
@@ -674,7 +678,7 @@ class _HomePageState extends State<HomePage> {
           'Popular Recipes',
           style: TextStyle(
             fontSize: 20,
-            fontFamily: 'Orbitron',
+            fontFamily: 'Exo', // Updated to EXO
             fontWeight: FontWeight.bold,
             color: Colors.white,
             shadows: [
@@ -719,7 +723,7 @@ class _HomePageState extends State<HomePage> {
               widget.userId == 0 ? "Featured Recipes" : "Today's Specials",
               style: const TextStyle(
                 fontSize: 20,
-                fontFamily: 'Orbitron',
+                fontFamily: 'Exo', // Updated to EXO
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 shadows: [
@@ -736,7 +740,7 @@ class _HomePageState extends State<HomePage> {
               widget.userId == 0 
                   ? "Discover delicious recipes to try" 
                   : "Discover new recipes based on your scans",
-              style: const TextStyle(color: Colors.white70),
+              style: const TextStyle(color: Colors.white70, fontFamily: 'Poppins'), // Updated to Poppins
             ),
             const SizedBox(height: 12),
             GestureDetector(
@@ -751,6 +755,7 @@ class _HomePageState extends State<HomePage> {
               child: const Text(
                 "See more recipes →",
                 style: TextStyle(
+                  fontFamily: 'Poppins', // Updated to Poppins
                   fontWeight: FontWeight.bold,
                   color: Colors.yellowAccent,
                   decoration: TextDecoration.underline,
@@ -783,7 +788,7 @@ class _HomePageState extends State<HomePage> {
             "Recently Viewed",
             style: TextStyle(
               fontSize: 20,
-              fontFamily: 'Orbitron',
+              fontFamily: 'Exo', // Updated to EXO
               fontWeight: FontWeight.bold,
               color: Colors.white,
               shadows: [
@@ -869,6 +874,7 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 meal['mealName'],
                                 style: const TextStyle(
+                                  fontFamily: 'Poppins', // Updated to Poppins
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                   color: Color(0xFF184E77),
@@ -881,6 +887,7 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'}',
                                 style: const TextStyle(
+                                  fontFamily: 'Poppins', // Updated to Poppins
                                   fontSize: 14,
                                   color: Colors.black54,
                                 ),
@@ -942,7 +949,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 'HealthTingi',
                 style: TextStyle(
-                  fontFamily: 'Orbitron',
+                  fontFamily: 'Exo', // Updated to EXO
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
                   color: Colors.white,
@@ -1008,7 +1015,7 @@ class _HomePageState extends State<HomePage> {
     label: Text(
       label,
       style: const TextStyle(
-        fontFamily: 'Orbitron',
+        fontFamily: 'Poppins', // Updated to Poppins
         fontWeight: FontWeight.bold,
         fontSize: 16,
       ),
@@ -1035,7 +1042,7 @@ class _HomePageState extends State<HomePage> {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Orbitron',
+            fontFamily: 'Exo', // Updated to EXO
             shadows: [
               Shadow(
                 color: Colors.black26,
@@ -1116,9 +1123,9 @@ class _HomePageState extends State<HomePage> {
                           decoration: const InputDecoration(
                             hintText: 'Search or Scan your ingredients',
                             border: InputBorder.none,
-                            hintStyle: TextStyle(color: Colors.black54),
+                            hintStyle: TextStyle(color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
                           ),
-                          style: const TextStyle(color: Colors.black87),
+                          style: const TextStyle(color: Colors.black87, fontFamily: 'Poppins'), // Updated to Poppins
                           onSubmitted: (value) => _performSearch(),
                           onTap: _navigateToSearchPage,
                         ),
@@ -1154,6 +1161,8 @@ class _HomePageState extends State<HomePage> {
         unselectedItemColor: Color(0xFF184E77).withOpacity(0.7),
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        selectedLabelStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold), // Updated
+        unselectedLabelStyle: const TextStyle(fontFamily: 'Poppins'), // Updated
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),

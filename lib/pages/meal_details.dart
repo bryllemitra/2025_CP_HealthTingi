@@ -499,7 +499,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                       text: TextSpan(
                         style: TextStyle(
                           fontSize: 14,
-                          fontFamily: 'Orbitron',
+                          fontFamily: 'Poppins', // Updated to Poppins
                           color: Colors.black87,
                           fontStyle: substituted != null &&
                                   substituted.containsKey(name) &&
@@ -531,7 +531,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                           '($content)',
                           style: TextStyle(
                             fontSize: 12,
-                            fontFamily: 'Orbitron',
+                            fontFamily: 'Poppins', // Updated to Poppins
                             color: Colors.black54,
                             fontStyle: FontStyle.italic,
                           ),
@@ -550,7 +550,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    fontFamily: 'Orbitron',
+                    fontFamily: 'Exo', // Updated to Exo for price emphasis
                     color: Color(0xFF76C893),
                   ),
                   textAlign: TextAlign.right,
@@ -624,7 +624,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                         '$displayQtyNum $qtyUnit $name',
                         style: const TextStyle(
                           fontSize: 14,
-                          fontFamily: 'Orbitron',
+                          fontFamily: 'Poppins', // Updated to Poppins
                           color: Colors.black87,
                           fontStyle: FontStyle.italic,
                         ),
@@ -641,7 +641,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      fontFamily: 'Orbitron',
+                      fontFamily: 'Exo', // Updated to Exo
                       color: Color(0xFF76C893),
                     ),
                     textAlign: TextAlign.right,
@@ -749,7 +749,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  fontFamily: 'Orbitron',
+                  fontFamily: 'Exo', // Updated to Exo
                   fontSize: 24,
                   shadows: [Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6)],
                 ),
@@ -781,7 +781,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.white, fontFamily: 'Orbitron', fontSize: 16, shadows: [
+                        style: const TextStyle(color: Colors.white, fontFamily: 'Poppins', fontSize: 16, shadows: [
                           Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6),
                         ]),
                         textAlign: TextAlign.center,
@@ -797,7 +797,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                         ),
-                        child: const Text('Retry', style: TextStyle(fontFamily: 'Orbitron', fontSize: 16, fontWeight: FontWeight.w600)),
+                        child: const Text('Retry', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
@@ -817,7 +817,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text('Error: ${snapshot.error}',
-                                style: const TextStyle(color: Colors.white, fontFamily: 'Orbitron', fontSize: 16, shadows: [
+                                style: const TextStyle(color: Colors.white, fontFamily: 'Poppins', fontSize: 16, shadows: [
                                   Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6),
                                 ])),
                             const SizedBox(height: 20),
@@ -831,7 +831,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                               ),
-                              child: const Text('Retry', style: TextStyle(fontFamily: 'Orbitron', fontSize: 16, fontWeight: FontWeight.w600)),
+                              child: const Text('Retry', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600)),
                             ),
                           ],
                         ),
@@ -840,7 +840,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     if (!snapshot.hasData) {
                       return const Center(
                         child: Text('No meal data found',
-                            style: TextStyle(color: Colors.white, fontFamily: 'Orbitron', fontSize: 16, shadows: [
+                            style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontSize: 16, shadows: [
                               Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6),
                             ])),
                       );
@@ -878,7 +878,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                     child: Text(
                                       mealData['mealName'],
                                       style: const TextStyle(
-                                        fontFamily: 'Orbitron',
+                                        fontFamily: 'Exo', // Updated to Exo
                                         fontWeight: FontWeight.bold,
                                         fontSize: 28,
                                         color: Color(0xFF184E77),
@@ -891,7 +891,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                   Center(
                                     child: Text(
                                       '(Serving Size: ${mealData['servings']})',
-                                      style: const TextStyle(fontSize: 14, fontFamily: 'Orbitron', color: Colors.black54),
+                                      style: const TextStyle(fontSize: 14, fontFamily: 'Poppins', color: Colors.black54),
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -912,7 +912,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                           'Price: Php ${priceSnapshot.data?.toStringAsFixed(2) ?? "0.00"}',
                                           style: const TextStyle(
                                             fontSize: 18,
-                                            fontFamily: 'Orbitron',
+                                            fontFamily: 'Exo', // Updated to Exo
                                             fontWeight: FontWeight.bold,
                                             color: Color(0xFF76C893),
                                           ),
@@ -929,7 +929,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                         alignment: WrapAlignment.center,
                                         children: categories.map((c) => Chip(
                                               label: Text(c,
-                                                  style: const TextStyle(fontSize: 12, fontFamily: 'Orbitron', color: Colors.white)),
+                                                  style: const TextStyle(fontSize: 12, fontFamily: 'Poppins', color: Colors.white)),
                                               backgroundColor: const Color(0xFF184E77),
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -954,7 +954,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                             Expanded(
                                               child: RichText(
                                                 text: TextSpan(
-                                                  style: const TextStyle(fontFamily: 'Orbitron', fontSize: 14, color: Colors.white),
+                                                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, color: Colors.white),
                                                   children: [
                                                     const TextSpan(text: 'Dietary Alert: '),
                                                     TextSpan(text: 'This meal contains ingredients that conflict with your '),
@@ -972,13 +972,13 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                     ),
                                   const SizedBox(height: 24),
                                   const Text('Ingredients and Cost',
-                                      style: TextStyle(fontFamily: 'Orbitron', fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF184E77))),
+                                      style: TextStyle(fontFamily: 'Exo', fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF184E77))),
                                   const SizedBox(height: 12),
                                   if (_customizedMeal != null)
                                     Row(
                                       children: [
                                         const Text('Show Customized Ingredients',
-                                            style: TextStyle(fontFamily: 'Orbitron', fontSize: 14, color: Color(0xFF184E77))),
+                                            style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: Color(0xFF184E77))),
                                         Switch(
                                           value: _showCustomized,
                                           onChanged: (v) => setState(() => _showCustomized = v),
@@ -995,7 +995,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                       child: ingredients.isEmpty
                                           ? const Center(
                                               child: Text('No ingredients listed',
-                                                  style: TextStyle(fontStyle: FontStyle.italic, fontFamily: 'Orbitron', color: Colors.black54)),
+                                                  style: TextStyle(fontStyle: FontStyle.italic, fontFamily: 'Poppins', color: Colors.black54)),
                                             )
                                           : FutureBuilder<List<Widget>>(
                                               future: _buildIngredientWidgets(
@@ -1018,7 +1018,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                       child: ElevatedButton.icon(
                                         icon: const Icon(Icons.edit, size: 20),
                                         label: Text(_customizedMeal != null ? 'Modify Customization' : 'Change Ingredients',
-                                            style: const TextStyle(fontFamily: 'Orbitron', fontSize: 16, fontWeight: FontWeight.w600)),
+                                            style: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600)),
                                         onPressed: () {
                                           final names = ingredients.map((i) => i['ingredientName'] as String).toList();
                                           Navigator.push(
@@ -1047,7 +1047,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                     ),
                                   const SizedBox(height: 32),
                                   const Text('Cooking Quest Steps',
-                                      style: TextStyle(fontFamily: 'Orbitron', fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF184E77))),
+                                      style: TextStyle(fontFamily: 'Exo', fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF184E77))),
                                   const SizedBox(height: 12),
                                   Card(
                                     elevation: 10,
@@ -1057,7 +1057,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                       padding: const EdgeInsets.all(16),
                                       child: SelectableText(
                                         mealData['instructions'] ?? 'No instructions available',
-                                        style: const TextStyle(fontSize: 14, height: 1.5, fontFamily: 'Orbitron', color: Colors.black87),
+                                        style: const TextStyle(fontSize: 14, height: 1.5, fontFamily: 'Poppins', color: Colors.black87),
                                       ),
                                     ),
                                   ),
@@ -1083,7 +1083,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                       ),
                                       child: const Text('Start Cooking Quest',
-                                          style: TextStyle(fontFamily: 'Orbitron', fontSize: 16, fontWeight: FontWeight.w600)),
+                                          style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600)),
                                     ).animate().scale(duration: 200.ms, curve: Curves.easeInOut),
                                   ),
                                   const SizedBox(height: 32),
@@ -1206,18 +1206,19 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                 right: 0,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_imagePaths.length, (i) {
-                    return AnimatedContainer(
+                  children: List.generate(
+                    _imagePaths.length,
+                    (i) => AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: _currentImageIndex == i ? 12 : 8,
+                      width: i == _currentImageIndex ? 12 : 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: _currentImageIndex == i ? Colors.white : Colors.white60,
+                        color: i == _currentImageIndex ? Colors.white : Colors.white60,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                    );
-                  }),
+                    ),
+                  ),
                 ),
               ),
             // Top Gradient

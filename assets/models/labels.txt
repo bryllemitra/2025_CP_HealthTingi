@@ -5,7 +5,7 @@ BaguioBeans
 Banana
 Beef
 Beetroot
-Brocolli
+Broccoli
 Cabbage
 Calamansi
 Carrot
@@ -28,6 +28,7 @@ Kamote
 Kangkong
 Lettuce
 Malunggay
+Munggo
 Mustasa
 Octopus
 Okra
@@ -46,6 +47,8 @@ Singkamas
 Sitaw
 Sitsaro
 Squid
+Tofu
+Toge
 Tomato
 Ube
 Upo

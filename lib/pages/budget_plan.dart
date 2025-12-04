@@ -304,7 +304,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                   Text(
                     meal['mealName'],
                     style: const TextStyle(
-                      fontFamily: 'Orbitron',
+                      fontFamily: 'Poppins', // Updated to Poppins
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       color: Color(0xFF184E77),
@@ -313,7 +313,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                   Text(
                     "Php ${meal['price'].toStringAsFixed(2)}",
                     style: const TextStyle(
-                      fontFamily: 'Orbitron',
+                      fontFamily: 'Poppins', // Updated to Poppins
                       fontSize: 12,
                       color: Colors.black54,
                     ),
@@ -340,7 +340,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
           "Meals at Php ${section['budget']}",
           style: const TextStyle(
             fontSize: 20,
-            fontFamily: 'Orbitron',
+            fontFamily: 'Exo', // Updated to Exo
             fontWeight: FontWeight.bold,
             color: Colors.white,
             shadows: [
@@ -373,9 +373,10 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
               child: const Text(
                 "See more →",
                 style: TextStyle(
-                  fontFamily: 'Orbitron',
+                  fontFamily: 'Poppins', // Updated to Poppins
                   color: Colors.yellowAccent,
                   decoration: TextDecoration.underline,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -408,7 +409,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
               child: Text(
                 'HealthTingi',
                 style: TextStyle(
-                  fontFamily: 'Orbitron',
+                  fontFamily: 'Exo', // Updated to Exo
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
                   color: Colors.white,
@@ -474,7 +475,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
       label: Text(
         label, 
         style: const TextStyle(
-          fontFamily: 'Orbitron',
+          fontFamily: 'Poppins', // Updated to Poppins
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),
@@ -493,7 +494,8 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Orbitron',
+            fontFamily: 'Exo', // Updated to Exo
+            fontSize: 22,
             shadows: [
               Shadow(
                 color: Colors.black26,
@@ -564,7 +566,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                           : 'Enter your budget to get suggested meals that match or come close to it.',
                       style: const TextStyle(
                         color: Color(0xFF184E77),
-                        fontFamily: 'Orbitron',
+                        fontFamily: 'Poppins', // Updated to Poppins
                         fontSize: 14,
                       ),
                       textAlign: TextAlign.center,
@@ -590,7 +592,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                         "Enter Budget (in numbers)",
                         style: TextStyle(
                           fontSize: 20,
-                          fontFamily: 'Orbitron',
+                          fontFamily: 'Exo', // Updated to Exo
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                           shadows: [
@@ -605,7 +607,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                       const SizedBox(height: 12),
                       TextField(
                         controller: _budgetController,
-                        style: const TextStyle(color: Color(0xFF184E77)),
+                        style: const TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins'), // Updated to Poppins
                         keyboardType: TextInputType.numberWithOptions(decimal: true),
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -620,7 +622,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                             borderSide: BorderSide.none,
                           ),
                           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                          hintStyle: const TextStyle(color: Colors.black54),
+                          hintStyle: const TextStyle(color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
                         ),
                         onChanged: (value) {
                           if (value.isEmpty) {
@@ -642,9 +644,9 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
+                      return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(fontFamily: 'Poppins')));
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text('No meals available'));
+                      return const Center(child: Text('No meals available', style: TextStyle(fontFamily: 'Poppins')));
                     }
 
                     final allMeals = snapshot.data!;
@@ -674,6 +676,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
                       letterSpacing: 1.2,
+                      fontFamily: 'Poppins', // Updated to Poppins
                     ),
                   ),
                 ),
@@ -687,6 +690,8 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
         selectedItemColor: Color(0xFF184E77),
         unselectedItemColor: Color(0xFF184E77).withOpacity(0.7),
         currentIndex: 3,
+        selectedLabelStyle: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+        unselectedLabelStyle: TextStyle(fontFamily: 'Poppins'),
         onTap: (index) {
           switch (index) {
             case 0:

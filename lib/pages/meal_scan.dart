@@ -43,8 +43,7 @@ class _MealScanPageState extends State<MealScanPage> {
   Future<void> _loadModel() async {
     setState(() => _isModelLoading = true);
     try {
-      // Create interpreter from asset - UPDATED MODEL NAME
-      _interpreter = await tfl.Interpreter.fromAsset('assets/models/kaggle_single.tflite');
+      _interpreter = await tfl.Interpreter.fromAsset('assets/models/finalmedj.tflite');
       
       // Create isolate interpreter for async inference (prevents UI blocking)
       _isolateInterpreter = await tfl.IsolateInterpreter.create(
@@ -76,7 +75,7 @@ class _MealScanPageState extends State<MealScanPage> {
       debugPrint('Failed to load model: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load AI model: ${e.toString()}')),
+          SnackBar(content: Text('Failed to load AI model: ${e.toString()}', style: const TextStyle(fontFamily: 'Poppins'))),
         );
       }
     }
@@ -121,7 +120,7 @@ class _MealScanPageState extends State<MealScanPage> {
       debugPrint('Camera initialization error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to initialize camera: ${e.toString()}')),
+          SnackBar(content: Text('Failed to initialize camera: ${e.toString()}', style: const TextStyle(fontFamily: 'Poppins'))),
         );
       }
     }
@@ -194,7 +193,7 @@ class _MealScanPageState extends State<MealScanPage> {
       setState(() => _isModelLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to capture image: ${e.toString()}')),
+          SnackBar(content: Text('Failed to capture image: ${e.toString()}', style: const TextStyle(fontFamily: 'Poppins'))),
         );
       }
     }
@@ -233,7 +232,7 @@ class _MealScanPageState extends State<MealScanPage> {
       setState(() => _isModelLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: ${e.toString()}')),
+          SnackBar(content: Text('Failed to pick image: ${e.toString()}', style: const TextStyle(fontFamily: 'Poppins'))),
         );
       }
     }
@@ -244,7 +243,7 @@ class _MealScanPageState extends State<MealScanPage> {
       debugPrint('Isolate interpreter not initialized');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('AI model not ready. Please try again.')),
+          const SnackBar(content: Text('AI model not ready. Please try again.', style: TextStyle(fontFamily: 'Poppins'))),
         );
       }
       return;
@@ -303,7 +302,7 @@ class _MealScanPageState extends State<MealScanPage> {
         debugPrint('Inference execution failed: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('AI processing error: ${e.toString()}')),
+            SnackBar(content: Text('AI processing error: ${e.toString()}', style: const TextStyle(fontFamily: 'Poppins'))),
           );
         }
         return; // Exit the function early since inference failed
@@ -331,7 +330,7 @@ class _MealScanPageState extends State<MealScanPage> {
       debugPrint('Stack trace: ${StackTrace.current}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Image processing failed: ${e.toString()}')),
+          SnackBar(content: Text('Image processing failed: ${e.toString()}', style: const TextStyle(fontFamily: 'Poppins'))),
         );
       }
     }
@@ -391,14 +390,12 @@ class _MealScanPageState extends State<MealScanPage> {
         });
       }
       
-      // Sort by confidence in descending order
       results.sort((a, b) => (b['confidence'] as double).compareTo(a['confidence'] as double));
       
       // Filter results with confidence > threshold (adjust as needed)
       final filteredResults = results.where((result) => 
-          (result['confidence'] as double) > 0.01).toList(); // Lowered threshold to see more results
-      
-      // Return top 5 results or all filtered results if less than 5
+          (result['confidence'] as double) > 0.10).toList();
+          
       final finalResults = filteredResults.take(5).toList();
       
       debugPrint('Returning ${finalResults.length} filtered results');
@@ -436,7 +433,8 @@ class _MealScanPageState extends State<MealScanPage> {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Orbitron',
+            fontFamily: 'Exo', // Updated to EXO
+            fontSize: 24, // Increased size
             shadows: [
               Shadow(
                 color: Colors.black26,
@@ -480,7 +478,7 @@ class _MealScanPageState extends State<MealScanPage> {
                               return const Center(
                                 child: Text(
                                   'Camera not available',
-                                  style: TextStyle(color: Colors.white),
+                                  style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated to Poppins
                                 ),
                               );
                             }
@@ -505,7 +503,7 @@ class _MealScanPageState extends State<MealScanPage> {
                       SizedBox(height: 8),
                       Text(
                         'Analyzing image...',
-                        style: TextStyle(color: Colors.white, fontSize: 14),
+                        style: TextStyle(color: Colors.white, fontSize: 14, fontFamily: 'Poppins'), // Updated to Poppins
                       ),
                     ],
                   ),
@@ -573,7 +571,7 @@ class _MealScanPageState extends State<MealScanPage> {
                 child: const Text(
                   'Scan one or more ingredients in a photo. Automatically get names, nutrition facts, and meal suggestions.\n\nTip: Make sure your ingredients are well-lit and clearly visible for best results.',
                   style: TextStyle(
-                    fontFamily: 'Orbitron',
+                    fontFamily: 'Poppins', // Updated to Poppins
                     fontSize: 14,
                     color: Color(0xFF184E77),
                   ),
@@ -587,6 +585,8 @@ class _MealScanPageState extends State<MealScanPage> {
         selectedItemColor: Color(0xFF184E77),
         unselectedItemColor: Color(0xFF184E77).withOpacity(0.7),
         currentIndex: 0,
+        selectedLabelStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold), // Added Poppins
+        unselectedLabelStyle: const TextStyle(fontFamily: 'Poppins'), // Added Poppins
         onTap: (index) {
           switch (index) {
             case 0:

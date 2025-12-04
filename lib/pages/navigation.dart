@@ -36,7 +36,7 @@ class NavigationDrawerWidget extends StatelessWidget {
               child: Text(
                 'HealthTingi',
                 style: TextStyle(
-                  fontFamily: 'Orbitron',
+                  fontFamily: 'Exo', // Updated to Exo
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
                   color: Colors.white,
@@ -124,7 +124,7 @@ class NavigationDrawerWidget extends StatelessWidget {
       label: Text(
         label,
         style: const TextStyle(
-          fontFamily: 'Orbitron',
+          fontFamily: 'Poppins', // Updated to Poppins
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),

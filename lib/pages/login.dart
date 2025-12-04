@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Invalid credentials - please try again'),
+              content: Text('Invalid credentials - please try again', style: TextStyle(fontFamily: 'Poppins')),
               duration: Duration(seconds: 3),
             ),
           );
@@ -103,7 +103,7 @@ class _LoginPageState extends State<LoginPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Login error: ${e.toString()}'),
+              content: Text('Login error: ${e.toString()}', style: const TextStyle(fontFamily: 'Poppins')),
               duration: const Duration(seconds: 3),
             ),
           );
@@ -161,15 +161,15 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 40),
 
-                    // App name
+                    // App name - Using EXO for the title
                     const Text(
                       'HealthTingi',
                       style: TextStyle(
-                        fontFamily: 'Orbitron',
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Exo', 
+                        fontSize: 40,
+                        fontWeight: FontWeight.w800,
                         color: Colors.white,
-                        letterSpacing: 1.2,
+                        letterSpacing: 1.5,
                         shadows: [
                           Shadow(
                             color: Colors.black26,
@@ -185,10 +185,12 @@ class _LoginPageState extends State<LoginPage> {
                     // Email or Username
                     TextFormField(
                       controller: _emailOrUsernameController,
+                      style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
                       decoration: InputDecoration(
                         hintText: 'Email or Username',
+                        hintStyle: const TextStyle(fontFamily: 'Poppins', color: Colors.black54),
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.6),
+                        fillColor: Colors.white.withOpacity(0.8), // Slightly more opaque for readability
                         prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF184E77)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -213,10 +215,12 @@ class _LoginPageState extends State<LoginPage> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
+                      style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
                       decoration: InputDecoration(
                         hintText: 'Password',
+                        hintStyle: const TextStyle(fontFamily: 'Poppins', color: Colors.black54),
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.6),
+                        fillColor: Colors.white.withOpacity(0.8),
                         prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF184E77)),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -246,13 +250,13 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 30),
 
-                    // Login Button (Primary CTA, styled like Register button in IndexPage)
+                    // Login Button - Using Poppins for UI elements
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF184E77),
+                          backgroundColor: const Color(0xFF184E77),
                           foregroundColor: Colors.white,
                           elevation: 10,
                           shadowColor: Colors.greenAccent,
@@ -273,7 +277,7 @@ class _LoginPageState extends State<LoginPage> {
                             : const Text(
                                 'Login',
                                 style: TextStyle(
-                                  fontFamily: 'Orbitron',
+                                  fontFamily: 'Poppins',
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: 1,
@@ -284,7 +288,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 20),
 
-                    // Register Link (Secondary CTA, styled like Login button in IndexPage)
+                    // Register Link
                     GestureDetector(
                       onTap: _isLoading
                           ? null
@@ -300,9 +304,9 @@ class _LoginPageState extends State<LoginPage> {
                         "Don't have an account? Register Here",
                         style: TextStyle(
                           color: Colors.white70,
-                          fontFamily: 'Orbitron',
+                          fontFamily: 'Poppins',
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                           decoration: TextDecoration.underline,
                           decorationColor: Colors.white70,
                         ),
@@ -318,6 +322,7 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.white70,
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
+                        fontFamily: 'Poppins',
                         letterSpacing: 1.2,
                       ),
                     ),

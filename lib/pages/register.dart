@@ -102,12 +102,12 @@ class _RegisterPageState extends State<RegisterPage> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Age Restriction', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('You must be at least 18 years old to register.'),
+        title: const Text('Age Restriction', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Exo')),
+        content: const Text('You must be at least 18 years old to register.', style: TextStyle(fontFamily: 'Poppins')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK', style: TextStyle(color: Color(0xFF184E77))),
+            child: const Text('OK', style: TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -167,11 +167,13 @@ class _RegisterPageState extends State<RegisterPage> {
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Add Custom Restriction', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text('Add Custom Restriction', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Exo')),
           content: TextField(
             controller: _otherRestrictionController,
+            style: const TextStyle(fontFamily: 'Poppins'),
             decoration: InputDecoration(
               hintText: 'Enter your dietary restriction',
+              hintStyle: const TextStyle(fontFamily: 'Poppins'),
               filled: true,
               fillColor: Colors.white.withOpacity(0.9),
               border: OutlineInputBorder(
@@ -184,14 +186,14 @@ class _RegisterPageState extends State<RegisterPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF184E77))),
+              child: const Text('Cancel', style: TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins')),
             ),
             TextButton(
               onPressed: () {
                 _addCustomRestriction();
                 Navigator.pop(context);
               },
-              child: const Text('Add', style: TextStyle(color: Color(0xFF184E77))),
+              child: const Text('Add', style: TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -207,7 +209,7 @@ class _RegisterPageState extends State<RegisterPage> {
         }
         if (_selectedBirthday == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select your birthday.')),
+            const SnackBar(content: Text('Please select your birthday.', style: TextStyle(fontFamily: 'Poppins'))),
           );
           return;
         }
@@ -224,7 +226,7 @@ class _RegisterPageState extends State<RegisterPage> {
       case 2:
         if (hasDietaryRestrictions && selectedDietaryRestrictions.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select at least one dietary restriction.')),
+            const SnackBar(content: Text('Please select at least one dietary restriction.', style: TextStyle(fontFamily: 'Poppins'))),
           );
           return;
         }
@@ -243,7 +245,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _submitForm() async {
     if (_selectedBirthday == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select your birthday.')),
+        const SnackBar(content: Text('Please select your birthday.', style: TextStyle(fontFamily: 'Poppins'))),
       );
       return;
     }
@@ -256,21 +258,21 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (!agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must agree to the terms and conditions.')),
+        const SnackBar(content: Text('You must agree to the terms and conditions.', style: TextStyle(fontFamily: 'Poppins'))),
       );
       return;
     }
 
     if (passwordController.text != confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match.')),
+        const SnackBar(content: Text('Passwords do not match.', style: TextStyle(fontFamily: 'Poppins'))),
       );
       return;
     }
 
     if (!_validateEmail(emailController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid email address.')),
+        const SnackBar(content: Text('Please enter a valid email address.', style: TextStyle(fontFamily: 'Poppins'))),
       );
       return;
     }
@@ -278,7 +280,7 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_validatePasswordLength(passwordController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Password must be between 6 and 30 characters and include uppercase, lowercase, and special characters.'),
+          content: Text('Password must be between 6 and 30 characters and include uppercase, lowercase, and special characters.', style: TextStyle(fontFamily: 'Poppins')),
           duration: Duration(seconds: 3),
         ),
       );
@@ -287,7 +289,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (hasDietaryRestrictions && selectedDietaryRestrictions.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one dietary restriction.')),
+        const SnackBar(content: Text('Please select at least one dietary restriction.', style: TextStyle(fontFamily: 'Poppins'))),
       );
       return;
     }
@@ -301,14 +303,14 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (emailExists != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email already registered.')),
+          const SnackBar(content: Text('Email already registered.', style: TextStyle(fontFamily: 'Poppins'))),
         );
         return;
       }
 
       if (usernameExists != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Username already taken.')),
+          const SnackBar(content: Text('Username already taken.', style: TextStyle(fontFamily: 'Poppins'))),
         );
         return;
       }
@@ -340,7 +342,7 @@ class _RegisterPageState extends State<RegisterPage> {
       await dbHelper.insertUser(user);
       
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration successful!')),
+        const SnackBar(content: Text('Registration successful!', style: TextStyle(fontFamily: 'Poppins'))),
       );
       
       Navigator.pushReplacement(
@@ -349,7 +351,7 @@ class _RegisterPageState extends State<RegisterPage> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration failed: ${e.toString()}')),
+        SnackBar(content: Text('Registration failed: ${e.toString()}', style: const TextStyle(fontFamily: 'Poppins'))),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -374,8 +376,10 @@ class _RegisterPageState extends State<RegisterPage> {
       controller: controller,
       obscureText: isObscure,
       keyboardType: keyboardType,
+      style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
       decoration: InputDecoration(
         hintText: isOptional ? '$hintText (Optional)' : hintText,
+        hintStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 14, color: Colors.black54),
         filled: true,
         fillColor: Colors.white.withOpacity(0.9),
         prefixIcon: Icon(
@@ -390,7 +394,7 @@ class _RegisterPageState extends State<RegisterPage> {
           borderSide: BorderSide.none,
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-        errorStyle: const TextStyle(color: Color(0xFF184E77)),
+        errorStyle: const TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins'),
       ),
       validator: validator ?? (isOptional ? null : (value) {
         if (value == null || value.isEmpty) {
@@ -415,13 +419,14 @@ class _RegisterPageState extends State<RegisterPage> {
             borderSide: BorderSide.none,
           ),
           errorText: _isUnderage ? 'Must be 18 years or older' : null,
-          errorStyle: const TextStyle(color: Color(0xFF184E77)),
+          errorStyle: const TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins'),
         ),
         child: Text(
           _selectedBirthday != null
               ? '${_selectedBirthday!.year}-${_selectedBirthday!.month.toString().padLeft(2, '0')}-${_selectedBirthday!.day.toString().padLeft(2, '0')}'
               : 'Select your birthday',
           style: TextStyle(
+            fontFamily: 'Poppins',
             color: _selectedBirthday != null 
               ? (_isUnderage ? Colors.red : Colors.black87) 
               : Colors.grey,
@@ -443,7 +448,7 @@ class _RegisterPageState extends State<RegisterPage> {
               'Step 1: Personal Information',
               style: TextStyle(
                 fontSize: 20,
-                fontFamily: 'Orbitron',
+                fontFamily: 'Exo',
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 shadows: [
@@ -470,6 +475,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 'Age: ${_calculateAge(_selectedBirthday!)} years old',
                 style: TextStyle(
                   fontSize: 12,
+                  fontFamily: 'Poppins',
                   color: _isUnderage ? Colors.red : Colors.white70,
                 ),
               ),
@@ -492,7 +498,7 @@ class _RegisterPageState extends State<RegisterPage> {
               'Step 2: Account Details',
               style: TextStyle(
                 fontSize: 20,
-                fontFamily: 'Orbitron',
+                fontFamily: 'Exo',
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 shadows: [
@@ -553,7 +559,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 8),
               const Text(
                 'Password must be at least 6 characters with uppercase, lowercase, and special characters',
-                style: TextStyle(fontSize: 12, color: Colors.white70),
+                style: TextStyle(fontSize: 12, color: Colors.white70, fontFamily: 'Poppins'),
               ),
             ],
             const SizedBox(height: 16),
@@ -584,7 +590,7 @@ class _RegisterPageState extends State<RegisterPage> {
             'Step 3: Dietary Restrictions',
             style: TextStyle(
               fontSize: 20,
-              fontFamily: 'Orbitron',
+              fontFamily: 'Exo',
               fontWeight: FontWeight.bold,
               color: Colors.white,
               shadows: [
@@ -600,7 +606,7 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: 20),
           const Text(
             'Do you have any dietary restrictions?',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: Colors.white70, fontFamily: 'Poppins'),
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -611,7 +617,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 activeColor: const Color(0xFF76C893),
                 checkColor: Colors.white,
               ),
-              const Text('Yes', style: TextStyle(color: Colors.white70)),
+              const Text('Yes', style: TextStyle(color: Colors.white70, fontFamily: 'Poppins')),
               const SizedBox(width: 16),
               Checkbox(
                 value: !hasDietaryRestrictions,
@@ -619,14 +625,14 @@ class _RegisterPageState extends State<RegisterPage> {
                 activeColor: const Color(0xFF76C893),
                 checkColor: Colors.white,
               ),
-              const Text('No', style: TextStyle(color: Colors.white70)),
+              const Text('No', style: TextStyle(color: Colors.white70, fontFamily: 'Poppins')),
             ],
           ),
           if (hasDietaryRestrictions) ...[
             const SizedBox(height: 16),
             const Text(
               'Please select your dietary restriction(s):',
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(color: Colors.white70, fontFamily: 'Poppins'),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -643,7 +649,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 'Shellfish Allergy',
               ].map((restriction) {
                 return FilterChip(
-                  label: Text(restriction, style: const TextStyle(color: Colors.black87)),
+                  label: Text(restriction, style: const TextStyle(color: Colors.black87, fontFamily: 'Poppins')),
                   selected: selectedDietaryRestrictions.contains(restriction),
                   onSelected: _isUnderage ? null : (selected) {
                     setState(() {
@@ -665,7 +671,7 @@ class _RegisterPageState extends State<RegisterPage> {
               spacing: 8.0,
               children: [
                 ActionChip(
-                  label: const Text('Other...'),
+                  label: const Text('Other...', style: TextStyle(fontFamily: 'Poppins')),
                   onPressed: _isUnderage ? null : _showCustomRestrictionDialog,
                   avatar: const Icon(Icons.add, color: Color(0xFF184E77)),
                   backgroundColor: Colors.white.withOpacity(0.9),
@@ -673,7 +679,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 if (selectedDietaryRestrictions.isNotEmpty)
                   ActionChip(
-                    label: const Text('Clear All'),
+                    label: const Text('Clear All', style: TextStyle(fontFamily: 'Poppins')),
                     onPressed: _isUnderage ? null : () {
                       setState(() {
                         selectedDietaryRestrictions.clear();
@@ -689,7 +695,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 12),
               const Text(
                 'Selected Restrictions:',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(color: Colors.white70, fontFamily: 'Poppins'),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -697,7 +703,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 runSpacing: 8.0,
                 children: selectedDietaryRestrictions.map((restriction) {
                   return Chip(
-                    label: Text(restriction, style: const TextStyle(color: Colors.black87)),
+                    label: Text(restriction, style: const TextStyle(color: Colors.black87, fontFamily: 'Poppins')),
                     onDeleted: _isUnderage ? null : () {
                       setState(() {
                         selectedDietaryRestrictions.remove(restriction);
@@ -713,7 +719,7 @@ class _RegisterPageState extends State<RegisterPage> {
             if (selectedDietaryRestrictions.isEmpty && hasDietaryRestrictions)
               const Text(
                 'Please select at least one dietary restriction',
-                style: TextStyle(color: Color(0xFF184E77)),
+                style: TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins'),
               ),
           ],
         ],
@@ -731,7 +737,7 @@ class _RegisterPageState extends State<RegisterPage> {
           'Step 4: Terms and Conditions',
           style: TextStyle(
             fontSize: 20,
-            fontFamily: 'Orbitron',
+            fontFamily: 'Exo',
             fontWeight: FontWeight.bold,
             color: Colors.white,
             shadows: [
@@ -778,7 +784,7 @@ This app is part of a student project and not intended for commercial use. There
 7. Changes to Terms
 We may update these terms as the app improves. Any changes will be reflected in this section.
 ''',
-                  style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.6),
+                  style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.6, fontFamily: 'Poppins'),
                 ),
               ),
             ),
@@ -807,6 +813,7 @@ We may update these terms as the app improves. Any changes will be reflected in 
                       color: Colors.black87,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
+                      fontFamily: 'Poppins',
                     ),
                   ),
                 ),
@@ -842,6 +849,7 @@ We may update these terms as the app improves. Any changes will be reflected in 
                       fontWeight: FontWeight.bold,
                       decoration: TextDecoration.underline,
                       decorationColor: Colors.white70,
+                      fontFamily: 'Poppins',
                     ),
                   ),
                 )
@@ -875,7 +883,7 @@ We may update these terms as the app improves. Any changes will be reflected in 
                   child: const Text(
                     'Next',
                     style: TextStyle(
-                      fontFamily: 'Orbitron',
+                      fontFamily: 'Poppins',
                       fontWeight: FontWeight.w600,
                       fontSize: 18,
                     ),
@@ -906,7 +914,7 @@ We may update these terms as the app improves. Any changes will be reflected in 
                       : const Text(
                           'Register',
                           style: TextStyle(
-                            fontFamily: 'Orbitron',
+                            fontFamily: 'Poppins',
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                           ),
@@ -928,7 +936,7 @@ We may update these terms as the app improves. Any changes will be reflected in 
               'Already have an account? Login Here',
               style: TextStyle(
                 color: Colors.white70,
-                fontFamily: 'Orbitron',
+                fontFamily: 'Poppins',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 decoration: TextDecoration.underline,
@@ -975,10 +983,11 @@ We may update these terms as the app improves. Any changes will be reflected in 
                         child: const Text(
                           'HealthTingi',
                           style: TextStyle(
-                            fontFamily: 'Orbitron',
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Exo',
+                            fontSize: 40,
+                            fontWeight: FontWeight.w800,
                             color: Colors.white,
+                            letterSpacing: 1.5,
                             shadows: [
                               Shadow(
                                 color: Colors.black26,

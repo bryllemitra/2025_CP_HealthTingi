@@ -14,11 +14,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentPage = 0;
 
-  // === UPDATED COLOR PALETTE ===
-  static const Color iconColor = Colors.white;                    // White icons
-  static const Color buttonColor = Color(0xFF10B981);             // Emerald Green (rich, non-overlapping)
-  static const Color activeDotColor = Color(0xFF10B981);          // Match button
-  static const Color inactiveDotColor = Color(0xFF6EE7B7);        // Lighter green for dots
+  static const Color iconColor = Colors.white;                   
+  static const Color buttonColor = Color(0xFF10B981);            
+  static const Color activeDotColor = Color(0xFF10B981);      
+  static const Color inactiveDotColor = Color(0xFF6EE7B7);     
 
   // List of onboarding pages
   final List<Widget> _onboardingPages = [
@@ -126,6 +125,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ? 'Get Started'
                         : 'Next',
                     style: const TextStyle(
+                      fontFamily: 'Poppins', // Updated Font
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -172,9 +172,9 @@ class OnboardingPage extends StatelessWidget {
             title,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Orbitron',
+              fontSize: 28, // Increased slightly
+              fontWeight: FontWeight.w800, // Thicker weight
+              fontFamily: 'Exo', // Updated Font
               shadows: [
                 Shadow(
                   color: Colors.black26,
@@ -188,7 +188,12 @@ class OnboardingPage extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             description,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
+            style: const TextStyle(
+              color: Colors.white, 
+              fontSize: 16,
+              fontFamily: 'Poppins', // Updated Font
+              height: 1.5, // Better line height for readability
+            ),
             textAlign: TextAlign.center,
           ),
         ],

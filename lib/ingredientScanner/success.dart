@@ -23,7 +23,12 @@ class ScanSuccessPage extends StatelessWidget {
         .where((recognition) => 
             recognition['confidence'] != null && 
             recognition['confidence'] > 0.1) // Adjust threshold as needed
-        .map((recognition) => recognition['label'].toString())
+        .map((recognition) {
+            final label = recognition['label'].toString();
+            // FIX: Insert a space before any capital letter that isn't the first letter.
+            // This converts "GroundBeef" -> "Ground Beef" so it matches your database.
+            return label.replaceAllMapped(RegExp(r'(?<!^)(?=[A-Z])'), (match) => ' ');
+        })
         .toSet() // Remove duplicates
         .toList();
     
@@ -73,7 +78,7 @@ class ScanSuccessPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Orbitron',
+                      fontFamily: 'Exo', // Updated to Exo
                       color: Color(0xFF184E77),
                       letterSpacing: 1.1,
                     ),
@@ -155,7 +160,7 @@ class ScanSuccessPage extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
-                            fontFamily: 'Orbitron',
+                            fontFamily: 'Exo', // Updated to Exo
                             color: Color(0xFF184E77),
                           ),
                         ),
@@ -174,6 +179,7 @@ class ScanSuccessPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
+                                fontFamily: 'Poppins', // Added Poppins
                                 color: Color(0xFF184E77),
                               ),
                             ),
@@ -214,7 +220,7 @@ class ScanSuccessPage extends StatelessWidget {
                     child: Text(
                       'VIEW INGREDIENT/S',
                       style: TextStyle(
-                        fontFamily: 'Orbitron',
+                        fontFamily: 'Poppins', // Updated to Poppins
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
@@ -242,7 +248,7 @@ class ScanSuccessPage extends StatelessWidget {
                       child: Text(
                         'SCAN AGAIN',
                         style: TextStyle(
-                          fontFamily: 'Orbitron',
+                          fontFamily: 'Poppins', // Updated to Poppins
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -263,6 +269,7 @@ class ScanSuccessPage extends StatelessWidget {
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
                     letterSpacing: 1.2,
+                    fontFamily: 'Poppins', // Added Poppins
                   ),
                 ),
               ],

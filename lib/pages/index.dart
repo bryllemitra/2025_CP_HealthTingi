@@ -46,15 +46,15 @@ class IndexPage extends StatelessWidget {
 
                 const SizedBox(height: 40),
 
-                // App name
+                // App name - UPDATED to Exo
                 const Text(
                   'HealthTingi',
                   style: TextStyle(
-                    fontFamily: 'Orbitron',
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Exo', 
+                    fontSize: 40,
+                    fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.5,
                     shadows: [
                       Shadow(
                         color: Colors.black26,
@@ -87,7 +87,7 @@ class IndexPage extends StatelessWidget {
                     child: const Text(
                       'Register',
                       style: TextStyle(
-                        fontFamily: 'Orbitron',
+                        fontFamily: 'Poppins',
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
@@ -118,7 +118,7 @@ class IndexPage extends StatelessWidget {
                     child: const Text(
                       'Login',
                       style: TextStyle(
-                        fontFamily: 'Orbitron',
+                        fontFamily: 'Poppins',
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
@@ -145,7 +145,8 @@ class IndexPage extends StatelessWidget {
                       'Use as Guest',
                       style: TextStyle(
                         fontSize: 14,
-                        fontFamily: 'Orbitron',
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w500,
                         color: Colors.white70,
                         decoration: TextDecoration.underline,
                         decorationColor: Colors.white70,
@@ -164,6 +165,7 @@ class IndexPage extends StatelessWidget {
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
                     letterSpacing: 1.2,
+                    fontFamily: 'Poppins',
                   ),
                 ),
               ],

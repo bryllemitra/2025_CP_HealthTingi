@@ -3668,10 +3668,8 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
       whereArgs: [customizedMealId],
     );
   }
-
-  // Add this to your DatabaseHelper class
-
-  // Precise mapping based on your specific meat cuts
+  
+  // ========== INGREDIENT VARIATIONS EXPANSION ==========
   final Map<String, List<String>> _ingredientVariations = {
     'Chicken': [
       'Chicken (neck/wings)', 'Chicken neck', 'Chicken breast', 'Chicken wings', 
@@ -3688,7 +3686,20 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
       'Ground Beef', 'Beef'
     ],
     'Fish': [
-      'Tilapia', 'Bangus', 'Salmon', 'Tuna', 'Fish'
+      'Fish', 'Bangus', 'Tilapia', 'Salmon', 'Tuna', 
+      'Alumahan', 'Yellow Fin Tuna', 'Culisi', 'Galunggong', 'Gulyasan', 
+      'Kubal-kubal', 'Lapu-Lapu', 'Malumbok', 'Matangbaka', 'Maya-maya', 
+      'Mulmul', 'Samaral', 'Talakitok', 'Tamban', 'Tanigue', 'Tulingan', 
+      'Sulig', 'Sapsap', 'Dilis', 'Dalagang bukid', 'Bisugo', 'Shark meat',
+      'Sting ray'
+    ],
+    'Seafood': [
+      'Fish', 'Bangus', 'Tilapia', 'Squid', 'Shrimp', 'Prawn', 'Crab',
+      'Alumahan', 'Galunggong', 'Lapu-Lapu', 'Tanigue', 'Blue crab', 
+      'Mud crab', 'Curacha', 'Shell', 'Oyster', 'Clams', 'Mussels'
+    ],
+    'Crab': [
+      'Blue crab', 'Mud crab', 'Curacha', 'Crab'
     ],
     
   };

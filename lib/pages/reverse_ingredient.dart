@@ -150,7 +150,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     String selectedQty = currentDetails['qty']!;
     String selectedUnit = currentDetails['unit']!;
     
-    final List<String> units = ['piece', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'pack', 'can', 'clove', 'head', 'bottle']; 
+    final List<String> units = ['piece', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'pack', 'can', 'clove', 'head', 'bottle', 'cloves', 'ml', 'l', 'bundle', 'small', 'medium', 'large', 'extra large']; 
 
     await showDialog(
       context: context,
