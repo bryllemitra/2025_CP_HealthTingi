@@ -160,8 +160,8 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Orbitron',
-            fontSize: 20,
+            fontFamily: 'Exo', // Updated to Exo
+            fontSize: 22,
             letterSpacing: 1.1,
             shadows: [
               Shadow(
@@ -292,7 +292,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                 style: const TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'Orbitron',
+                                  fontFamily: 'Exo', // Updated to Exo
                                   color: Colors.white,
                                   letterSpacing: 1.2,
                                 ),
@@ -325,7 +325,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                     style: TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: 'Orbitron',
+                                      fontFamily: 'Exo', // Updated to Exo
                                       color: Color(0xFF184E77),
                                     ),
                                   ),
@@ -361,7 +361,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
-                                            fontFamily: 'Orbitron',
+                                            fontFamily: 'Exo', // Updated to Exo
                                             color: Color(0xFF184E77),
                                           ),
                                         ),
@@ -401,7 +401,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                     style: TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: 'Orbitron',
+                                      fontFamily: 'Exo', // Updated to Exo
                                       color: Color(0xFF184E77),
                                     ),
                                   ),
@@ -424,7 +424,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                           ),
                                           child: const Text(
                                             'Error loading related meals',
-                                            style: TextStyle(color: Colors.red),
+                                            style: TextStyle(color: Colors.red, fontFamily: 'Poppins'),
                                           ),
                                         );
                                       }
@@ -442,7 +442,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                               const SizedBox(height: 12),
                                               const Text(
                                                 'No meals found containing this ingredient',
-                                                style: TextStyle(color: Colors.grey, fontSize: 16),
+                                                style: TextStyle(color: Colors.grey, fontSize: 16, fontFamily: 'Poppins'),
                                                 textAlign: TextAlign.center,
                                               ),
                                             ],
@@ -477,6 +477,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                 fontSize: 12,
                                 fontStyle: FontStyle.italic,
                                 letterSpacing: 1.2,
+                                fontFamily: 'Poppins', // Updated to Poppins
                               ),
                             ),
                           ),
@@ -516,7 +517,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
           end: Alignment.bottomRight,
         ),
       ),
-      child: Center(child: Text('Error: $error', style: const TextStyle(color: Colors.white))),
+      child: Center(child: Text('Error: $error', style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'))),
     );
   }
 
@@ -553,6 +554,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Colors.grey,
+                    fontFamily: 'Poppins', // Updated to Poppins
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -562,6 +564,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF184E77),
+                    fontFamily: 'Poppins', // Updated to Poppins
                   ),
                 ),
               ],
@@ -607,7 +610,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
             Expanded(
               child: Text(
                 value.trim(),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF184E78)),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF184E78), fontFamily: 'Poppins'), // Updated to Poppins
               ),
             ),
           ],
@@ -617,7 +620,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
     return [
       const Text(
         "Nutritional information not available",
-        style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+        style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic, fontFamily: 'Poppins'), // Updated to Poppins
       )
     ];
   }
@@ -706,7 +709,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: Color(0xFF184E77),
-                        fontFamily: 'Orbitron',
+                        fontFamily: 'Exo', // Updated to Exo
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -724,6 +727,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                           color: Color(0xFF184E77),
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
+                          fontFamily: 'Exo', // Updated to Exo for price
                         ),
                       ),
                     ),

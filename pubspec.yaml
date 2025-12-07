@@ -176,6 +176,8 @@ flutter:
     - assets/models/colab_single.tflite
     - assets/models/kaggle_single.tflite
     - assets/models/finalmedj.tflite
+    - assets/models/food_ingredients.tflite
+    - assets/models/labels-1.txt
 
 
   fonts:

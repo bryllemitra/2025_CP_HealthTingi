@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:flutter/services.dart';
@@ -2737,7 +2735,6 @@ class DatabaseHelper {
         ingredientNameToId[ingredient['ingredientName']] = ingredient['ingredientID'];
       }
       
-      // Clear existing meals and relationships
       await db.delete('meal_ingredients');
       await db.delete('meals');
       
@@ -3380,7 +3377,6 @@ double convertToGrams(double quantity, String unit, Map<String, dynamic> ingredi
     case 'cup': return quantity * (ingredient['unit_density_cup'] as double? ?? 240.0);
     case 'l':
     case 'liter':
-      // Use density if available, otherwise default to 1000g
       double d = (ingredient['unit_density_cup'] as double? ?? 240.0) / 240.0;
       return quantity * 1000 ;
     
@@ -3479,16 +3475,13 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
   return 100.0; // general default
 }
 
-  // --- Helper: Parse Quantity Strings (e.g., "1/2", "1.5", "¼") ---
   double _parseQuantity(String quantityStr) {
     if (quantityStr.trim().isEmpty) return 0.0;
     
-    // Handle decimals immediately
     if (double.tryParse(quantityStr) != null) {
       return double.parse(quantityStr);
     }
     
-    // Map of common fraction characters
     final fractionMap = {
       '⅛': 0.125, '¼': 0.25, '⅓': 0.333, '⅜': 0.375,
       '½': 0.5, '⅝': 0.625, '⅔': 0.666, '¾': 0.75, '⅞': 0.875

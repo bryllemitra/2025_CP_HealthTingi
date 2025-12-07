@@ -94,7 +94,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
                         child: Text(
                           'About Us',
                           style: TextStyle(
-                            fontFamily: 'Orbitron',
+                            fontFamily: 'Exo', // Updated to Exo
                             fontWeight: FontWeight.bold,
                             fontSize: 24,
                             color: Colors.white,
@@ -150,7 +150,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
                                     _content,               // <-- now guaranteed non-null
                                     style: const TextStyle(
                                       fontSize: 16,
-                                      fontFamily: 'Exo',
+                                      fontFamily: 'Poppins', // Updated to Poppins
                                       color: Color(0xFF184E77),
                                       height: 1.6,
                                     ),
@@ -165,6 +165,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
                                     fontSize: 12,
                                     fontStyle: FontStyle.italic,
                                     letterSpacing: 1.2,
+                                    fontFamily: 'Poppins', // Updated to Poppins
                                   ),
                                 ),
                               ],

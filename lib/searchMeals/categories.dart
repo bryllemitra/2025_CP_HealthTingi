@@ -321,6 +321,7 @@ class _CategoryPageState extends State<CategoryPage> {
                     child: Text(
                       meal['mealName'],
                       style: const TextStyle(
+                        fontFamily: 'Exo', // Updated to Exo
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color(0xFF184E77),
@@ -339,7 +340,7 @@ class _CategoryPageState extends State<CategoryPage> {
                         child: Text(
                           "Est. ${meal['cookingTime']}",
                           style: const TextStyle(
-                              fontSize: 10, color: Colors.black54),
+                              fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'), // Updated
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -357,6 +358,7 @@ class _CategoryPageState extends State<CategoryPage> {
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                             color: Colors.black54,
+                            fontFamily: 'Exo', // Updated to Exo
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -394,6 +396,7 @@ class _CategoryPageState extends State<CategoryPage> {
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
+                        fontFamily: 'Poppins', // Updated
                       ),
                     ),
                   ),
@@ -450,11 +453,12 @@ class _CategoryPageState extends State<CategoryPage> {
                         ),
                         child: TextField(
                           controller: searchController,
+                          style: const TextStyle(fontFamily: 'Poppins'), // Updated
                           decoration: InputDecoration(
                             hintText:
                                 'Search ${widget.category.toLowerCase()} meals',
                             hintStyle: const TextStyle(
-                                fontSize: 14, color: Colors.black54),
+                                fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'), // Updated
                             suffixIcon: searchController.text.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear,
@@ -480,7 +484,7 @@ class _CategoryPageState extends State<CategoryPage> {
                         ? Center(
                             child: Text(
                               errorMessage!,
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
                             ),
                           )
                         : filteredMeals.isEmpty
@@ -489,7 +493,7 @@ class _CategoryPageState extends State<CategoryPage> {
                                   _searchQuery.isNotEmpty
                                       ? 'No meals found matching your search'
                                       : 'No meals found in this category',
-                                  style: const TextStyle(color: Colors.white),
+                                  style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
                                 ),
                               )
                             : GridView.builder(

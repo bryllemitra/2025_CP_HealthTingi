@@ -69,7 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Profile updated successfully!'),
+          content: Text('Profile updated successfully!', style: TextStyle(fontFamily: 'Poppins')),
           backgroundColor: Color(0xFF76C893),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -78,7 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to update profile: ${e.toString()}'),
+          content: Text('Failed to update profile: ${e.toString()}', style: TextStyle(fontFamily: 'Poppins')),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -99,15 +99,17 @@ class _ProfilePageState extends State<ProfilePage> {
         title: Text(
           'Edit ${field.replaceAll('_', ' ')}',
           style: TextStyle(
-            fontFamily: 'Orbitron',
+            fontFamily: 'Exo', // Updated to Exo
             color: Color(0xFF184E77),
             fontWeight: FontWeight.bold,
           ),
         ),
         content: TextField(
           controller: controller,
+          style: TextStyle(fontFamily: 'Poppins'), // Updated
           decoration: InputDecoration(
             hintText: 'Enter new ${field.replaceAll('_', ' ')}',
+            hintStyle: TextStyle(fontFamily: 'Poppins'), // Updated
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
@@ -116,7 +118,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: Color(0xFF184E77)),
+              style: TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins'), // Updated
             ),
           ),
           ElevatedButton(
@@ -132,7 +134,7 @@ class _ProfilePageState extends State<ProfilePage> {
             },
             child: Text(
               'Save',
-              style: TextStyle(color: Colors.white), // Changed to white
+              style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
             ),
           ),
         ],
@@ -205,7 +207,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Orbitron',
+                        fontFamily: 'Exo', // Updated to Exo
                         color: Color(0xFF184E77),
                       ),
                     ),
@@ -220,7 +222,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         const Expanded(
                           child: Text(
                             'I have dietary restrictions',
-                            style: TextStyle(fontSize: 16),
+                            style: TextStyle(fontSize: 16, fontFamily: 'Poppins'), // Updated
                           ),
                         ),
                       ],
@@ -229,7 +231,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 16),
                       const Text(
                         'Select your restrictions:',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, fontFamily: 'Poppins'), // Updated
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -237,7 +239,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         runSpacing: 8.0,
                         children: allRestrictions.map((restriction) {
                           return FilterChip(
-                            label: Text(restriction),
+                            label: Text(restriction, style: TextStyle(fontFamily: 'Poppins')), // Updated
                             selected: selectedDietaryRestrictions.contains(restriction),
                             onSelected: (selected) {
                               setState(() {
@@ -256,7 +258,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 16),
                       const Text(
                         'Other restrictions:',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, fontFamily: 'Poppins'), // Updated
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -264,8 +266,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           Expanded(
                             child: TextField(
                               controller: _otherRestrictionController,
+                              style: TextStyle(fontFamily: 'Poppins'), // Updated
                               decoration: InputDecoration(
                                 hintText: 'Enter other restriction',
+                                hintStyle: TextStyle(fontFamily: 'Poppins'), // Updated
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               ),
@@ -295,14 +299,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: 16),
                         const Text(
                           'Selected restrictions:',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, fontFamily: 'Poppins'), // Updated
                         ),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8.0,
                           runSpacing: 8.0,
                           children: selectedDietaryRestrictions.map((r) => Chip(
-                            label: Text(r),
+                            label: Text(r, style: TextStyle(fontFamily: 'Poppins')), // Updated
                             backgroundColor: Color(0xFFB5E48C),
                             deleteIconColor: Colors.black,
                             onDeleted: () {
@@ -320,7 +324,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           onPressed: () => Navigator.pop(context),
                           child: Text(
                             'Cancel',
-                            style: TextStyle(color: Color(0xFF184E77)),
+                            style: TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins'), // Updated
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -342,7 +346,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           },
                           child: Text(
                             'Save',
-                            style: TextStyle(color: Colors.white), // Changed to white
+                            style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
                           ),
                         ),
                       ],
@@ -429,7 +433,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             'Account Information',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontFamily: 'Orbitron',
+                              fontFamily: 'Exo', // Updated to Exo
                               fontSize: 20,
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -486,7 +490,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF184E77),
-                              fontFamily: 'Orbitron',
+                              fontFamily: 'Exo', // Updated to Exo
                             ),
                           ),
                         ),
@@ -499,7 +503,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     Text(
                       '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}',
                       style: TextStyle(
-                        fontFamily: 'Orbitron',
+                        fontFamily: 'Exo', // Updated to Exo
                         fontWeight: FontWeight.bold,
                         fontSize: 22,
                         color: Colors.white,
@@ -547,7 +551,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 Text(
                                   'Saved Recipes',
                                   style: TextStyle(
-                                    fontFamily: 'Orbitron',
+                                    fontFamily: 'Poppins', // Updated to Poppins
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: Color(0xFF184E77),
@@ -582,7 +586,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Text(
                             'Personal Information',
                             style: TextStyle(
-                              fontFamily: 'Orbitron',
+                              fontFamily: 'Exo', // Updated to Exo
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF184E77),
@@ -647,7 +651,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       children: [
                                         Text('Birthday',
                                             style: TextStyle(
-                                              fontFamily: 'Orbitron',
+                                              fontFamily: 'Poppins', // Updated to Poppins
                                               fontSize: 13,
                                               fontWeight: FontWeight.bold,
                                               color: Color(0xFF184E77),
@@ -656,7 +660,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         Text(
                                           _editedValues['birthday'] ?? userData['birthday']?.toString() ?? 'Not set',
                                           style: TextStyle(
-                                            fontFamily: 'Orbitron',
+                                            fontFamily: 'Poppins', // Updated to Poppins
                                             fontSize: 12,
                                           ),
                                         ),
@@ -686,7 +690,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Text(
                             'Address Information',
                             style: TextStyle(
-                              fontFamily: 'Orbitron',
+                              fontFamily: 'Exo', // Updated to Exo
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF184E77),
@@ -744,7 +748,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       children: [
                                         Text('Dietary Restrictions',
                                             style: TextStyle(
-                                              fontFamily: 'Orbitron',
+                                              fontFamily: 'Poppins', // Updated to Poppins
                                               fontSize: 13,
                                               fontWeight: FontWeight.bold,
                                               color: Color(0xFF184E77),
@@ -755,7 +759,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                               ? (_editedValues['dietaryRestriction'] ?? 'None')
                                               : (userData['dietaryRestriction']?.toString() ?? 'None'),
                                           style: TextStyle(
-                                            fontFamily: 'Orbitron',
+                                            fontFamily: 'Poppins', // Updated to Poppins
                                             fontSize: 12,
                                           ),
                                         ),
@@ -791,7 +795,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: Text(
                           'Update Profile',
                           style: TextStyle(
-                            fontFamily: 'Orbitron',
+                            fontFamily: 'Poppins', // Updated to Poppins
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1,
@@ -810,6 +814,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
                         letterSpacing: 1.2,
+                        fontFamily: 'Poppins', // Updated to Poppins
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -851,7 +856,7 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Text(title,
                     style: TextStyle(
-                      fontFamily: 'Orbitron',
+                      fontFamily: 'Poppins', // Updated to Poppins
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF184E77),
@@ -859,7 +864,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 SizedBox(height: 2),
                 Text(value.isEmpty ? 'Not set' : value,
                     style: TextStyle(
-                      fontFamily: 'Orbitron',
+                      fontFamily: 'Poppins', // Updated to Poppins
                       fontSize: 12,
                     )),
               ],

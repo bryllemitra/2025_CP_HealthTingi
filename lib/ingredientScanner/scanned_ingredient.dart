@@ -155,12 +155,11 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
             .where((name) => name != null)
             .toSet();
 
-        // USE EXPANDED INGREDIENTS FOR MATCHING
         final matchingIng = expandedIngredients.where((ing) {
           final ingLower = ing.toLowerCase();
           return mealIngredientNames.any((mealIng) => 
-              mealIng!.toLowerCase() == ingLower || // Exact match
-              _isIngredientVariationMatch(ing, mealIng!)); // Variation match
+              mealIng!.toLowerCase() == ingLower || 
+              _isIngredientVariationMatch(ing, mealIng!));
         }).toList();
         
         final matchingIngredients = matchingIng.length;
@@ -298,6 +297,9 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
     final baseIngredients = ['chicken', 'pork', 'beef', 'fish', 'shrimp', 'egg'];
     for (var base in baseIngredients) {
       if (ing1.contains(base) && ing2.contains(base)) {
+        if (base == 'egg' && (ing1.contains('plant') || ing2.contains('plant'))) {
+          continue; 
+        }
         return true;
       }
     }
@@ -360,7 +362,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                         child: Text(
                           "Scanned Ingredients",
                           style: TextStyle(
-                            fontFamily: 'Orbitron',
+                            fontFamily: 'Exo', // Updated to Exo
                             color: Colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -411,7 +413,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                             const Text(
                               "Can't find an ingredient?",
                               style: TextStyle(
-                                fontFamily: 'Orbitron',
+                                fontFamily: 'Exo', // Updated to Exo
                                 fontSize: 14,
                                 color: Color(0xFF184E77),
                                 fontWeight: FontWeight.w600,
@@ -432,9 +434,11 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                               ),
                               child: TextField(
                                 controller: _searchController,
+                                style: const TextStyle(fontFamily: 'Poppins'), // Updated
                                 decoration: const InputDecoration(
                                   prefixIcon: Icon(Icons.search, color: Color(0xFF184E77)),
                                   hintText: "Search ingredients...",
+                                  hintStyle: TextStyle(fontFamily: 'Poppins'), // Updated
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                 ),
@@ -466,7 +470,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                               const Text(
                                 "Search Results",
                                 style: TextStyle(
-                                  fontFamily: 'Orbitron',
+                                  fontFamily: 'Exo', // Updated to Exo
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF184E77),
@@ -504,7 +508,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                     title: Text(
                                       name,
                                       style: const TextStyle(
-                                        fontFamily: 'Orbitron',
+                                        fontFamily: 'Poppins', // Updated to Poppins
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
                                         color: Color(0xFF184E77),
@@ -514,7 +518,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                     ),
                                     subtitle: Text(
                                       '${ing['calories'] ?? 'N/A'} kcal',
-                                      style: const TextStyle(fontSize: 12),
+                                      style: const TextStyle(fontSize: 12, fontFamily: 'Poppins'), // Updated
                                     ),
                                     trailing: Container(
                                       padding: const EdgeInsets.all(6),
@@ -546,6 +550,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                       fontSize: 12,
                                       color: Colors.grey,
                                       fontStyle: FontStyle.italic,
+                                      fontFamily: 'Poppins', // Updated
                                     ),
                                   ),
                                 ),
@@ -576,7 +581,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                             const Text(
                               "Detected Ingredients",
                               style: TextStyle(
-                                fontFamily: 'Orbitron',
+                                fontFamily: 'Exo', // Updated to Exo
                                 fontWeight: FontWeight.bold,
                                 fontSize: 20,
                                 color: Color(0xFF184E77),
@@ -630,7 +635,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                         Text(
                                           ingredient,
                                           style: const TextStyle(
-                                            fontFamily: 'Orbitron',
+                                            fontFamily: 'Poppins', // Updated to Poppins
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                             color: Color(0xFF184E77),
@@ -643,6 +648,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                             style: const TextStyle(
                                               fontSize: 11,
                                               color: Colors.grey,
+                                              fontFamily: 'Poppins', // Updated
                                             ),
                                           ),
                                       ],
@@ -677,7 +683,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                             const Text(
                               "Recipe Suggestions",
                               style: TextStyle(
-                                fontFamily: 'Orbitron',
+                                fontFamily: 'Exo', // Updated to Exo
                                 fontWeight: FontWeight.bold,
                                 fontSize: 20,
                                 color: Color(0xFF184E77),
@@ -710,7 +716,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 color: Colors.grey,
-                                                fontFamily: 'Orbitron',
+                                                fontFamily: 'Poppins', // Updated to Poppins
                                               ),
                                               textAlign: TextAlign.center,
                                             ),
@@ -747,7 +753,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.white,
-                                                    fontFamily: 'Orbitron',
+                                                    fontFamily: 'Exo', // Updated to Exo
                                                   ),
                                                 ),
                                               ),
@@ -757,7 +763,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                   padding: EdgeInsets.symmetric(vertical: 20),
                                                   child: Text(
                                                     'No recipes found',
-                                                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                                                    style: TextStyle(fontSize: 14, color: Colors.grey, fontFamily: 'Poppins'),
                                                     textAlign: TextAlign.center,
                                                   ),
                                                 )
@@ -834,6 +840,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                               fontSize: 10,
                                                                               color: Colors.white,
                                                                               fontWeight: FontWeight.bold,
+                                                                              fontFamily: 'Poppins', // Updated
                                                                             ),
                                                                           ),
                                                                         ],
@@ -856,7 +863,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                     const SizedBox(width: 4),
                                                                     Text(
                                                                       '~${recipe['cookingTime']}',
-                                                                      style: const TextStyle(fontSize: 12, color: Color(0xFF184E77)),
+                                                                      style: const TextStyle(fontSize: 12, color: Color(0xFF184E77), fontFamily: 'Poppins'),
                                                                     ),
                                                                   ],
                                                                 ),
@@ -867,7 +874,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                     fontWeight: FontWeight.bold,
                                                                     fontSize: 16,
                                                                     color: Color(0xFF184E77),
-                                                                    fontFamily: 'Orbitron',
+                                                                    fontFamily: 'Exo', // Updated to Exo
                                                                   ),
                                                                   maxLines: 2,
                                                                   overflow: TextOverflow.ellipsis,
@@ -875,7 +882,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                 const SizedBox(height: 8),
                                                                 Text(
                                                                   recipe['content'] ?? 'No description available',
-                                                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                                                  style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Poppins'),
                                                                   maxLines: 2,
                                                                   overflow: TextOverflow.ellipsis,
                                                                 ),
@@ -894,6 +901,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                         fontSize: 10,
                                                                         color: Colors.orange[700],
                                                                         fontWeight: FontWeight.w500,
+                                                                        fontFamily: 'Poppins', // Updated
                                                                       ),
                                                                     ),
                                                                   ),
@@ -911,6 +919,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                             style: const TextStyle(
                                                                               fontSize: 12,
                                                                               color: Colors.grey,
+                                                                              fontFamily: 'Poppins', // Updated
                                                                             ),
                                                                           ),
                                                                           if (recipe['matchingList'] != null && recipe['matchingList'].isNotEmpty)
@@ -920,6 +929,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                                 fontSize: 10,
                                                                                 color: Color(0xFF184E77),
                                                                                 fontWeight: FontWeight.w500,
+                                                                                fontFamily: 'Poppins', // Updated
                                                                               ),
                                                                               maxLines: 1,
                                                                               overflow: TextOverflow.ellipsis,
@@ -952,7 +962,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                         'View Recipe',
                                                                         style: TextStyle(
                                                                           fontSize: 12,
-                                                                          fontFamily: 'Orbitron',
+                                                                          fontFamily: 'Poppins', // Updated to Poppins
                                                                         ),
                                                                       ),
                                                                     ),
@@ -993,6 +1003,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                             fontSize: 12,
                             fontStyle: FontStyle.italic,
                             letterSpacing: 1.2,
+                            fontFamily: 'Poppins', // Updated
                           ),
                         ),
                       ),

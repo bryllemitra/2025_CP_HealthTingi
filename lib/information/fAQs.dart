@@ -137,7 +137,7 @@ class _FAQSPageState extends State<FAQSPage> {
                             Text(
                               'Frequently Asked',
                               style: TextStyle(
-                                fontFamily: 'Orbitron',
+                                fontFamily: 'Exo', // Updated to Exo
                                 fontWeight: FontWeight.bold,
                                 fontSize: 22,
                                 color: Colors.white,
@@ -153,7 +153,7 @@ class _FAQSPageState extends State<FAQSPage> {
                             Text(
                               'Questions',
                               style: TextStyle(
-                                fontFamily: 'Orbitron',
+                                fontFamily: 'Exo', // Updated to Exo
                                 fontWeight: FontWeight.bold,
                                 fontSize: 22,
                                 color: Colors.white,
@@ -222,7 +222,7 @@ class _FAQSPageState extends State<FAQSPage> {
                                                 Text(
                                                   faq['question'],
                                                   style: const TextStyle(
-                                                    fontFamily: 'Orbitron',
+                                                    fontFamily: 'Exo', // Updated to Exo
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 16,
                                                     color: Color(0xFF184E77),
@@ -232,7 +232,7 @@ class _FAQSPageState extends State<FAQSPage> {
                                                 Text(
                                                   faq['answer'],
                                                   style: const TextStyle(
-                                                    fontFamily: 'Exo',
+                                                    fontFamily: 'Poppins', // Updated to Poppins
                                                     fontSize: 14,
                                                     color: Color(0xFF184E77),
                                                     height: 1.5,
@@ -268,6 +268,7 @@ class _FAQSPageState extends State<FAQSPage> {
                                   fontSize: 12,
                                   fontStyle: FontStyle.italic,
                                   letterSpacing: 1.2,
+                                  fontFamily: 'Poppins', // Updated to Poppins
                                 ),
                               ),
                             ],

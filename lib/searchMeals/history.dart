@@ -320,6 +320,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color(0xFF184E77),
+                        fontFamily: 'Exo', // Updated to Exo
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -333,7 +334,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       Flexible(
                         child: Text(
                           "Est. ${recipe['cookingTime']}",
-                          style: const TextStyle(fontSize: 10, color: Colors.black54),
+                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -351,6 +352,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                             color: Colors.black54,
+                            fontFamily: 'Exo', // Updated to Exo for price emphasis
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -365,6 +367,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       style: const TextStyle(
                         fontSize: 10,
                         color: Colors.black54,
+                        fontFamily: 'Poppins', // Updated to Poppins
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -377,6 +380,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       style: const TextStyle(
                         fontSize: 10,
                         color: Colors.black54,
+                        fontFamily: 'Poppins', // Updated to Poppins
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -411,6 +415,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
+                        fontFamily: 'Poppins', // Updated to Poppins
                       ),
                     ),
                   ),
@@ -466,17 +471,11 @@ class _HistoryPageState extends State<HistoryPage> {
                         ),
                         child: TextField(
                           controller: searchController,
-                          decoration: InputDecoration(
+                          style: const TextStyle(fontFamily: 'Poppins'), // Updated
+                          decoration: const InputDecoration(
                             hintText: 'Search your completed recipes',
-                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54),
-                            suffixIcon: searchController.text.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear, color: Color(0xFF184E77)),
-                                    onPressed: () {
-                                      searchController.clear();
-                                    },
-                                  )
-                                : const Icon(Icons.search, color: Color(0xFF184E77)),
+                            hintStyle: TextStyle(fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'), // Updated
+                            suffixIcon: Icon(Icons.search, color: Color(0xFF184E77)),
                             border: InputBorder.none,
                           ),
                         ),
@@ -492,14 +491,14 @@ class _HistoryPageState extends State<HistoryPage> {
                         ? Center(
                             child: Text(
                               errorMessage!,
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
                             ),
                           )
                         : historyRecipes.isEmpty
                             ? const Center(
                                 child: Text(
                                   'No completed recipes yet',
-                                  style: TextStyle(color: Colors.white),
+                                  style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
                                 ),
                               )
                             : GridView.builder(

@@ -308,6 +308,7 @@ class _UserCustomPageState extends State<UserCustomPage> {
                         fontWeight: FontWeight.bold, 
                         fontSize: 14,
                         color: Color(0xFF184E77),
+                        fontFamily: 'Exo', // Updated to Exo
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -321,7 +322,7 @@ class _UserCustomPageState extends State<UserCustomPage> {
                       Flexible(
                         child: Text(
                           "Est. ${meal['cookingTime']}",
-                          style: const TextStyle(fontSize: 10, color: Colors.black54),
+                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -339,6 +340,7 @@ class _UserCustomPageState extends State<UserCustomPage> {
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                             color: Colors.black54,
+                            fontFamily: 'Exo', // Updated to Exo for price emphasis
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -375,6 +377,7 @@ class _UserCustomPageState extends State<UserCustomPage> {
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
+                        fontFamily: 'Poppins', // Updated to Poppins
                       ),
                     ),
                   ),
@@ -430,9 +433,10 @@ class _UserCustomPageState extends State<UserCustomPage> {
                         ),
                         child: TextField(
                           controller: _searchController,
+                          style: const TextStyle(fontFamily: 'Poppins'), // Updated
                           decoration: InputDecoration(
                             hintText: 'Search ${_getTitle().toLowerCase()}',
-                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54),
+                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'), // Updated
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear, color: Color(0xFF184E77)),
@@ -456,16 +460,29 @@ class _UserCustomPageState extends State<UserCustomPage> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
+                      return Center(
+                        child: Text(
+                          'Error: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                        ),
+                      );
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text('No customized meals available', style: TextStyle(color: Colors.white)));
+                      return const Center(
+                        child: Text(
+                          'No customized meals available',
+                          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                        ),
+                      );
                     }
 
                     var filteredMeals = _filterMealsByName(snapshot.data!, _searchQuery);
 
                     if (filteredMeals.isEmpty) {
                       return const Center(
-                        child: Text('No meals found matching your criteria', style: TextStyle(color: Colors.white)),
+                        child: Text(
+                          'No meals found matching your criteria',
+                          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                        ),
                       );
                     }
 

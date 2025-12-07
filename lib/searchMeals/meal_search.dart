@@ -198,7 +198,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
     }
   }
 
-  // ... (rest of the file remains exactly the same: _toggleFavorite, _onSearchChanged, build, etc.)
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text.toLowerCase();
@@ -434,6 +433,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color(0xFF184E77),
+                        fontFamily: 'Exo', // Updated to Exo
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -447,7 +447,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                       Flexible(
                         child: Text(
                           "Est. ${meal['cookingTime']}",
-                          style: const TextStyle(fontSize: 10, color: Colors.black54),
+                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -465,6 +465,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                             color: Colors.black54,
+                            fontFamily: 'Exo', // Updated to Exo for price
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -501,6 +502,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
+                        fontFamily: 'Poppins', // Updated to Poppins
                       ),
                     ),
                   ),
@@ -569,6 +571,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   fontWeight: FontWeight.bold,
                   fontSize: 11,
                   color: Color(0xFF184E77),
+                  fontFamily: 'Exo', // Updated to Exo
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -584,6 +587,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 fontSize: 10,
                 color: Colors.grey[700],
                 fontWeight: FontWeight.w500,
+                fontFamily: 'Exo', // Updated to Exo for price
               ),
             ),
           ),
@@ -617,6 +621,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   fontSize: 9,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.3,
+                  fontFamily: 'Poppins', // Updated to Poppins
                 ),
               ),
             ),
@@ -644,6 +649,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: Colors.white,
+                  fontFamily: 'Exo', // Updated to Exo
                   shadows: [
                     Shadow(
                       color: Colors.black26,
@@ -667,7 +673,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 },
                 child: const Text(
                   "Browse All",
-                  style: TextStyle(fontSize: 12, color: Colors.white70),
+                  style: TextStyle(fontSize: 12, color: Colors.white70, fontFamily: 'Poppins'), // Updated to Poppins
                 ),
               ),
             ],
@@ -700,6 +706,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
               fontWeight: FontWeight.bold,
               fontSize: 18,
               color: Colors.white,
+              fontFamily: 'Exo', // Updated to Exo
               shadows: [
                 Shadow(
                   color: Colors.black26,
@@ -758,8 +765,10 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   ),
                   child: TextField(
                     controller: _searchController,
+                    style: const TextStyle(fontFamily: 'Poppins'), // Updated
                     decoration: const InputDecoration(
                       hintText: 'Search meals or ingredients...',
+                      hintStyle: TextStyle(fontFamily: 'Poppins'), // Updated
                       suffixIcon: Icon(Icons.search, color: Color(0xFF184E77)),
                       border: InputBorder.none,
                     ),
@@ -830,7 +839,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                               const Center(
                                 child: Padding(
                                   padding: EdgeInsets.all(16.0),
-                                  child: Text("No meals or ingredients found matching your search", style: TextStyle(color: Colors.white)),
+                                  child: Text("No meals or ingredients found matching your search", style: TextStyle(color: Colors.white, fontFamily: 'Poppins')), // Updated
                                 ),
                               ),
 
@@ -852,6 +861,8 @@ class _MealSearchPageState extends State<MealSearchPage> {
         selectedItemColor: const Color(0xFF184E77),
         unselectedItemColor: const Color(0xFF184E77).withOpacity(0.7),
         currentIndex: 2,
+        selectedLabelStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontFamily: 'Poppins'),
         onTap: (index) {
           switch (index) {
             case 0:

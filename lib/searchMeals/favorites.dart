@@ -311,6 +311,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     child: Text(
                       recipe['mealName'],
                       style: const TextStyle(
+                        fontFamily: 'Exo', // Updated to Exo
                         fontWeight: FontWeight.bold, 
                         fontSize: 14,
                         color: Color(0xFF184E77),
@@ -327,7 +328,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                       Flexible(
                         child: Text(
                           "Est. ${recipe['cookingTime']}",
-                          style: const TextStyle(fontSize: 10, color: Colors.black54),
+                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'), // Updated
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -345,6 +346,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                             color: Colors.black54,
+                            fontFamily: 'Exo', // Updated to Exo
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -381,6 +383,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
+                        fontFamily: 'Poppins', // Updated
                       ),
                     ),
                   ),
@@ -436,9 +439,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         ),
                         child: TextField(
                           controller: searchController,
+                          style: const TextStyle(fontFamily: 'Poppins'), // Updated
                           decoration: InputDecoration(
                             hintText: 'Search your favorite recipes',
-                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54),
+                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'), // Updated
                             suffixIcon: searchController.text.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear, color: Color(0xFF184E77)),
@@ -462,14 +466,14 @@ class _FavoritesPageState extends State<FavoritesPage> {
                         ? Center(
                             child: Text(
                               errorMessage!,
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
                             ),
                           )
                         : favoriteRecipes.isEmpty
                             ? const Center(
                                 child: Text(
                                   'No favorites yet',
-                                  style: TextStyle(color: Colors.white),
+                                  style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
                                 ),
                               )
                             : GridView.builder(
