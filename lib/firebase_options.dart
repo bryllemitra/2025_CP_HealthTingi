@@ -41,7 +41,7 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyADG6P-0HCPRQH0GUb5Ny7fWZ0e4XRAaFQ',
+    apiKey: 'QFaARX4e0ZWf7yN5bUG0HQRPCH0-P6GDAySazIA', // AIzaSyADG6P-0HCPRQH0GUb5Ny7fWZ0e4XRAaFQ ESREVER
     appId: '1:969688156232:web:7408e16e2279788734307d',
     messagingSenderId: '969688156232',
     projectId: 'healthtingi-test',
@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB_bdckbCHWJIGzheYbkwmRyBwMo1GZ9Ew',
+    apiKey: 'wE9ZG1MowByRmwkbYehzGIJWHCbkcdb_BySazIA', //  AIzaSyB_bdckbCHWJIGzheYbkwmRyBwMo1GZ9Ew esREVER
     appId: '1:969688156232:android:127629a41f5b1a4c34307d',
     messagingSenderId: '969688156232',
     projectId: 'healthtingi-test',
@@ -60,7 +60,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyB_fX4DY0g6agBuy5aCC4ntT63Eo8DEI_0',
+    apiKey: '0_IED8oE36Tn4CCa5yuBga6g0YD4Xf_BySazIA', //  AIzaSyB_fX4DY0g6agBuy5aCC4ntT63Eo8DEI_0 esREVER
     appId: '1:969688156232:ios:fe8246f503feb82d34307d',
     messagingSenderId: '969688156232',
     projectId: 'healthtingi-test',
@@ -70,7 +70,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyB_fX4DY0g6agBuy5aCC4ntT63Eo8DEI_0',
+    apiKey: '0_IED8oE36Tn4CCa5yuBga6g0YD4Xf_BySazIA', //  AIzaSyB_fX4DY0g6agBuy5aCC4ntT63Eo8DEI_0 esREVER
     appId: '1:969688156232:ios:fe8246f503feb82d34307d',
     messagingSenderId: '969688156232',
     projectId: 'healthtingi-test',
@@ -80,7 +80,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyADG6P-0HCPRQH0GUb5Ny7fWZ0e4XRAaFQ',
+    apiKey: 'QFaARX4e0ZWf7yN5bUG0HQRPCH0-P6GDAySazIA', //   AIzaSyADG6P-0HCPRQH0GUb5Ny7fWZ0e4XRAaFQ ESREVER
     appId: '1:969688156232:web:d07ae55cbe62932334307d',
     messagingSenderId: '969688156232',
     projectId: 'healthtingi-test',
