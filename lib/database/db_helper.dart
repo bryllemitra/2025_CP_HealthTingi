@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:flutter/services.dart';
@@ -34,14 +35,13 @@ class DatabaseHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
-    // Create tables in proper order considering foreign key dependencies
+    await _createUsersTable(db);           // <--- Was missing!
     await _createIngredientsTable(db);
     await _createMealsTable(db);
-    await _createMealIngredientsTable(db);
-    await _createUsersTable(db);
-    await _createFaqsTable(db);
+    await _createMealIngredientsTable(db); // <--- This was the cause of your crash!
+    await _createFaqsTable(db);            // <--- Was missing!
     await _createAboutUsTable(db);
-    // New tables for substitutions
+
     await db.execute('''
       CREATE TABLE unit_conversions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -93,11 +93,18 @@ class DatabaseHelper {
         FOREIGN KEY (user_id) REFERENCES users(id)
       )
     ''');
+    await _insertInitialData(db); 
+    
+    // Admin User
     await _insertAdminUser(db);
-    await _insertInitialData(db);
+    
+    // Content Pages
     await _insertInitialFaqs(db);
     await _insertInitialAboutUs(db);
-    //await _insertCompleteSubstitutionData(db);
+    
+    // Logic Data
+    await _insertUnitConversions(db); 
+    await _insertCompleteSubstitutionData(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -2492,7 +2499,7 @@ class DatabaseHelper {
       'calories': 250,
       'servings': 2,
       'cookingTime': '25 minutes',
-      'mealPicture': 'assets/ginataang_kalabasa.jpg',
+      'mealPicture': 'assets/meals/ginataang_kalabasa.webp',
       'category': 'Vegetable, Main Dish',
       'content': 'Creamy coconut-based stew with squash and string beans.',
       'instructions': '''
@@ -2719,6 +2726,3321 @@ class DatabaseHelper {
       'unit': 'clove',
       'content': 'optional, minced'
     });
+
+    final stirfryId = await db.insert('meals', {
+        'mealName': 'Stirfry Alugbati',
+        'price': 45.0, 
+        'calories': 150, 
+        'servings': 4,
+        'cookingTime': '10 minutes',
+        'mealPicture': 'assets/meals/Stir_Fry_Alugbati.jpg',
+        'category': 'side dish, vegetable',
+        'content': 'Simple, quick stir-fried Indian spinach (Alugbati) leaves sautéed in butter and seasoned with garlic and salt.',
+        'instructions': '''
+      1. Wash the alugbati leaves, drain, and dry on a piece of cloth. Make sure there is no water left on the leaves to avoid a watery stir-fry.
+      2. Heat a pan over medium-high heat. Sauté garlic in butter.
+      3. Add the alugbati leaves and stir-fry. Season with salt and pepper to taste.
+      4. Serve immediately.
+      ''',
+        'hasDietaryRestrictions': 'low calorie, low fat (if using minimal butter)',
+        'availableFrom': '10:00',
+        'availableTo': '14:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': stirfryId,
+        'ingredientID': 255, 
+        'quantity': 1,
+        'unit': 'bunch',
+        'content': 'washed, drained, and dried'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': stirfryId,
+        'ingredientID': 152,
+        'quantity': 2,
+        'unit': 'cloves',
+        'content': 'minced or sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': stirfryId,
+        'ingredientID': 232,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': stirfryId,
+        'ingredientID': 22, 
+        'quantity': 1,
+        'unit': 'tbsp',
+        'content': 'for sautéing'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': stirfryId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'optional, to taste'
+      });
+
+      final saladId = await db.insert('meals', {
+        'mealName': 'Alugbati Salad',
+        'price': 75.0, 
+        'calories': 200, 
+        'servings': 4,
+        'cookingTime': '10 minutes',
+        'mealPicture': 'assets/meals/Alugbati_Salad.jpg',
+        'category': 'salad, side dish, vegetable',
+        'content': 'A refreshing Filipino-style salad featuring Alugbati leaves, ripe tomatoes, onions, and salty egg, dressed with olive oil and calamansi juice.',
+        'instructions': '''
+      1. Wash the alugbati, tomatoes, and onions. Drain and dry on a piece of cloth. Chop the vegetables and salted egg to your desired size.
+      2. For the dressing, mix a teaspoon of extra virgin olive oil with the lemon or calamansi juice.
+      3. Toss the chopped vegetables and salted egg with the dressing.
+      4. Season with salt to taste. Serve immediately.
+      ''',
+        'hasDietaryRestrictions': 'low carbohydrate',
+        'availableFrom': '11:00',
+        'availableTo': '14:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': saladId,
+        'ingredientID': 255, 
+        'quantity': 1,
+        'unit': 'bunch',
+        'content': 'washed, drained, and chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': saladId,
+        'ingredientID': 125,
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': saladId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'small',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': saladId,
+        'ingredientID': 138, 
+        'quantity': 1,
+        'unit': 'tbsp',
+        'content': 'lemon juice or calamansi juice'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': saladId,
+        'ingredientID': 232,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+      final tempuraId = await db.insert('meals', {
+        'mealName': 'Tempura Alugbati',
+        'price': 80.0, 
+        'calories': 350, 
+        'servings': 4,
+        'cookingTime': '15 minutes',
+        'mealPicture': 'assets/meals/Tempura_Alugbati.jpg',
+        'category': 'appetizer, side dish, deep-fried',
+        'content': 'Crispy Alugbati leaves deep-fried in a traditional, light tempura batter made extra crisp with ice-cold water and cornstarch.',
+        'instructions': '''
+      1. Wash the alugbati leaves, drain, and dry on a piece of cloth. Dredge the leaves in cornstarch.
+      2. For the batter, combine 1 cup cornstarch, salt, pepper, egg, and enough water to achieve a smooth consistency. Add 2–3 ice cubes.
+      3. Heat oil in a deep pan. Dip the dredged alugbati leaves into the batter and deep fry for about 1 minute, or until crispy.
+      4. Drain excess oil using a strainer lined with a kitchen towel.
+      5. Serve immediately.
+      ''',
+        'hasDietaryRestrictions': 'deep-fried, high oil content',
+        'availableFrom': '15:00',
+        'availableTo': '18:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': tempuraId,
+        'ingredientID': 255, 
+        'quantity': 1,
+        'unit': 'bunch',
+        'content': 'leaves, washed, drained, and dried'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tempuraId,
+        'ingredientID': 248, 
+        'quantity': 1,
+        'unit': 'cup',
+        'content': 'for the batter, plus extra for dredging'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tempuraId,
+        'ingredientID': 232,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tempuraId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tempuraId,
+        'ingredientID': 177,
+        'quantity': 1,
+        'unit': 'medium',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tempuraId,
+        'ingredientID': 237, // Oil
+        'quantity': null,
+        'unit': null,
+        'content': 'for frying'
+      });
+
+      final ampalayaId = await db.insert('meals', {
+        'mealName': 'Ginisang Ampalaya',
+        'price': 90.0, 
+        'calories': 152, 
+        'servings': 4,
+        'cookingTime': '20 minutes',
+        'mealPicture': 'assets/meals/Ginisang_Ampalaya.jpg',
+        'category': 'main dish, vegetable, stir-fry',
+        'content': 'Sautéed bitter melon (ampalaya) with tomatoes and onions, quickly scrambled with eggs for a nutritious Filipino vegetable dish.',
+        'instructions': '''
+      1. Place the ampalaya in a large bowl.
+      2. Add salt and lukewarm water (about 18 oz), then leave for 5 minutes.
+      3. Transfer the ampalaya to a cheesecloth and squeeze tightly until all liquid drips out to reduce bitterness.
+      4. Heat the pan and add cooking oil.
+      5. Sauté the garlic, onion, and tomato.
+      6. Add the ampalaya and mix well with the sautéed ingredients.
+      7. Season with salt and pepper to taste.
+      8. Beat the eggs and pour over the ampalaya; let the eggs cook partially.
+      9. Mix the eggs with the other ingredients.
+      10. Serve hot. Enjoy!
+      ''',
+        'hasDietaryRestrictions': 'low carbohydrate, high fiber',
+        'availableFrom': '17:00',
+        'availableTo': '21:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaId,
+        'ingredientID': 152, 
+        'quantity': 1,
+        'unit': 'tbsp',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaId,
+        'ingredientID': 233, 
+        'quantity': 0.5,
+        'unit': 'tsp',
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaId,
+        'ingredientID': 232, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaId,
+        'ingredientID': 177, 
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': 'beaten'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaId,
+        'ingredientID': 125, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'sliced or chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaId,
+        'ingredientID': 237, 
+        'quantity': 3,
+        'unit': 'tbs',
+        'content': null
+      });
+
+      final stuffedAmpalayaId = await db.insert('meals', {
+        'mealName': 'Stuffed Ampalaya',
+        'price': 150.0,
+        'calories': 380, 
+        'servings': 4,
+        'cookingTime': '30 minutes',
+        'mealPicture': 'assets/meals/Stuffed_Ampalaya.jpg',
+        'category': 'main dish, baked, pork',
+        'content': 'Ampalaya slices stuffed with a savory mixture of ground pork, carrots, and spices, then baked until tender.',
+        'instructions': '''
+      1. Preheat oven to 375 degrees Fahrenheit.
+      2. In a large bowl, combine ground pork, onion, carrots, shredded bread, salt, pepper, garlic powder, paprika, and egg. Mix well. Set aside.
+      3. Stuff the mixture into the ampalaya slices.
+      4. Grease a baking pan, and arrange the stuffed ampalaya.
+      5. Place inside the oven, and bake for 22 to 26 minutes, or until the meat is cooked.
+      6. Transfer to a serving plate.
+      7. Serve. Share and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high protein, pork content',
+        'availableFrom': '18:00',
+        'availableTo': '22:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': stuffedAmpalayaId,
+        'ingredientID': 260, 
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': 'halved and deseeded'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': stuffedAmpalayaId,
+        'ingredientID': 40, 
+        'quantity': 1,
+        'unit': 'lb',
+        'content': 'ground pork'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': stuffedAmpalayaId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': stuffedAmpalayaId,
+        'ingredientID': 120,
+        'quantity': 0.75,
+        'unit': 'cup',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': stuffedAmpalayaId,
+        'ingredientID': 232, 
+        'quantity': 1,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': stuffedAmpalayaId,
+        'ingredientID': 233, 
+        'quantity': 0.5,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': stuffedAmpalayaId,
+        'ingredientID': 177, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'for binding the filling'
+      });
+
+      final ampalayaSaladId = await db.insert('meals', {
+        'mealName': 'Ampalaya Salad',
+        'price': 65.0, 
+        'calories': 120, 
+        'servings': 3,
+        'cookingTime': '1 minute',
+        'mealPicture': 'assets/meals/Ampalaya_Salad.jpg',
+        'category': 'salad, side dish, vegetable',
+        'content': 'A simple, tart, and refreshing Filipino bitter gourd salad featuring a simple dressing and fresh vegetables.',
+        'instructions': '''
+      1. Rub the salt all over the sliced bitter gourd. Let it sit for 30 minutes.
+      2. Rinse quickly under running water to remove the salt, then drain excess liquid.
+      3. Combine vinegar, ground black pepper, sugar, and extra salt (if needed) in a bowl. Stir well.
+      4. Add the bitter gourd, onion, and tomato into the bowl. Mix thoroughly.
+      5. Cover the bowl with cling wrap and refrigerate for about 3 hours.
+      6. Serve as a side dish for fried fish. Share and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'low calorie, low fat',
+        'availableFrom': '11:00',
+        'availableTo': '14:00'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaSaladId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'thinly sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaSaladId,
+        'ingredientID': 125, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'diced and seeds removed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaSaladId,
+        'ingredientID': 233,
+        'quantity': 0.5,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaSaladId,
+        'ingredientID': 228,
+        'quantity': 1,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaSaladId,
+        'ingredientID': 232, 
+        'quantity': 1,
+        'unit': 'tablespoon',
+        'content': 'for rubbing'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaSaladId,
+        'ingredientID': 232,
+        'quantity': null,
+        'unit': null,
+        'content': 'extra salt to taste (for dressing)'
+      });
+
+      final ampalayaConCarneId = await db.insert('meals', {
+        'mealName': 'Ampalaya Con Carne',
+        'price': 130.0, 
+        'calories': 280, 
+        'servings': 3,
+        'cookingTime': '15 minutes',
+        'mealPicture': 'assets/meals/Ampalaya_Con_Carne.jpg',
+        'category': 'main dish, beef, stir-fry',
+        'content': 'Tender beef sirloin and crunchy bitter gourd (ampalaya) stir-fried in a savory brown sauce.',
+        'instructions': '''
+      1. Combine the beef sirloin, ground black pepper, soy sauce, sesame oil, and oyster sauce. Mix well. Add cornstarch and continue mixing until everything is well coated. Marinate for 10 minutes.
+      2. Heat oil in a cooking pot. Add the marinated beef slices and cook each side for 30 seconds. Stir-fry the beef for 3 minutes. Set aside.
+      3. Sauté the ginger and garlic using the remaining oil. Add onion and cook until it softens.
+      4. Add the ampalaya to the pan and cook for 1 minute.
+      5. Return the beef to the pan. Add water (0.75 cup), cover, and let it boil. Cook over medium heat for 5 minutes.
+      6. Transfer to a serving bowl. Serve!
+      ''',
+        'hasDietaryRestrictions': 'high protein, low-carb friendly',
+        'availableFrom': '17:00',
+        'availableTo': '21:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaConCarneId,
+        'ingredientID': 39, 
+        'quantity': 0.5,
+        'unit': 'lb',
+        'content': 'sliced into thin pieces'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaConCarneId,
+        'ingredientID': 149,
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaConCarneId,
+        'ingredientID': 237, 
+        'quantity': 3,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaConCarneId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'for marinade'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaConCarneId,
+        'ingredientID': 240,
+        'quantity': null,
+        'unit': null,
+        'content': 'for marinade'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaConCarneId,
+        'ingredientID': 248,
+        'quantity': null,
+        'unit': null,
+        'content': 'for coating beef'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaConCarneId,
+        'ingredientID': 153, 
+        'quantity': null,
+        'unit': null,
+        'content': 'for sauté'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ampalayaConCarneId,
+        'ingredientID': 152, 
+        'quantity': null,
+        'unit': null,
+        'content': 'for sauté'
+      });
+
+      final sardinasAmpalayaId = await db.insert('meals', {
+        'mealName': 'Ginisang Sardinas with Ampalaya',
+        'price': 70.0, 
+        'calories': 250,
+        'servings': 3,
+        'cookingTime': '12 minutes',
+        'mealPicture': 'assets/meals/Ginisang_Sardinas_with_Ampalaya.jpg',
+        'category': 'main dish, fish, stir-fry, budget-friendly',
+        'content': 'Sautéed sardines in tomato sauce combined with bitter gourd (ampalaya), garlic, and onion, seasoned with fish sauce.',
+        'instructions': '''
+      1. Heat oil (3 tablespoons) in a cooking pot.
+      2. Sauté crushed garlic (5 cloves) and onion (1 medium) until the garlic starts to turn light brown.
+      3. Add the sliced bitter melon (1 medium) and continue to sauté for 2 minutes.
+      4. Pour the contents of the large can of sardines in tomato sauce and gently stir.
+      5. Add ground black pepper (1/8 teaspoon) and fish sauce (2 teaspoons). Cover and cook on medium heat for 2 to 3 minutes.
+      6. Transfer to a serving plate and top with chopped scallions and toasted garlic.
+      7. Serve. Share and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high sodium (due to canned fish/sauce), fish content',
+        'availableFrom': '12:00',
+        'availableTo': '18:00'
+      });
+
+ 
+      await db.insert('meal_ingredients', {
+        'mealID': sardinasAmpalayaId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': sardinasAmpalayaId,
+        'ingredientID': 152, 
+        'quantity': 5,
+        'unit': 'cloves',
+        'content': 'crushed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': sardinasAmpalayaId,
+        'ingredientID': 233, 
+        'quantity': 0.125, 
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': sardinasAmpalayaId,
+        'ingredientID': 239, 
+        'quantity': 2,
+        'unit': 'teaspoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': sardinasAmpalayaId,
+        'ingredientID': 237,
+        'quantity': 3,
+        'unit': 'tablespoons',
+        'content': null
+      });
+
+  
+      final atcharaId = await db.insert('meals', {
+        'mealName': 'Atchara',
+        'price': 180.0, 
+        'calories': 174, 
+        'servings': 12, 
+        'cookingTime': '20 minutes',
+        'mealPicture': 'assets/meals/Atchara.jpg',
+        'category': 'condiment, side dish, pickled, vegetable',
+        'content': 'A traditional Filipino relish made from pickled grated green papaya, carrots, bell peppers, and raisins in a sweet and sour brine.',
+        'instructions': '''
+      1. Place the julienned papaya in a large bowl and add 1/4 cup salt. Mix until well distributed.
+      2. Cover the bowl and refrigerate overnight to dehydrate the papaya (Prep time is actually much longer due to overnight refrigeration).
+      3. Place the papaya in a colander or strainer, then rinse with running water.
+      4. Put the rinsed papaya inside a cheesecloth (or any clean cloth) and squeeze until all liquid comes out.
+      5. Place the papaya back into the large bowl and add the carrots, garlic, ginger, onions, whole peppercorn, bell pepper, and raisins. Mix well.
+      6. Heat a saucepan and pour in the vinegar (2 cups). Bring to a boil.
+      7. Add the sugar (1 1/3 cups) and 1 1/2 teaspoons salt. Stir until fully dissolved.
+      8. Turn off the heat and let the syrup cool until it is safe to handle.
+      9. Place the mixed vegetables and spices into a sterilized airtight jar, then pour the cooled syrup over them.
+      10. Seal the jar and refrigerate for at least 5 days (one week for best flavor and texture).
+      11. Serve cold with fried dishes. Share and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high sugar, low fat, contains vinegar',
+        'availableFrom': '10:00', 
+        'availableTo': '20:00'
+      });
+
+
+      await db.insert('meal_ingredients', {
+        'mealID': atcharaId,
+        'ingredientID': 120, 
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': 'julienned'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': atcharaId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'thinly sliced lengthwise'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': atcharaId,
+        'ingredientID': 152,
+        'quantity': 10,
+        'unit': 'cloves',
+        'content': 'thinly sliced'
+      });
+     
+      await db.insert('meal_ingredients', {
+        'mealID': atcharaId,
+        'ingredientID': 153,
+        'quantity': 1,
+        'unit': 'knob',
+        'content': 'cut into thin strips'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': atcharaId,
+        'ingredientID': 232, 
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': 'for dehydrating papaya'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': atcharaId,
+        'ingredientID': 232, 
+        'quantity': 1.5,
+        'unit': 'teaspoons',
+        'content': 'for the brine/syrup'
+      });
+     
+      await db.insert('meal_ingredients', {
+        'mealID': atcharaId,
+        'ingredientID': 228, 
+        'quantity': 1.33, 
+        'unit': 'cups',
+        'content': null
+      });
+      
+
+      final baguioBeansId = await db.insert('meals', {
+        'mealName': 'Ginisang Baguio Beans with Pork',
+        'price': 110.0, 
+        'calories': 260, 
+        'servings': 4,
+        'cookingTime': '20 minutes',
+        'mealPicture': 'assets/meals/Ginisang_Baguio_Beans_with_Pork.jpg',
+        'category': 'main dish, pork, vegetable, stir-fry',
+        'content': 'Sautéed long green beans (Baguio beans) and ground pork seasoned with fish sauce, a classic Filipino staple.',
+        'instructions': '''
+      1. Heat the oil (2 tablespoons) in a pan.
+      2. Sauté the onion (1 medium), garlic (1 teaspoon), and plum tomato (1 medium).
+      3. Add the ground pork (1/2 lb.) once the tomato softens. Continue sautéing until the pork turns light to medium brown and is fully cooked.
+      4. Add the fish sauce (1 1/2 tablespoons) and ground black pepper (1/4 teaspoon). Stir well.
+      5. Add the sliced beans (1 lb.). Toss and continue to sauté for 5 minutes.
+      6. Transfer to a serving plate. Serve.
+      7. Share and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high protein, high fiber',
+        'availableFrom': '17:00',
+        'availableTo': '21:00'
+      });
+
+    
+      await db.insert('meal_ingredients', {
+        'mealID': baguioBeansId,
+        'ingredientID': 40, 
+        'quantity': 0.5,
+        'unit': 'lb',
+        'content': 'ground pork'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baguioBeansId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baguioBeansId,
+        'ingredientID': 152, 
+        'quantity': 1,
+        'unit': 'teaspoon',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baguioBeansId,
+        'ingredientID': 125, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'diced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baguioBeansId,
+        'ingredientID': 239,
+        'quantity': 1.5,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baguioBeansId,
+        'ingredientID': 233, 
+        'quantity': 0.25,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baguioBeansId,
+        'ingredientID': 237,
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': null
+      });
+
+      final baconBeansId = await db.insert('meals', {
+        'mealName': 'Sauteed Baguio Beans with Bacon',
+        'price': 120.0, 
+        'calories': 300, 
+        'servings': 3,
+        'cookingTime': '10 minutes',
+        'mealPicture': 'assets/meals/Sauteed_Baguio_Beans_with_Bacon.jpg',
+        'category': 'main dish, side dish, pork, vegetable',
+        'content': 'Long green beans sautéed with crispy bacon, garlic, and onion, seasoned with soy sauce, salt, and pepper.',
+        'instructions': '''
+      1. Sauté the bacon (1/4 kilo) in a preheated pan until the fat is rendered or the bacon is crispy.
+      2. Add the onion (1 medium) and garlic (2 cloves), and sauté for 2 minutes.
+      3. Add the green beans (1/2 kilo) and soy sauce (2 tablespoons), and cook for another 5 minutes.
+      4. Season with salt and pepper to taste.
+      5. Serve warm.
+      ''',
+        'hasDietaryRestrictions': 'high fat (bacon), pork content',
+        'availableFrom': '17:00',
+        'availableTo': '21:00'
+ 
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baconBeansId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baconBeansId,
+        'ingredientID': 152, 
+        'quantity': 2,
+        'unit': 'cloves',
+        'content': 'minced or crushed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baconBeansId,
+        'ingredientID': 240, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baconBeansId,
+        'ingredientID': 232,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': baconBeansId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+      final cheesyBeansId = await db.insert('meals', {
+        'mealName': 'Cheesy Ginisang Baguio Beans',
+        'price': 140.0,
+        'calories': 320, 
+        'servings': 5,
+        'cookingTime': '10 minutes',
+        'mealPicture': 'assets/meals/Cheesy_Ginisang_Baguio_Beans.jpg',
+        'category': 'side dish, vegetable, stir-fry',
+        'content': 'Sautéed Baguio beans with garlic, butter, and a hint of sweetness, traditionally finished with cheese for a savory, creamy vegetable dish.',
+        'instructions': '''
+      1. In a large frying pan over medium heat, sauté garlic in oil (2 tablespoons). Once the garlic lightly browns, add brown sugar (1/2 teaspoon) and stir.
+      2. Add Baguio beans (500 grams) to the pan. Crumble in the chicken bouillon cube and mix well. Stir-fry until the beans are evenly green and slightly crunchy.
+      3. Season with ground black pepper (to taste) and add butter (2 tablespoons), stirring until melted.
+      4. Add grated cheddar cheese (85 grams) and stir until the cheese is evenly distributed.
+      5. Serve hot.
+      ''',
+        'hasDietaryRestrictions': 'vegetarian friendly (if no bouillon/subbed)',
+        'availableFrom': '17:00',
+        'availableTo': '21:00'
+      });
+
+      // Insert Cheesy Ginisang Baguio Beans ingredients
+      // NOTE: Cheddar Cheese and Chicken Bouillon Cube are omitted due to missing Ingredient IDs.
+      await db.insert('meal_ingredients', {
+        'mealID': cheesyBeansId,
+        'ingredientID': 237, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': 'for sautéing'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cheesyBeansId,
+        'ingredientID': 152, 
+        'quantity': 1,
+        'unit': 'head',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cheesyBeansId,
+        'ingredientID': 227, 
+        'quantity': 0.5,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cheesyBeansId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cheesyBeansId,
+        'ingredientID': 22, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': null
+      });
+
+      final spicyCoconutPorkId = await db.insert('meals', {
+        'mealName': 'Ground Pork and Baguio Beans in Spicy Coconut Sauce',
+        'price': 160.0,
+        'calories': 350, 
+        'servings': 4, 
+        'cookingTime': '1 hour',
+        'mealPicture': 'assets/meals/Ground_Pork_and_Baguio_Beans_in_Spicy_Coconut_Sauce.jpg',
+        'category': 'main dish, pork, spicy, coconut',
+        'content': 'Ground pork and Baguio beans cooked in a rich and spicy coconut cream sauce with fish sauce and bird\'s eye chili.',
+        'instructions': '''
+      1. In a saucepan, sauté garlic (2 cloves) in oil. Add ground pork (1/2 kilo) and water (1/2 cup). Simmer until almost all the water has evaporated, about 10–15 minutes.
+      2. Add Baguio beans (2 bundles), fish sauce (1 tablespoon), black pepper (to taste), coconut cream (1 cup), and siling labuyo (2 pieces). Simmer until the beans are cooked.
+      3. Serve immediately with white rice.
+      ''',
+        'hasDietaryRestrictions': 'pork content, high fat (coconut cream), spicy',
+        'availableFrom': '17:00',
+        'availableTo': '22:00'
+      });
+
+   
+      await db.insert('meal_ingredients', {
+        'mealID': spicyCoconutPorkId,
+        'ingredientID': 152, 
+        'quantity': 2,
+        'unit': 'cloves',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': spicyCoconutPorkId,
+        'ingredientID': 40, 
+        'quantity': 0.5,
+        'unit': 'kilo',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': spicyCoconutPorkId,
+        'ingredientID': 239,
+        'quantity': 1,
+        'unit': 'tablespoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': spicyCoconutPorkId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': spicyCoconutPorkId,
+        'ingredientID': 246, 
+        'quantity': 1,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': spicyCoconutPorkId,
+        'ingredientID': 236, 
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': 'chopped'
+      });
+      // Water (1/2 cup) is omitted as it is a cooking liquid
+
+
+      final bananaBreadId = await db.insert('meals', {
+        'mealName': 'Banana Bread',
+        'price': 220.0, 
+        'calories': 359, 
+        'servings': 6,
+        'cookingTime': '1 hour',
+        'mealPicture': 'assets/meals/Banana_Bread.jpg',
+        'category': 'dessert, snack, baked goods',
+        'content': 'A classic, moist banana bread loaf made with mashed ripe bananas, perfect for a snack or dessert.',
+        'instructions': '''
+      1. Preheat the oven to 350°F (175°C).
+      2. In a bowl, combine all dry ingredients: all-purpose flour (1 1/2 cups), granulated white sugar (10 tablespoons), salt (1 teaspoon), and baking soda (1/2 teaspoon). Set aside.
+      3. Mash the bananas (2 large ripe) using a fork or potato masher.
+      4. Add eggs (2), cooking oil (1/2 cup), and vanilla extract (1 teaspoon) to the mashed bananas. Mix well.
+      5. Gradually add the dry ingredients to the banana mixture. Mix until evenly combined.
+      6. Grease a loaf pan with cooking oil or melted butter. Pour the batter into the pan.
+      7. Bake for about 1 hour. Check the bread at 40 minutes using a toothpick to prevent overcooking.
+      8. Remove from the oven and let the bread cool. Slice and arrange on a serving plate.
+      9. Serve immediately or refrigerate for later. Share and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high sugar, contains gluten',
+        'availableFrom': '09:00',
+        'availableTo': '20:00'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaBreadId,
+        'ingredientID': 121, 
+        'quantity': 2,
+        'unit': 'large',
+        'content': 'ripe, mashed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaBreadId,
+        'ingredientID': 228, 
+        'quantity': 10,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaBreadId,
+        'ingredientID': 247, 
+        'quantity': 1.5,
+        'unit': 'cups',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaBreadId,
+        'ingredientID': 177, 
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaBreadId,
+        'ingredientID': 237,
+        'quantity': 0.5,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaBreadId,
+        'ingredientID': 232,
+        'quantity': 1,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      
+
+      
+      final bananaMuffinId = await db.insert('meals', {
+        'mealName': 'Banana Muffin',
+        'price': 180.0, 
+        'calories': 200, 
+        'servings': 8,
+        'cookingTime': '16 minutes',
+        'mealPicture': 'assets/meals/Banana_Muffin.jpg',
+        'category': 'dessert, snack, baked goods',
+        'content': 'Fluffy and moist banana muffins made with ripe bananas, perfect for breakfast or an afternoon snack.',
+        'instructions': '''
+      1. Preheat the oven to 350°F (175°C).
+      2. Mash the bananas (3 large ripe) and set aside.
+      3. In a bowl, combine flour (1 1/3 cups), baking powder, baking soda, and salt (1/2 teaspoon). Mix well with a wire whisk and set aside.
+      4. In a large mixing bowl, combine the mashed bananas, melted butter (5 tablespoons), egg (1), vanilla extract, and sugar (12 tablespoons). Mix thoroughly.
+      5. Gradually fold in the dry ingredient mixture until the batter is smooth.
+      6. Line a muffin pan with paper cups. Scoop the batter into each cup, filling only halfway to prevent overflow.
+      7. Bake in the oven for 13–16 minutes.
+      8. Remove from the oven and let the muffins cool on a wire rack.
+      9. Serve and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high sugar, contains gluten, contains dairy (butter)',
+        'availableFrom': '09:00',
+        'availableTo': '20:00'
+      });
+
+    
+      await db.insert('meal_ingredients', {
+        'mealID': bananaMuffinId,
+        'ingredientID': 121, 
+        'quantity': 3,
+        'unit': 'large',
+        'content': 'ripe, mashed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaMuffinId,
+        'ingredientID': 247, 
+        'quantity': 1.33,
+        'unit': 'cups',
+        'content': 'sifted'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaMuffinId,
+        'ingredientID': 22,
+        'quantity': 5,
+        'unit': 'tablespoons',
+        'content': 'melted'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaMuffinId,
+        'ingredientID': 228, 
+        'quantity': 12,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaMuffinId,
+        'ingredientID': 177,
+        'quantity': 1,
+        'unit': 'piece',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': bananaMuffinId,
+        'ingredientID': 232, 
+        'quantity': 0.5,
+        'unit': 'teaspoon',
+        'content': null
+      });
+
+      final chocoChipMuffinId = await db.insert('meals', {
+        'mealName': 'Banana Chocolate Chip Muffin',
+        'price': 190.0, 
+        'calories': 250, 
+        'servings': 6,
+        'cookingTime': '17 minutes',
+        'mealPicture': 'assets/Banana_Choco_Chip_Muffin.jpg',
+        'category': 'dessert, snack, baked goods',
+        'content': 'Quick and easy muffins made with ripe bananas and chocolate chips, using a pancake mix base for a fast bake.',
+        'instructions': '''
+      1. Preheat the oven to 400°F (200°C).
+      2. In a mixing bowl, beat the egg (1) and gradually add the sugar (1/2 cup). Mix well.
+      3. Add the vegetable oil (3 tablespoons) and mashed bananas (2 medium). Mix thoroughly.
+      4. Gradually add the pancake mix (2 cups) and continue mixing until all ingredients are well combined.
+      5. Fold in the chocolate chips (1/2 cup).
+      6. Line a muffin pan with paper cups and scoop the batter into each cup.
+      7. Bake in the preheated oven for 14–17 minutes, or until a toothpick inserted comes out clean.
+      8. Remove the muffins from the oven and let cool on a wire rack.
+      9. Serve and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high sugar, contains gluten',
+        'availableFrom': '09:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': chocoChipMuffinId,
+        'ingredientID': 121, 
+        'quantity': 2,
+        'unit': 'medium',
+        'content': 'ripe, mashed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chocoChipMuffinId,
+        'ingredientID': 237, 
+        'quantity': 3,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chocoChipMuffinId,
+        'ingredientID': 177,
+        'quantity': 1,
+        'unit': 'piece',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chocoChipMuffinId,
+        'ingredientID': 228, 
+        'quantity': 0.5,
+        'unit': 'cup',
+        'content': null
+      });
+
+      final darkChocoBananaBreadId = await db.insert('meals', {
+        'mealName': 'Dark Chocolate Banana Bread',
+        'price': 240.0, 
+        'calories': 380,
+        'servings': 4,
+        'cookingTime': '50 minutes',
+        'mealPicture': 'assets/meals/Dark_Chocolate_Banana_Bread.jpg',
+        'category': 'dessert, snack, baked goods',
+        'content': 'A rich and moist banana bread infused with dark chocolate, offering a decadent twist on a classic recipe.',
+        'instructions': '''
+      1. Preheat the oven to 350°F (175°C).
+      2. Mash the bananas (2 to 3 large ripe) using a fork and set aside.
+      3. In a bowl, combine flour (1 1/2 cups), sugar (1 cup), salt (3/4 teaspoon), baking soda (1 teaspoon), and dark chocolate powder (4 tablespoons). Mix well with a wire whisk.
+      4. Add the eggs (2), cooking oil (8 tablespoons), and mashed bananas to the dry mixture. Fold until well blended.
+      5. Grease a loaf pan and pour the batter into it.
+      6. Bake for 50–55 minutes, or until a toothpick inserted in the center comes out clean.
+      7. Remove from the oven and let the banana bread cool. Slice and serve.
+      8. Share and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high sugar, contains gluten',
+        'availableFrom': '09:00',
+        'availableTo': '20:00'
+      });
+
+
+      await db.insert('meal_ingredients', {
+        'mealID': darkChocoBananaBreadId,
+        'ingredientID': 121, 
+        'quantity': 3,
+        'unit': 'large',
+        'content': 'ripe, mashed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': darkChocoBananaBreadId,
+        'ingredientID': 247, 
+        'quantity': 1.5,
+        'unit': 'cups',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': darkChocoBananaBreadId,
+        'ingredientID': 228, 
+        'quantity': 1,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': darkChocoBananaBreadId,
+        'ingredientID': 232, 
+        'quantity': 0.75,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': darkChocoBananaBreadId,
+        'ingredientID': 177, 
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': darkChocoBananaBreadId,
+        'ingredientID': 237, 
+        'quantity': 8,
+        'unit': 'tablespoons',
+        'content': null
+      });
+
+
+      final kilawingPusoId = await db.insert('meals', {
+        'mealName': 'Kilawing Puso ng Saging',
+        'price': 95.0, 
+        'calories': 180,
+        'servings': 3,
+        'cookingTime': '30 minutes',
+        'mealPicture': 'assets/meals/Kilawing_Puso_ng_Saging.jpg',
+        'category': 'appetizer, side dish, vegetable, pickled',
+        'content': 'A savory and slightly tangy Filipino dish featuring banana blossoms (puso ng saging) cooked in vinegar, spices, and fish sauce.',
+        'instructions': '''
+      1. Soak the chopped banana blossoms (2-3 cups) in the brine (6 cups water, 5 tablespoons salt) for 15–20 minutes. After soaking, squeeze tightly to release the sap and place in a colander to drain. Set aside.
+      2. Heat cooking oil (2 tablespoons) in a pan over medium heat. Sauté garlic (1 tablespoon) and onion (1 medium) until fragrant.
+      3. Add the banana blossoms and cook for 5 minutes.
+      4. Pour in fish sauce (2 tablespoons) and vegetable broth (3/4 cup). Stir and bring to a boil.
+      5. Add the vinegar (6 tablespoons), cover, and simmer for 10–15 minutes.
+      6. Add the sliced green chili (3 long) and ground black pepper (1/4 teaspoon). Stir and cook for another 5 minutes.
+      7. Turn off the heat and transfer to a serving plate. Serve and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'vegetarian friendly (if no fish sauce/subbed)',
+        'availableFrom': '11:00',
+        'availableTo': '14:00'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': kilawingPusoId,
+        'ingredientID': 152, 
+        'quantity': 1,
+        'unit': 'tablespoon',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': kilawingPusoId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': kilawingPusoId,
+        'ingredientID': 264, 
+        'quantity': 6,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': kilawingPusoId,
+        'ingredientID': 236, 
+        'quantity': 3,
+        'unit': 'pieces',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': kilawingPusoId,
+        'ingredientID': 239, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': kilawingPusoId,
+        'ingredientID': 233, 
+        'quantity': 0.25,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': kilawingPusoId,
+        'ingredientID': 232, 
+        'quantity': 5,
+        'unit': 'tablespoons',
+        'content': 'for brine'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': kilawingPusoId,
+        'ingredientID': 237, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': null
+      });
+
+  
+      final beefNilagaId = await db.insert('meals', {
+        'mealName': 'Beef Nilaga',
+        'price': 280.0, 
+        'calories': 820, 
+        'servings': 4,
+        'cookingTime': '1 hour 30 minutes',
+        'mealPicture': 'assets/meals/Beef_Nilaga.jpg',
+        'category': 'main dish, soup, beef',
+        'content': 'A classic Filipino boiled beef soup (nilaga) with tender beef, corn, potatoes, and various leafy vegetables in a clear, flavorful broth.',
+        'instructions': '''
+      1. Grill the beef neck bones (3 lbs) for 1 1/2 minutes per side. Remove from the grill and set aside.
+      2. Heat cooking oil (3 tablespoons) in a pot and sauté crushed garlic (4 cloves) and chopped onion (1) until the onion softens.
+      3. Add the grilled beef and sauté for 2 minutes.
+      4. Pour in water (6 cups) and bring to a boil. Cover and simmer over low heat until the meat is tender (approx. 1 hour 30 mins). Add more water as needed.
+      5. Add the Knorr beef cube and corn (3 cobs). Cover and cook for 8 minutes.
+      6. Add the potatoes (2) and cook for 6 minutes.
+      7. Add the long green beans (18), cabbage (1/2 head), and bok choy (1 bunch). Continue cooking for 3 minutes.
+      8. Season with fish sauce and ground black pepper to taste.
+      9. Transfer to a serving bowl. Serve hot and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high protein, high calorie',
+        'availableFrom': '17:00',
+        'availableTo': '22:00'
+      });
+
+      
+      await db.insert('meal_ingredients', {
+        'mealID': beefNilagaId,
+        'ingredientID': 39, 
+        'quantity': 3,
+        'unit': 'lbs',
+        'content': 'neck bones'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefNilagaId,
+        'ingredientID': 274, 
+        'quantity': 18,
+        'unit': 'pieces',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefNilagaId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefNilagaId,
+        'ingredientID': 152, 
+        'quantity': 4,
+        'unit': 'cloves',
+        'content': 'crushed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefNilagaId,
+        'ingredientID': 237, 
+        'quantity': 3,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefNilagaId,
+        'ingredientID': 239, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefNilagaId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+      final calderetaId = await db.insert('meals', {
+        'mealName': 'Caldereta',
+        'price': 350.0, 
+        'calories': 10291, 
+        'servings': 5,
+        'cookingTime': '1 hour 15 minutes',
+        'mealPicture': 'assets/meals/Caldereta.jpg',
+        'category': 'main dish, beef, stew, spicy',
+        'content': 'A rich and hearty Filipino beef stew, often cooked with tomatoes, spices, and various vegetables, traditionally with a spicy kick.',
+        'instructions': '''
+      1. Combine beef neck bones (3 lbs), beef chuck (2 lbs), and soy sauce (5 tablespoons) in a bowl. Mix well and marinate for 10 minutes.
+      2. Heat 2 cups of cooking oil in a wok. Deep-fry the potatoes (3) and carrots (3) until lightly browned. Remove and set aside.
+      3. Heat 3 tablespoons of the used oil in a clean wok. Sauté onions (2) for 1 minute.
+      4. Add garlic (5 cloves) and continue sautéing until lightly browned.
+      5. Add the marinated beef and sauté until the outer layer starts to turn light brown (about 3–5 minutes).
+      6. Pour in tomato sauce (8 ounces) and water (4 cups). Cover and bring to a boil.
+      7. Reduce heat to simmer and cook for 40 minutes.
+      8. Add tomato paste (2 tablespoons) and continue simmering for 20–35 minutes, or until the beef is tender. Stir occasionally and add water if needed.
+      9. Add beef powder (2 teaspoons), liver spread (1/4 cup), and peanut butter (3 tablespoons). Stir well.
+      10. Add green olives (5 ounces) and bell peppers (2 red, 2 green). Cook for 3 minutes.
+      11. Season with Maggi Magic Sarap (8 grams) and ground black pepper (to taste). Stir to combine.
+      12. Return the fried potatoes and carrots to the wok and toss.
+      13. Add cheddar cheese (2 ounces) and cook for 2–3 minutes until melted and well combined.
+      14. Transfer to a serving bowl and serve with rice. Enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high calorie, beef content, contains peanuts (peanut butter)',
+        'availableFrom': '18:00',
+        'availableTo': '23:00'
+      });
+
+      
+      await db.insert('meal_ingredients', {
+        'mealID': calderetaId,
+        'ingredientID': 39, 
+        'quantity': 5,
+        'unit': 'lbs', 
+        'content': 'neck bones and chuck, cubed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': calderetaId,
+        'ingredientID': 149,
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': calderetaId,
+        'ingredientID': 152, 
+        'quantity': 5,
+        'unit': 'cloves',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': calderetaId,
+        'ingredientID': 240, 
+        'quantity': 5,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': calderetaId,
+        'ingredientID': 125, 
+        'quantity': 8,
+        'unit': 'ounces',
+        'content': 'tomato sauce'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': calderetaId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': calderetaId,
+        'ingredientID': 237, 
+        'quantity': 2, 
+        'unit': 'cups',
+        'content': null
+      });
+
+      final beefChopSueyId = await db.insert('meals', {
+        'mealName': 'Beef Chop Suey',
+        'price': 250.0, 
+        'calories': 373, 
+        'servings': 5,
+        'cookingTime': '30 minutes',
+        'mealPicture': 'assets/meals/Beef_Chopsuey.webp',
+        'category': 'main dish, beef, vegetable, stir-fry',
+        'content': 'A Filipino-style stir-fry featuring tender beef slices and a medley of fresh, partially cooked vegetables seasoned with soy sauce and black pepper.',
+        'instructions': '''
+      1. Combine the sliced beef (1 lb top sirloin) with soy sauce, oyster sauce, baking soda, cornstarch, ground black pepper, and 1 tablespoon oil. Mix well and set aside for 12 minutes.
+      2. Partially cook the vegetables: Heat 2 tablespoons of oil in a wide pan. Stir-fry cabbage (1/2 head), snap peas (2 cups), carrot (2), and bell pepper (1) for 1 minute. Sprinkle some salt, pour in 1/4 cup beef stock, cover, and let boil. Steam for 1 minute, then remove the cover and let remaining liquid evaporate. Set vegetables aside.
+      3. Heat the remaining oil (1 tablespoon) in the same pan. Stir-fry the marinated beef until the outside turns light brown.
+      4. Add minced garlic (5 cloves), the white part of the green onion (3 stems), and sliced yellow onion (1). Continue stir-frying until the onion softens.
+      5. Add the stir-fried vegetables and toss to combine evenly.
+      6. Pour in 1 tablespoon soy sauce and the remaining beef stock (1/4 cup). Stir and continue cooking until the sauce thickens.
+      7. Season with Maggi Magic Sarap as needed.
+      8. Transfer to a serving plate. Serve and enjoy.
+      ''',
+        'hasDietaryRestrictions': 'high protein',
+        'availableFrom': '17:00',
+        'availableTo': '22:00'
+      });
+
+     
+      await db.insert('meal_ingredients', {
+        'mealID': beefChopSueyId,
+        'ingredientID': 39, 
+        'quantity': 1,
+        'unit': 'lb',
+        'content': 'sliced into thin pieces'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefChopSueyId,
+        'ingredientID': 152,
+        'quantity': 5,
+        'unit': 'cloves',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefChopSueyId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'sliced thinly'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefChopSueyId,
+        'ingredientID': 240, 
+        'quantity': 2,
+        'unit': 'tablespoons', 
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefChopSueyId,
+        'ingredientID': 237, 
+        'quantity': 3,
+        'unit': 'tablespoons', 
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefChopSueyId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefChopSueyId,
+        'ingredientID': 232, 
+        'quantity': null,
+        'unit': null,
+        'content': 'for seasoning vegetables'
+      });
+
+
+      final garlicPepperBeefId = await db.insert('meals', {
+        'mealName': 'Garlic Pepper Beef in Mushroom Gravy',
+        'price': 295.0,
+        'calories': 420, 
+        'servings': 4,
+        'cookingTime': '25 minutes',
+        'mealPicture': 'assets/meals/Garlic_Pepper_Beef_in_Mushroom_Gravy.jpg',
+        'category': 'main dish, beef, stir-fry, savory',
+        'content': 'Thinly sliced beef marinated and cooked in a rich, peppery gravy with garlic and mushrooms, served hot.',
+        'instructions': '''
+      1. Heat cooking oil (1/4 cup) in a large skillet over medium heat and add the minced garlic (1 1/2 heads). Cook until golden brown and crispy, about 2–3 minutes. Separate the crispy garlic from the oil and set aside for garnish.
+      2. Reduce the garlic oil to 2 tablespoons in the pan. Increase heat to medium-high and sauté the sliced beef (1 1/2 lbs sirloin) until browned on all sides, about 4–5 minutes.
+      3. Pour in soy sauce (2 tablespoons) and oyster sauce (3 tablespoons), then season with salt (1/4 teaspoon), ground black pepper (1/2 teaspoon), and half of the toasted garlic. Stir and cook for 1 minute. Remove beef from the pan and set aside.
+      4. In the same pan, melt butter (3 tablespoons) over medium heat. Add all-purpose flour (4 tablespoons) and whisk continuously until the mixture turns golden brown, about 2–3 minutes.
+      5. Gradually pour in beef broth (1 3/4 cups) while whisking constantly to prevent lumps. Add the sliced mushrooms (14 oz) and simmer until the sauce thickens, about 3–4 minutes. Season with onion powder, garlic powder, salt, and ground black pepper (1/8 teaspoon).
+      6. Return the cooked beef to the pan and toss until well combined with the mushroom gravy. Cook for 2–3 minutes to heat through.
+      7. Transfer to a serving plate, top with the remaining crispy garlic, and serve immediately.
+      ''',
+        'hasDietaryRestrictions': 'high protein, high fat (gravy)',
+        'availableFrom': '18:00',
+        'availableTo': '22:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': garlicPepperBeefId,
+        'ingredientID': 39,
+        'quantity': 1.5,
+        'unit': 'lbs',
+        'content': 'thinly sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': garlicPepperBeefId,
+        'ingredientID': 152,
+        'quantity': 1.5,
+        'unit': 'heads',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': garlicPepperBeefId,
+        'ingredientID': 240, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': garlicPepperBeefId,
+        'ingredientID': 233, 
+        'quantity': 0.5,
+        'unit': 'teaspoon',
+        'content': 'for meat'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': garlicPepperBeefId,
+        'ingredientID': 232, 
+        'quantity': 0.25, 
+        'unit': 'teaspoon',
+        'content': 'for meat'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': garlicPepperBeefId,
+        'ingredientID': 237, 
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': garlicPepperBeefId,
+        'ingredientID': 247, 
+        'quantity': 4,
+        'unit': 'tablespoons',
+        'content': 'for gravy'
+      });
+
+      final creamyBeefMushroomId = await db.insert('meals', {
+        'mealName': 'Creamy Beef with Mushroom',
+        'price': 275.0, 
+        'calories': 422, 
+        'servings': 4,
+        'cookingTime': '30 minutes',
+        'mealPicture': 'assets/meals/Creamy_Beef_with_Mushroom.webp',
+        'category': 'main dish, beef, creamy, savory',
+        'content': 'Tender, thinly sliced beef and mushrooms in a rich, creamy sauce, typically served over rice.',
+        'instructions': '''
+      1. Melt butter (3 tablespoons) in a pan and add cooking oil (1 tablespoon).
+      2. Sauté sliced garlic (1 head) until browned, then add diced onion (1) and cook until softened.
+      3. Add the beef (2 lbs sirloin) and cook, stirring, until the sides turn brown.
+      4. Pour in 1 cup water, cover, and simmer for 35 minutes.
+      5. Add button mushrooms (8 ounces) and stir.
+      6. In a bowl, combine the remaining 1 cup water with Knorr Cream of Mushroom Soup (62 grams) and mix well. Pour the mixture into the pan and bring to a boil.
+      7. Continue cooking uncovered on low heat for 10–15 minutes.
+      8. Season with salt and ground black pepper to taste.
+      9. Top with chopped parsley (1 tablespoon) and serve warm with rice. Enjoy!
+      ''',
+        'hasDietaryRestrictions': 'high protein, dairy content (from soup/butter)',
+        'availableFrom': '18:00',
+        'availableTo': '22:00'
+      });
+
+    
+      await db.insert('meal_ingredients', {
+        'mealID': creamyBeefMushroomId,
+        'ingredientID': 39,
+        'quantity': 2,
+        'unit': 'lbs',
+        'content': 'sliced thinly'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': creamyBeefMushroomId,
+        'ingredientID': 152, 
+        'quantity': 1,
+        'unit': 'head',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': creamyBeefMushroomId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'diced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': creamyBeefMushroomId,
+        'ingredientID': 237, 
+        'quantity': 1,
+        'unit': 'tablespoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': creamyBeefMushroomId,
+        'ingredientID': 232, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': creamyBeefMushroomId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+     
+      final steamedBroccoliId = await db.insert('meals', {
+        'mealName': 'Steam Broccoli',
+        'price': 60.0, 
+        'calories': 55, 
+        'servings': 2,
+        'cookingTime': '5 minutes',
+        'mealPicture': 'assets/meals/Steamed_Broccoli.jpg',
+        'category': 'side dish, vegetable, healthy, low calorie',
+        'content': 'Fresh or frozen broccoli lightly steamed and ready to be seasoned to preference with salt, pepper, or butter.',
+        'instructions': '''
+      1. Add 1–2 inches of water (1 1/2 cups) to a medium pot and bring to a boil over high heat.
+      2. Arrange the broccoli chunks (2 cups) in a steamer basket and suspend it over the boiling water. Cover with a lid and steam for up to 5 minutes, adjusting for desired tenderness.
+      3. When the broccoli turns bright green, remove the steamer basket from heat and let it cool slightly.
+      4. Season with salt, pepper, butter, or drizzle with salad dressing as desired. Serve and enjoy.
+      ''',
+        'hasDietaryRestrictions': 'low carb, low fat, vegetarian, vegan (if unbuttered)',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': steamedBroccoliId,
+        'ingredientID': 232, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': steamedBroccoliId,
+        'ingredientID': 233,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': steamedBroccoliId,
+        'ingredientID': 22, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+      final cheesyBroccoliSoupId = await db.insert('meals', {
+        'mealName': 'Cheesy Broccoli Soup',
+        'price': 150.0, 
+        'calories': 380, 
+        'servings': 2,
+        'cookingTime': '20 minutes',
+        'mealPicture': 'assets/meals/Cheesy_Broccoli_Soup.jpg',
+        'category': 'soup, creamy, vegetable',
+        'content': 'A thick and comforting soup featuring melted cheese, chopped vegetables, and a creamy milk base.',
+        'instructions': '''
+      1. Heat a cooking pan and melt the butter (2 tablespoons).
+      2. Add the chopped onion (1/4 cup) and cook until soft.
+      3. Stir in the all-purpose flour (2 tablespoons) and cook for a minute.
+      4. Pour in the milk (2 3/4 cups) and bring to a boil. Simmer for 2 minutes over medium heat.
+      5. Add ground black pepper (1/8 teaspoon) and stir.
+      6. Add the broccoli (8 ounces) and cook for 3–5 minutes.
+      7. Stir in the sharp cheddar cheese (3/4 cups) until it melts.
+      8. Turn off the heat and transfer to a serving bowl. Serve hot and enjoy.
+      ''',
+        'hasDietaryRestrictions': 'contains dairy, contains gluten (flour)',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': cheesyBroccoliSoupId,
+        'ingredientID': 22, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cheesyBroccoliSoupId,
+        'ingredientID': 149, 
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cheesyBroccoliSoupId,
+        'ingredientID': 233, 
+        'quantity': 0.125,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cheesyBroccoliSoupId,
+        'ingredientID': 247, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cheesyBroccoliSoupId,
+        'ingredientID': 223, 
+        'quantity': 2.75,
+        'unit': 'cups',
+        'content': null
+      });
+
+    
+      final roastedBroccoliId = await db.insert('meals', {
+        'mealName': 'Oven Roasted Broccoli',
+        'price': 70.0, 
+        'calories': 34, 
+        'servings': 3,
+        'cookingTime': '9 minutes',
+        'mealPicture': 'assets/meals/Oven_Roasted_Broccoli.jpg',
+        'category': 'side dish, vegetable, healthy, roasted',
+        'content': 'Broccoli florets tossed with oil and seasonings, then roasted until tender-crisp with slightly browned edges.',
+        'instructions': '''
+      1. Preheat the oven to broil (about 510°F).
+      2. In a medium bowl, combine broccoli florets (1/2 lb), salt (1/2 teaspoon), and garlic powder (1/2 teaspoon). Toss to mix.
+      3. Pour in olive oil (1 tablespoon) and toss again until the florets are coated evenly.
+      4. Arrange the florets on a baking tray.
+      5. Roast in the oven for 6–9 minutes, or until the edges start to brown.
+      6. Remove from the oven and transfer to a serving plate. Serve warm as a side dish.
+      ''',
+        'hasDietaryRestrictions': 'low calorie, low carb, vegetarian, vegan',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+    
+      await db.insert('meal_ingredients', {
+        'mealID': roastedBroccoliId,
+        'ingredientID': 232, 
+        'quantity': 0.5,
+        'unit': 'teaspoon',
+        'content': null
+      });
+     
+      await db.insert('meal_ingredients', {
+        'mealID': roastedBroccoliId,
+        'ingredientID': 237,
+        'quantity': 1,
+        'unit': 'tablespoon',
+        'content': 'extra-virgin'
+      });
+   
+
+
+      final tofuBroccoliStirFryId = await db.insert('meals', {
+        'mealName': 'Tofu and Broccoli Stir fry',
+        'price': 180.0, 
+        'calories': 320, 
+        'servings': 4,
+        'cookingTime': '18 minutes',
+        'mealPicture': 'assets/meals/Tofu_and_Broccoli_Stir_Fry.jpg',
+        'category': 'main dish, vegetarian, stir-fry, Asian',
+        'content': 'A quick and healthy stir-fry combining crispy tofu and fresh broccoli in a savory sauce.',
+        'instructions': '''
+      1. Heat a pan and add 4 tablespoons of cooking oil (6 tablespoons total used).
+      2. Fry the tofu slices (8 oz extra firm) until crisp on both sides, about 8–10 minutes per side.
+      3. Remove the tofu from the pan, let cool, and slice into smaller rectangles. Set aside.
+      4. In a clean pan, heat the remaining oil (2 tablespoons).
+      5. Sauté garlic (1 teaspoon), ginger (1 teaspoon), and onion (1 medium) until fragrant.
+      6. Add the fried tofu slices and oyster sauce (2 tablespoons). Stir to combine.
+      7. Add the broccoli florets (3 cups) and cook for 5–8 minutes, stirring occasionally.
+      8. Season with salt and pepper to taste.
+      9. Transfer to a serving plate and serve with rice. Enjoy.
+      ''',
+        'hasDietaryRestrictions': 'vegetarian, high protein',
+        'availableFrom': '17:00',
+        'availableTo': '22:00'
+      });
+
+
+      await db.insert('meal_ingredients', {
+        'mealID': tofuBroccoliStirFryId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tofuBroccoliStirFryId,
+        'ingredientID': 152, 
+        'quantity': 1,
+        'unit': 'teaspoon',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tofuBroccoliStirFryId,
+        'ingredientID': 237, 
+        'quantity': 6,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tofuBroccoliStirFryId,
+        'ingredientID': 232,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': tofuBroccoliStirFryId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+
+      final beefBroccoliId = await db.insert('meals', {
+        'mealName': 'Beef with Broccoli',
+        'price': 260.0, 
+        'calories': 380, 
+        'servings': 4,
+        'cookingTime': '18 minutes',
+        'mealPicture': 'assets/meals/Beef_with_Broccoli.jpg',
+        'category': 'main dish, beef, vegetable, stir-fry',
+        'content': 'A classic savory stir-fry dish featuring tender beef slices and crisp broccoli florets, coated in a seasoned sauce.',
+        'instructions': '''
+      1. In a bowl, combine beef (1 lb), oyster sauce (1/4 cup), Knorr Liquid Seasoning (1 tablespoon), sesame oil (1/2 teaspoon), cooking wine (3 tablespoons), and sugar (1 teaspoon). Mix well and marinate for 15 minutes. Add cornstarch (1 tablespoon) and mix until evenly coated. Set aside.
+      2. Heat 2 tablespoons of cooking oil in a pan. Sauté ginger (2 teaspoons) and garlic (2 cloves), then add broccoli (2 cups) and stir-fry for 1–2 minutes. Remove broccoli from the pan and set aside.
+      3. Add the remaining oil (2 tablespoons) to the pan. Stir-fry the marinated beef until browned. Add water (1/2 to 3/4 cups) if needed to tenderize the beef, letting it boil and evaporate. Season with salt and ground black pepper.
+      4. Return the cooked broccoli to the pan with the beef and stir-fry for 3 minutes.
+      5. Transfer to a serving plate and serve.
+      ''',
+        'hasDietaryRestrictions': 'high protein',
+        'availableFrom': '17:00',
+        'availableTo': '22:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': beefBroccoliId,
+        'ingredientID': 39, 
+        'quantity': 1,
+        'unit': 'lb',
+        'content': 'sliced into thin pieces'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefBroccoliId,
+        'ingredientID': 152, 
+        'quantity': 2,
+        'unit': 'cloves',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefBroccoliId,
+        'ingredientID': 237, 
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefBroccoliId,
+        'ingredientID': 232,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefBroccoliId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': beefBroccoliId,
+        'ingredientID': 228, 
+        'quantity': 1,
+        'unit': 'teaspoon',
+        'content': null
+      });
+
+ 
+      final cabbageSoupId = await db.insert('meals', {
+        'mealName': 'Cabbage Soup',
+        'price': 85.0, 
+        'calories': 120, 
+        'servings': 3,
+        'cookingTime': '20 minutes',
+        'mealPicture': 'assets/meals/Cabbage_Soup.jpg',
+        'category': 'soup, vegetable, healthy',
+        'content': 'A light and savory soup featuring cored and chopped cabbage cooked in a broth with tomato sauce and simple aromatics.',
+        'instructions': '''
+      1. Heat olive oil (2 teaspoons) in a cooking pot and sauté onion (1 medium) and garlic (2 teaspoons) until fragrant.
+      2. Add the chopped cabbage (1 medium head) and cook for 1 minute.
+      3. Pour in the tomato sauce (15 ounces) and chicken broth (3 cups). Stir and bring to a boil.
+      4. Simmer for 5–7 minutes until the cabbage is tender.
+      5. Turn off the heat and transfer to a serving bowl. Serve and enjoy.
+      ''',
+        'hasDietaryRestrictions': 'low calorie, vegetarian, vegan',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': cabbageSoupId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cabbageSoupId,
+        'ingredientID': 125, 
+        'quantity': 15,
+        'unit': 'ounces',
+        'content': 'organic tomato sauce'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cabbageSoupId,
+        'ingredientID': 231, 
+        'quantity': 3,
+        'unit': 'cups',
+        'content': 'low sodium'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cabbageSoupId,
+        'ingredientID': 152,
+        'quantity': 2,
+        'unit': 'teaspoons',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cabbageSoupId,
+        'ingredientID': 237, 
+        'quantity': 2,
+        'unit': 'teaspoons',
+        'content': 'extra virgin olive oil'
+      });
+
+
+      final crispyCabbageRollsId = await db.insert('meals', {
+        'mealName': 'Crispy Cabbage Rolls',
+        'price': 220.0, 
+        'calories': 350, 
+        'servings': 6,
+        'cookingTime': '35 minutes',
+        'mealPicture': 'assets/meals/Crispy_Cabbage_Rolls.jpg',
+        'category': 'main dish, pork, savory, fried',
+        'content': 'Crispy deep-fried rolls filled with seasoned ground pork, rice, vegetables, and wrapped in boiled Napa cabbage leaves.',
+        'instructions': '''
+      1. Boil 4 cups of water in a pot with 1 teaspoon salt. Add the Napa cabbage (12 leaves) and boil for 1 minute. Submerge the cabbage in ice-cold water (3 cups) until cooled. Remove and dry. Set aside.
+      2. Heat 3 tablespoons of cooking oil in a pan. Sauté chopped garlic (5 cloves) until lightly browned. Add chopped onion (1) and cook until softened. Add ground pork (1 lb) and cook until lightly browned. Add Knorr Pork Cube (1) and cook for 2 minutes. Season with salt and black pepper. Transfer to a large bowl and let cool.
+      3. Mix in minced carrot (1/2 cup), green onion (1/2 cup), egg (1), all-purpose flour (5 tablespoons), soy sauce (2 tablespoons), and sesame oil (2 teaspoons) with the cooled meat.
+      4. Scoop 3 tablespoons of meat mixture onto a cabbage leaf. Fold both sides inward and roll to cover the filling. Secure with a toothpick.
+      5. Heat cooking oil (1 cup) in a pan. Dredge the cabbage rolls in flour (1/2 cup), dip in beaten egg (2), and coat with panko breadcrumbs (1 1/2 cups). Fry until golden brown on all sides. Remove and drain on paper towels or a wire rack.
+      6. Slice cabbage rolls into bite-sized pieces. Serve with your favorite dipping sauce and enjoy.
+      ''',
+        'hasDietaryRestrictions': 'contains gluten, high sodium, high fat',
+        'availableFrom': '18:00',
+        'availableTo': '22:00'
+      });
+
+    
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 232, 
+        'quantity': 1,
+        'unit': 'teaspoon',
+        'content': 'for boiling cabbage'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 247, 
+        'quantity': 0.5,
+        'unit': 'cup',
+        'content': 'for dredging'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 177, 
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': 'beaten, for dredging'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 237,
+        'quantity': 1.15, 
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 247, 
+        'quantity': 5,
+        'unit': 'tablespoons',
+        'content': 'for filling'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 177, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'for filling'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 33, 
+        'quantity': 1,
+        'unit': 'lb',
+        'content': 'ground'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 149,
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 152, 
+        'quantity': 5,
+        'unit': 'cloves',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 240, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 233,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCabbageRollsId,
+        'ingredientID': 232, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+      final cornedBeefCabbageId = await db.insert('meals', {
+        'mealName': 'Cabbage with Corned beef and Potato',
+        'price': 180.0, 
+        'calories': 450, 
+        'servings': 3,
+        'cookingTime': '18 minutes',
+        'mealPicture': 'assets/meals/Cabbage_with_Corned_Beef_and_Potato.jpg',
+        'category': 'main dish, stew, beef, comfort food',
+        'content': 'A simple, savory stew of canned corned beef, cabbage, and potatoes cooked in a flavorful broth with aromatics.',
+        'instructions': '''
+      1. Heat oil (3 tablespoons) in a pot.
+      2. Sauté crushed garlic (4 cloves) and chopped onion (1 medium) until fragrant.
+      3. Add corned beef (1 12-oz can) and sauté for 3 minutes.
+      4. Pour in beef broth (2 cups) and bring to a boil.
+      5. Add potato (1 large) and cabbage (1/2 small), cover, and cook over medium heat for 8–10 minutes.
+      6. Stir in parsley (2 tablespoons), salt, and black pepper to taste. Transfer to a serving bowl and serve.
+      ''',
+        'hasDietaryRestrictions': 'high sodium (corned beef), high fat',
+        'availableFrom': '17:00',
+        'availableTo': '22:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': cornedBeefCabbageId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cornedBeefCabbageId,
+        'ingredientID': 152,
+        'quantity': 4,
+        'unit': 'cloves',
+        'content': 'crushed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cornedBeefCabbageId,
+        'ingredientID': 230, 
+        'quantity': 2,
+        'unit': 'cups',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cornedBeefCabbageId,
+        'ingredientID': 237, 
+        'quantity': 3,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cornedBeefCabbageId,
+        'ingredientID': 232,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cornedBeefCabbageId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+      final ginisangRepolyoId = await db.insert('meals', {
+        'mealName': 'Ginisang Repolyo',
+        'price': 160.0, 
+        'calories': 280, 
+        'servings': 4,
+        'cookingTime': '25 minutes',
+        'mealPicture': 'assets/meals/Ginisang_Repolyo.webp',
+        'category': 'main dish, side dish, pork, vegetable, stir-fry',
+        'content': 'A simple Filipino dish of stir-fried cabbage (repolyo) with ground or sliced pork and aromatics in a light broth.',
+        'instructions': '''
+      1. Heat cooking oil (3 tablespoons) in a pan.
+      2. Sauté crushed and minced garlic (4 cloves) and sliced onion (1 medium) until fragrant.
+      3. Add pork (4 ounces, sliced) and cook for 5 minutes or until medium brown.
+      4. Pour in half of the beef broth (1 cup total), bring to a boil, and simmer until the liquid evaporates.
+      5. Add cabbage (1 head, chopped) and cook for 1–2 minutes.
+      6. Add red bell pepper (1, sliced) and stir-fry for 1 more minute.
+      7. Season with salt and pepper.
+      8. Pour in the remaining beef broth, bring to a boil, and stir.
+      9. Transfer to a serving bowl and serve.
+      ''',
+        'hasDietaryRestrictions': 'high vegetable content',
+        'availableFrom': '17:00',
+        'availableTo': '22:00'
+      });
+
+    
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangRepolyoId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangRepolyoId,
+        'ingredientID': 152, 
+        'quantity': 4,
+        'unit': 'cloves',
+        'content': 'crushed and minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangRepolyoId,
+        'ingredientID': 237, 
+        'quantity': 3,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangRepolyoId,
+        'ingredientID': 230, 
+        'quantity': 1,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangRepolyoId,
+        'ingredientID': 232, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': ginisangRepolyoId,
+        'ingredientID': 233,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+      final chopSueyId = await db.insert('meals', {
+        'mealName': 'Chop Suey',
+        'price': 240.0, 
+        'calories': 350,
+        'servings': 4,
+        'cookingTime': '30 minutes',
+        'mealPicture': 'assets/meals/Chop_Suey.jpg',
+        'category': 'main dish, stir-fry, vegetable, meat',
+        'content': 'A Filipino-style mixed vegetable and meat stir-fry, combining shrimp, pork, and chicken with a variety of vegetables in a thick, savory sauce.',
+        'instructions': '''
+      1. Heat oil (3 tablespoons) in a wok or pan.
+      2. Pan-fry shrimp (7 pieces) for 1 minute per side, then remove and set aside.
+      3. Sauté sliced onion (1 yellow) and crushed garlic (4 cloves) until onion softens.
+      4. Add pork (3 ounces) and chicken (3 ounces boneless); stir-fry until lightly browned.
+      5. Add soy sauce (1/4 cup) and oyster sauce (1 1/2 tablespoons), stir to combine.
+      6. Pour in water (3/4 cup), bring to a boil, cover, and cook over medium heat for 15 minutes.
+      7. Add cauliflower (1 1/2 cups), carrots (1), bell peppers (1 red, 1 green), snow peas (15 pieces), and baby corn (8 pieces); stir to combine.
+      8. Add cabbage (1 1/2 cups), toss, cover, and cook for 5–7 minutes.
+      9. Return shrimp to the pan, add ground black pepper (1/4 teaspoon), quail eggs (12), and cornstarch mixture (1 tablespoon cornstarch diluted in 1/2 cup water); toss until sauce thickens.
+      10. Transfer to a serving plate and serve.
+      ''',
+        'hasDietaryRestrictions': 'contains shellfish (shrimp), contains gluten (soy sauce)',
+        'availableFrom': '17:00',
+        'availableTo': '22:00'
+      });
+
+      
+      await db.insert('meal_ingredients', {
+        'mealID': chopSueyId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'sliced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chopSueyId,
+        'ingredientID': 152, 
+        'quantity': 4,
+        'unit': 'cloves',
+        'content': 'crushed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chopSueyId,
+        'ingredientID': 240, 
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chopSueyId,
+        'ingredientID': 233, 
+        'quantity': 0.25,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chopSueyId,
+        'ingredientID': 237, 
+        'quantity': 3,
+        'unit': 'tablespoons',
+        'content': null
+      });
+  
+      final cassavaCakeId = await db.insert('meals', {
+        'mealName': 'Cassava Cake',
+        'price': 320.0,
+        'calories': 550,
+        'servings': 6,
+        'cookingTime': '1 hour',
+        'mealPicture': 'assets/meals/Cassava_Cake.webp',
+        'category': 'dessert, cake, Filipino, baked',
+        'content': 'A traditional Filipino moist cake made from grated cassava, coconut milk, and condensed milk, topped with a creamy custard.',
+        'instructions': '''
+      1. In a mixing bowl, combine grated cassava (2 lbs), melted butter (1/4 cup), 1/2 cup condensed milk, evaporated milk (6 oz), 6 tablespoons grated cheddar cheese, granulated white sugar (14 tablespoons), and 2 eggs (total 3 eggs needed). Mix thoroughly.
+      2. Add 2 cups coconut milk to the mixture and stir again.
+      3. Grease a baking tray and pour in the batter. Preheat oven to 350°F for 10 minutes. Bake the batter for 1 hour. Remove from oven and set aside.
+      4. Prepare the topping by combining flour (2 tablespoons) and sugar (2 tablespoons) in a heated saucepan.
+      5. Pour in 1/2 cup condensed milk and mix thoroughly.
+      6. Add 2 tablespoons grated cheddar cheese while stirring constantly.
+      7. Pour in 2 cups coconut milk and stir for 10 minutes.
+      8. Spread the topping evenly over the baked cassava batter.
+      9. Separate the yolk from the remaining egg (1 yolk) and use the egg white to glaze the topping with a basting brush.
+      10. Broil the cassava cake until the topping turns light brown.
+      11. Garnish with extra grated cheese. Serve and enjoy.
+      ''',
+        'hasDietaryRestrictions': 'contains dairy, contains egg, high sugar',
+        'availableFrom': '09:00',
+        'availableTo': '21:00'
+      });
+
+      
+      await db.insert('meal_ingredients', {
+        'mealID': cassavaCakeId,
+        'ingredientID': 214, 
+        'quantity': 4, 
+        'unit': 'cups',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cassavaCakeId,
+        'ingredientID': 177,
+        'quantity': 3,
+        'unit': 'pieces',
+        'content': '2 for batter, 1 for topping'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cassavaCakeId,
+        'ingredientID': 22, 
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': 'melted'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cassavaCakeId,
+        'ingredientID': 228, 
+        'quantity': 16, 
+        'unit': 'tablespoons',
+        'content': null
+      });
+  
+      await db.insert('meal_ingredients', {
+        'mealID': cassavaCakeId,
+        'ingredientID': 247,
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': 'for topping'
+      });
+
+      final cassavaSumanId = await db.insert('meals', {
+        'mealName': 'Cassava Suman',
+        'price': 150.0, 
+        'calories': 380,
+        'servings': 6,
+        'cookingTime': '30 minutes',
+        'mealPicture': 'assets/meals/Cassava_Suman.jpg',
+        'category': 'dessert, snack, Filipino, steamed',
+        'content': 'A Filipino delicacy made from grated cassava, brown sugar, and coconut cream, steamed in banana leaves to create a sweet, sticky cake.',
+        'instructions': '''
+      1. In a large mixing bowl, combine grated cassava (2 lbs) and brown sugar (1 1/2 cups). Fold gently until well distributed.
+      2. Add coconut cream (1/2 cup) and stir until fully incorporated.
+      3. Scoop about 1/2 cup of mixture and place on one side of a banana leaf (cut into 12 x 6 inch pieces). Shape into a cylinder about 4–5 inches long.
+      4. Roll the banana leaf tightly around the mixture, folding the top and bottom inward to secure.
+      5. Boil 5–6 cups of water in a steamer.
+      6. Arrange the wrapped cassava suman in the steamer and steam for 30–35 minutes, or until firm.
+      7. Remove from steamer and allow to cool. Serve and enjoy.
+      ''',
+        'hasDietaryRestrictions': 'vegetarian, high sugar, high carb',
+        'availableFrom': '10:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': cassavaSumanId,
+        'ingredientID': 229, 
+        'quantity': 1.5,
+        'unit': 'cups',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cassavaSumanId,
+        'ingredientID': 214, 
+        'quantity': 0.5,
+        'unit': 'cup',
+        'content': 'coconut cream or milk'
+      });
+
+      final steamedCassavaCakeId = await db.insert('meals', {
+        'mealName': 'Steamed Cassava Cake',
+        'price': 280.0, 
+        'calories': 520, 
+        'servings': 6,
+        'cookingTime': '45 minutes',
+        'mealPicture': 'assets/meals/Steamed_Cassava_Cake.jpg',
+        'category': 'dessert, cake, Filipino, steamed',
+        'content': 'A sweet and dense cake made primarily from cassava and coconut milk, steamed until cooked, and usually topped with cheese.',
+        'instructions': '''
+      1. Pour water (5 cups) into a cooking pot and bring to a boil.
+      2. In a large bowl, combine grated cassava (24 oz), coconut milk (1 cup), melted butter (6 tablespoons), eggs (2), and condensed milk (1 can). Mix well using a whisk.
+      3. Pour the cassava mixture into individual molds. Arrange the molds in a steamer.
+      4. Steam for 45 minutes or until the cassava cake is cooked through.
+      5. Remove the molds from the steamer and let cool.
+      6. Gently remove the cassava cake from the molds and arrange on a plate.
+      7. Top with shredded quick-melt or sharp cheddar cheese (1/2 cup). Serve and enjoy.
+      ''',
+        'hasDietaryRestrictions': 'contains dairy, contains egg, high sugar',
+        'availableFrom': '10:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': steamedCassavaCakeId,
+        'ingredientID': 214, 
+        'quantity': 1,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': steamedCassavaCakeId,
+        'ingredientID': 177, 
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': steamedCassavaCakeId,
+        'ingredientID': 22,
+        'quantity': 6,
+        'unit': 'tablespoons',
+        'content': 'melted'
+      });
+
+      final roastedCauliflowerId = await db.insert('meals', {
+        'mealName': 'Roasted Cauliflower',
+        'price': 100.0, 
+        'calories': 180, 
+        'servings': 4,
+        'cookingTime': '25 minutes',
+        'mealPicture': 'assets/meals/Roasted_Cauliflower.jpg',
+        'category': 'side dish, vegetable, healthy, roasted',
+        'content': 'Cauliflower florets tossed with garlic and oil, roasted until tender, and finished with a sprinkle of Parmesan cheese.',
+        'instructions': '''
+      1. In a large mixing bowl, combine cauliflower florets (1 head), olive oil (1/4 cup), minced garlic (2 tablespoons), salt, parsley, and ground black pepper. Toss until evenly coated.
+      2. Preheat oven to 425°F.
+      3. Transfer cauliflower to a greased baking tray and bake for 25 minutes, stirring each floret halfway through.
+      4. Sprinkle Parmesan cheese (1/2 cup) on top and roast for an additional 4 minutes.
+      5. Remove from oven and transfer to a serving plate. Serve and enjoy.
+      ''',
+        'hasDietaryRestrictions': 'low carb, vegetarian, contains dairy',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': roastedCauliflowerId,
+        'ingredientID': 152, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': roastedCauliflowerId,
+        'ingredientID': 232,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': roastedCauliflowerId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': roastedCauliflowerId,
+        'ingredientID': 237, 
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': 'olive oil'
+      });
+
+      final chickenBistekId = await db.insert('meals', {
+        'mealName': 'Chicken Bistek',
+        'price': 250.0,
+        'calories': 380, 
+        'servings': 4,
+        'cookingTime': '45 minutes', 
+        'mealPicture': 'assets/meals/Chicken_Bistek.jpg',
+        'category': 'main dish, chicken, Filipino, savory, citrus',
+        'content': 'A Filipino dish of chicken marinated in soy sauce and lemon (or calamansi) juice, then pan-fried and served with a savory sauce and onion rings.',
+        'instructions': '''
+      1. In a large bowl, combine soy sauce (3/4 cup), lemon juice (1 lemon), salt (1/4 teaspoon), and crushed garlic (3 cloves) to make the marinade. Add chicken (2 lbs boneless breast) and coat thoroughly. Cover and refrigerate overnight.
+      2. Remove the chicken from the marinade, letting excess liquid drip off.
+      3. Heat 2 tablespoons of cooking oil in a wok. Fry the chicken 2 minutes per side until lightly browned. Remove and set aside.
+      4. In the same wok, heat the remaining oil (2 tablespoons) and sauté garlic and half of the sliced onions (3 total) until softened.
+      5. Add the fried chicken back to the wok and stir for 30 seconds.
+      6. Pour in the remaining marinade and 1 cup water. Bring to a boil, then reduce heat, cover, and simmer for 35 minutes, adding more water if needed.
+      7. Add the remaining onions and cook for 2 minutes. Season with sugar (1/2 teaspoon), salt, and ground black pepper to taste.
+      8. Transfer to a serving bowl and serve hot.
+      ''',
+        'hasDietaryRestrictions': 'high protein, high sodium (soy sauce)',
+        'availableFrom': '18:00',
+        'availableTo': '22:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': chickenBistekId,
+        'ingredientID': 149, 
+        'quantity': 3,
+        'unit': 'pieces',
+        'content': 'sliced into rings'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenBistekId,
+        'ingredientID': 152,
+        'quantity': 3,
+        'unit': 'cloves',
+        'content': 'crushed'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenBistekId,
+        'ingredientID': 228, 
+        'quantity': 0.5,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenBistekId,
+        'ingredientID': 237, 
+        'quantity': 0.25,
+        'unit': 'cup', 
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenBistekId,
+        'ingredientID': 232, 
+        'quantity': 0.25,
+        'unit': 'teaspoon',
+        'content': 'for marinade and to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenBistekId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenBistekId,
+        'ingredientID': 240, 
+        'quantity': 0.75,
+        'unit': 'cup',
+        'content': null
+      });
+  
+      await db.insert('meal_ingredients', {
+        'mealID': chickenBistekId,
+        'ingredientID': 4,
+        'quantity': 2,
+        'unit': 'lbs',
+        'content': 'boneless chicken breast'
+      });
+
+ 
+      final roastChickenId = await db.insert('meals', {
+        'mealName': 'Roast Chicken',
+        'price': 350.0,
+        'calories': 450,
+        'servings': 5,
+        'cookingTime': '1 hour 20 minutes',
+        'mealPicture': 'assets/meals/Roast_Chicken.jpg',
+        'category': 'main dish, chicken, savory, roasted',
+        'content': 'A classic whole roasted chicken seasoned with salt, pepper, garlic, lemon, and thyme, yielding a tender, flavorful main course.',
+        'instructions': '''
+      1. Clean the whole chicken (1) and pat dry. Rub sea salt and freshly ground black pepper all over.
+      2. Boil water with salt, whole lemon (1 large), and garlic (6 cloves), then set the lemon and garlic aside.
+      3. Gently lift the chicken breast skin and pour a little olive oil underneath.
+      4. Pierce the lemon to release its juice and place it, along with the garlic and fresh thyme, inside the chicken cavity.
+      5. Preheat oven to 350°F (175°C). Place the chicken in a roasting pan. Roast for 1 hour and 20 minutes.
+      6. Remove from oven and serve. Store any leftovers in the fridge for future meals.
+      ''',
+        'hasDietaryRestrictions': 'high protein',
+        'availableFrom': '18:00',
+        'availableTo': '22:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': roastChickenId,
+        'ingredientID': 152,
+        'quantity': 6,
+        'unit': 'cloves',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': roastChickenId,
+        'ingredientID': 232, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': roastChickenId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': roastChickenId,
+        'ingredientID': 4,
+        'quantity': 1,
+        'unit': 'whole',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': roastChickenId,
+        'ingredientID': 237,
+        'quantity': null,
+        'unit': null,
+        'content': 'a little'
+      });
+
+      final pocherongManokId = await db.insert('meals', {
+        'mealName': 'Pocherong Manok',
+        'price': 280.0,
+        'calories': 420, 
+        'servings': 4,
+        'cookingTime': '35 minutes',
+        'mealPicture': 'assets/meals/Pocherong_Manok.jpg',
+        'category': 'main dish, stew, Filipino, chicken, savory',
+        'content': 'A hearty Filipino chicken stew (Pochero) featuring chicken pieces, potatoes, saba bananas, chickpeas, and various vegetables in a rich tomato-based broth.',
+        'instructions': '''
+      1. Heat the cooking oil (1 cup) in a wok. Fry the saba bananas (3) and potatoes (2) until lightly browned. Remove and set aside.
+      2. Leave about 3 tablespoons of oil in the wok. Pan-fry the chicken (2 lbs) for 2 minutes on each side. Remove and set aside.
+      3. Add 2 tablespoons more oil. Sauté the chopped onion (1) for 1 minute, then add the chopped garlic (5 cloves) and cook until aromatic. Add the wedged tomatoes (2) and sauté for another minute.
+      4. Stir in the Chorizo de Bilbao (2 pieces), then add the chicken back and sauté for 2 minutes.
+      5. Add the tomato paste (3 tablespoons) and pour in 2 cups of water. Bring to a boil.
+      6. Crumble in the Maggi Magic Chicken Cube (1) and stir until dissolved.
+      7. Add the canned chickpeas (14 oz), fried potatoes, and bananas. Cook for 2 minutes.
+      8. Add the long green beans (15) and cabbage (1/2 head). Cover and cook for 3 minutes.
+      9. Season with fish sauce and ground black pepper to taste. Add the bok choy (1 bunch), cover, and turn off the heat, letting residual heat finish cooking it for 2 minutes.
+      10. Transfer to a serving bowl and serve with rice.
+      ''',
+        'hasDietaryRestrictions': 'contains fish product (fish sauce)',
+        'availableFrom': '17:00',
+        'availableTo': '22:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': pocherongManokId,
+        'ingredientID': 4,
+        'quantity': 2,
+        'unit': 'lbs',
+        'content': 'cut into serving pieces'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': pocherongManokId,
+        'ingredientID': 133, 
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': 'cut into large cubes'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': pocherongManokId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': pocherongManokId,
+        'ingredientID': 152, 
+        'quantity': 5,
+        'unit': 'cloves',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': pocherongManokId,
+        'ingredientID': 125, 
+        'quantity': 2,
+        'unit': 'pieces',
+        'content': 'wedged'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': pocherongManokId,
+        'ingredientID': 237,
+        'quantity': 1,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': pocherongManokId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+      final chickenAlaKingId = await db.insert('meals', {
+        'mealName': 'Filipino Chicken ala King with Creamy Sauce',
+        'price': 220.0, 
+        'calories': 680, 
+        'servings': 1,
+        'cookingTime': '30 minutes',
+        'mealPicture': 'assets/meals/Filipino_Chicken_Ala_King_with_Creamy_Sauce.webp',
+        'category': 'main dish, chicken, creamy, savory, fried',
+        'content': 'Crispy deep-fried chicken breast topped with a rich, creamy sauce made from butter, milk, cream, and vegetables, served with buttered corn.',
+        'instructions': '''
+      1. Flatten the chicken breast (8 oz) using a meat tenderizer. Rub salt (1/8 tsp), black pepper (1/8 tsp), and garlic powder (1/8 tsp) all over the chicken.
+      2. Dredge the chicken in all-purpose flour (1/4 cup), dip in the beaten egg (1), and coat with Good Life breadcrumbs (1 cup). Let rest for 5 minutes.
+      3. Heat oil (1 cup) in a pan and deep fry the chicken until golden brown. Remove and set aside.
+      4. For the side dish, melt butter (2 tbsp) in a pan, sauté the sweet corn kernels (1 1/2 cups) for 2 minutes, season with garlic powder (1/4 tsp), salt, and black pepper. Set aside.
+      5. For the Ala King sauce, melt butter (4 tbsp) in a saucepan. Sauté minced garlic (3 cloves), minced onion (3 tsp), and minced carrot (2 tbsp) for 2 minutes. Add flour (3 tbsp) and stir until a paste forms. Gradually pour in fresh milk (1 cup) and stir until thickened. Season with chicken powder (2 tsp), salt, and black pepper. Add all-purpose cream (1 cup), sliced pimiento (4 oz), and chopped parsley (2 tsp). Stir for 30 seconds.
+      6. Pour the sauce over the chicken. Serve with sautéed corn and rice.
+      ''',
+        'hasDietaryRestrictions': 'contains dairy, contains egg, contains gluten',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 4, 
+        'quantity': 8,
+        'unit': 'oz',
+        'content': 'boneless breast'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 177, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'beaten'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 237, 
+        'quantity': 1,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 247, 
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': 'for breading'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 232, 
+        'quantity': 0.125,
+        'unit': 'teaspoon',
+        'content': 'for seasoning'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 233, 
+        'quantity': 0.125,
+        'unit': 'teaspoon',
+        'content': 'for seasoning'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 22, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': 'for side dish'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 232, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste (side)'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste (side)'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 152, 
+        'quantity': 3,
+        'unit': 'cloves',
+        'content': 'minced (sauce)'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 149, 
+        'quantity': 3,
+        'unit': 'teaspoons',
+        'content': 'minced (sauce)'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 120, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': 'minced (sauce)'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 22,
+        'quantity': 4,
+        'unit': 'tablespoons',
+        'content': 'for sauce'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 247,
+        'quantity': 3,
+        'unit': 'tablespoons',
+        'content': 'for sauce'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 223, 
+        'quantity': 1,
+        'unit': 'cup',
+        'content': 'fresh (sauce)'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 223, 
+        'quantity': 1,
+        'unit': 'cup',
+        'content': 'all-purpose cream (sauce)'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 232, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste (sauce)'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenAlaKingId,
+        'ingredientID': 233,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste (sauce)'
+      });
+
+      
+      final chickenSotanghonSoupId = await db.insert('meals', {
+        'mealName': 'Chicken Sotanghon Soup with Patola',
+        'price': 200.0,
+        'calories': 250, 
+        'servings': 6,
+        'cookingTime': '30 minutes',
+        'mealPicture': 'assets/meals/Chicken_Sotanghon_Soup_with_Patola.jpg',
+        'category': 'main dish, soup, chicken, Filipino, noodle',
+        'content': 'A light and comforting Filipino chicken noodle soup featuring sotanghon (glass noodles), tender chicken, and patola (luffa gourd) in a clear, flavorful broth.',
+        'instructions': '''
+      1. Heat annatto oil (3 tbsp) in a pot over medium heat. Sauté chopped garlic (8 cloves) until lightly golden, then add chopped onion (1) and cook until soft and fragrant.
+      2. Add chicken pieces (1 1/2 lbs) and cook while stirring until lightly browned on all sides.
+      3. Pour in water (1.5 quarts) and bring to a boil. Add chicken powder (1 tbsp) and simmer for 20 minutes or until chicken is tender. Skim any foam for a clear broth.
+      4. Add sotanghon noodles (5 oz) and cook for about 3 minutes, stirring gently to prevent clumping.
+      5. Add patola slices (1 piece) and cook for 2 minutes until tender but not mushy.
+      6. Season with fish sauce and ground black pepper to taste. Ladle into bowls and top with roasted garlic (1 tbsp) and chopped green onions (2 tbsp) before serving.
+      ''',
+        'hasDietaryRestrictions': 'high protein, low fat',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': chickenSotanghonSoupId,
+        'ingredientID': 4, 
+        'quantity': 1.5,
+        'unit': 'lbs',
+        'content': 'cut into serving pieces'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenSotanghonSoupId,
+        'ingredientID': 152, 
+        'quantity': 8,
+        'unit': 'cloves',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenSotanghonSoupId,
+        'ingredientID': 149,
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'chopped'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chickenSotanghonSoupId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+   
+      final bukoSaladId = await db.insert('meals', {
+        'mealName': 'Buko Salad',
+        'price': 300.0, 
+        'calories': 400, 
+        'servings': 6,
+        'cookingTime': '10 minutes',
+        'mealPicture': 'assets/meals/Buko_Salad.jpg',
+        'category': 'dessert, fruit, Filipino, sweet',
+        'content': 'A popular Filipino dessert made from shredded young coconut (buko), mixed with various preserved fruits, and blended in a sweet, creamy dressing.',
+        'instructions': '''
+      1. In a mixing bowl, combine young coconut (4 cups), kaong (6 oz), nata de coco (12 oz), pineapple chunks (8 oz), and fruit cocktail (2 cans). Gently stir to evenly distribute the ingredients.
+      2. Add sweetened condensed milk (1 can) and table cream (7 oz). Mix until everything is well combined.
+      3. Refrigerate for at least 4 hours or place in the freezer for 1 hour to chill.
+      4. Transfer to a serving bowl. Serve as a dessert.
+      ''',
+        'hasDietaryRestrictions': 'contains dairy, high sugar, vegetarian',
+        'availableFrom': '10:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': bukoSaladId,
+        'ingredientID': 178, 
+        'quantity': 8,
+        'unit': 'ounces',
+        'content': 'drained'
+      });
+
+      final coconutMacaroonId = await db.insert('meals', {
+        'mealName': 'Coconut Macaroon',
+        'price': 120.0, 
+        'calories': 320,
+        'servings': 4,
+        'cookingTime': '30 minutes',
+        'mealPicture': 'assets/meals/Coconut_Macaroon.jpg',
+        'category': 'dessert, pastry, Filipino, baked, sweet',
+        'content': 'Sweet and chewy macaroons made primarily from shredded coconut, butter, brown sugar, eggs, and sweetened condensed milk.',
+        'instructions': '''
+      1. In a large bowl, cream the butter (1/2 cup) using a fork until smooth.
+      2. Add brown sugar (1/2 cup) and mix well.
+      3. Stir in the eggs (3) and condensed milk (14 ounces) until all ingredients are well blended.
+      4. Fold in the sweetened shredded coconut (14 ounces), distributing it evenly throughout the mixture.
+      5. Prepare a mold or paper-lined cupcake pan. Place about 1 tablespoon of the mixture into each cup.
+      6. Preheat the oven to 370°F (188°C) for 10 minutes.
+      7. Bake the coconut macaroons for 20–30 minutes, or until they turn golden brown.
+      8. Let cool slightly and serve as a dessert or snack.
+      ''',
+        'hasDietaryRestrictions': 'contains dairy, contains egg, high sugar',
+        'availableFrom': '10:00',
+        'availableTo': '20:00'
+      });
+
+     
+      await db.insert('meal_ingredients', {
+        'mealID': coconutMacaroonId,
+        'ingredientID': 22, 
+        'quantity': 0.5,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': coconutMacaroonId,
+        'ingredientID': 229, 
+        'quantity': 0.5,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': coconutMacaroonId,
+        'ingredientID': 177, 
+        'quantity': 3,
+        'unit': 'pieces',
+        'content': null
+      });
+
+ 
+      final bukoPandanId = await db.insert('meals', {
+        'mealName': 'Buko Pandan',
+        'price': 180.0, 
+        'calories': 350, 
+        'servings': 4,
+        'cookingTime': '15 minutes',
+        'mealPicture': 'assets/meals/Buko_Pandan.webp',
+        'category': 'dessert, Filipino, sweet, chilled',
+        'content': 'A famous Filipino dessert made from pandan-flavored gelatin cubes, shredded young coconut, and sago pearls mixed in a creamy sauce of condensed milk and cream.',
+        'instructions': '''
+      1. Boil water (2 cups) in a saucepan and add the pandan leaves (1/2 lb). Cover and simmer for 15 minutes.
+      2. Remove the pandan leaves, then stir in sugar (1/4 cup), powdered gelatin (3 oz), and buko pandan flavoring (1/2 tsp) until fully dissolved.
+      3. Turn off the heat and pour the mixture into a mold. Let it cool until firm. For faster setting, refrigerate after the mixture has cooled slightly (Optional setting time: 8 hours).
+      4. In a separate bowl, combine young coconut strips (20 oz), Nestlé Carnation Condensada (150 ml), Nestlé All Purpose Cream (250 ml), and cooked sago pearls (1/2 cup, optional). Mix well.
+      5. Chill the creamy mixture in the refrigerator until thickened.
+      6. Once the gelatin is firm, cut it into 1/2-inch cubes and fold it into the chilled creamy mixture.
+      7. Serve in individual cups or platters. Optionally, top with a scoop of vanilla ice cream.
+      ''',
+        'hasDietaryRestrictions': 'contains dairy, high sugar, vegetarian',
+        'availableFrom': '10:00',
+        'availableTo': '20:00'
+      });
+
+
+      await db.insert('meal_ingredients', {
+        'mealID': bukoPandanId,
+        'ingredientID': 228, 
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': null
+      });
+
+
+      final suamNaMaisId = await db.insert('meals', {
+        'mealName': 'Suam na Mais',
+        'price': 180.0, 
+        'calories': 300, 
+        'servings': 4,
+        'cookingTime': '25 minutes',
+        'mealPicture': 'assets/meals/Suam_na_Mais.jpg',
+        'category': 'main dish, soup, Filipino, corn, savory',
+        'content': 'A savory Filipino corn soup, thickened and flavored with ground pork, shrimp, and aromatics, finished with leafy vegetables.',
+        'instructions': '''
+      1. Heat the cooking oil (3 tablespoons) in a pot and sauté the minced garlic (3 cloves) and minced onion (1) until the onion softens.
+      2. Add the ground pork (4 ounces) and sauté for 2 minutes or until lightly browned.
+      3. Stir in the white corn kernels (30 ounces) and cook for 3 minutes.
+      4. Add the chopped shrimp (8 ounces) and sauté for 1 minute.
+      5. In a separate bowl, combine Knorr Crab and Corn Soup (37 grams) with water (4 cups), then pour the mixture into the pot. Stir and bring to a boil. Simmer on low to medium heat for 3 minutes while stirring.
+      6. Add the hot pepper leaves or spinach (1 bunch) and season with fish sauce and ground white pepper to taste.
+      7. Serve hot with rice.
+      ''',
+        'hasDietaryRestrictions': 'contains shellfish (shrimp)',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+  
+      await db.insert('meal_ingredients', {
+        'mealID': suamNaMaisId,
+        'ingredientID': 149, 
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': suamNaMaisId,
+        'ingredientID': 152, 
+        'quantity': 3,
+        'unit': 'cloves',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': suamNaMaisId,
+        'ingredientID': 237, 
+        'quantity': 3,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': suamNaMaisId,
+        'ingredientID': 233, 
+        'quantity': null,
+        'unit': null,
+        'content': 'ground white pepper, to taste'
+      });
+
+      final cornSoupQuailEggsId = await db.insert('meals', {
+        'mealName': 'Corn Soup with Quail Eggs',
+        'price': 150.0, 
+        'calories': 220, 
+        'servings': 3,
+        'cookingTime': '20 minutes',
+        'mealPicture': 'assets/meals/Corn_Soup_with_Quail_Eggs.jpg',
+        'category': 'side dish, soup, corn, savory',
+        'content': 'A creamy and comforting soup featuring sweet corn and whole quail eggs, thickened with cornstarch and a raw egg.',
+        'instructions': '''
+      1. Combine chicken broth (2 cups) and water (1 cup) in a cooking pot and bring to a boil.
+      2. Add the cream-style sweet corn (1 can, 15 oz.), stir, and let it re-boil. Cover and simmer for 15 minutes, adding water if necessary.
+      3. Stir in the chopped green onions (3/4 cup), salt, and pepper. Cook for 2 minutes.
+      4. Pour in the diluted cornstarch (2 tbsp cornstarch in water) and stir. Continue cooking for 1 minute.
+      5. Drop in the raw chicken egg (1) and stir quickly until it is evenly distributed.
+      6. Add the boiled quail eggs (2 dozen), cover, and turn off the heat. Let it sit covered for 5 minutes.
+      7. Transfer to a serving bowl and serve.
+      ''',
+        'hasDietaryRestrictions': 'contains egg, vegetarian option (if using vegetable broth)',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+   
+      await db.insert('meal_ingredients', {
+        'mealID': cornSoupQuailEggsId,
+        'ingredientID': 231, 
+        'quantity': 2,
+        'unit': 'cups',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cornSoupQuailEggsId,
+        'ingredientID': 177,
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'raw'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cornSoupQuailEggsId,
+        'ingredientID': 232,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cornSoupQuailEggsId,
+        'ingredientID': 233,
+        'quantity': null,
+        'unit': null,
+        'content': 'to taste'
+      });
+
+  
+      final chiliCrabId = await db.insert('meals', {
+        'mealName': 'Chili Crab',
+        'price': 650.0, 
+        'calories': 400, 
+        'servings': 4,
+        'cookingTime': '30 minutes',
+        'mealPicture': 'assets/meals/Chili_Crab.jpg',
+        'category': 'main dish, seafood, spicy, Southeast Asian',
+        'content': 'A savory and spicy seafood dish where hard-shell crabs are stir-fried in a thick, tomato-based chili sauce.',
+        'instructions': '''
+      1. Heat cooking oil (2 tbsp) in a pot over medium heat.
+      2. Sauté minced garlic (2 tbsp), minced ginger (3 tbsp), and crushed red pepper or sliced red chili (1 tbsp or 3 pieces) until fragrant.
+      3. Add the crab (2 lbs, cut in half) and cook for 3 to 4 minutes.
+      4. Stir in hoisin sauce (2 tbsp), tomato ketchup or tomato sauce (1/2 cup), sweet chili sauce (1/4 cup), fish sauce (2 tbsp), and sesame oil (1/2 tsp) until evenly combined.
+      5. Pour in water (1/4 cup) and bring to a boil, then simmer for 10 to 15 minutes or until the sauce thickens.
+      6. Garnish with thinly sliced green onions or scallions (3 tbsp) on top.
+      7. Serve hot and enjoy!
+      ''',
+        'hasDietaryRestrictions': 'contains shellfish (crab), contains fish product (fish sauce)',
+        'availableFrom': '18:00',
+        'availableTo': '22:00'
+      });
+
+     
+      await db.insert('meal_ingredients', {
+        'mealID': chiliCrabId,
+        'ingredientID': 237, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chiliCrabId,
+        'ingredientID': 152, 
+        'quantity': 2,
+        'unit': 'tablespoons',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': chiliCrabId,
+        'ingredientID': 125, 
+        'quantity': 0.5,
+        'unit': 'cup',
+        'content': 'tomato ketchup or sauce'
+      });
+
+ 
+      final crispyCrabletsId = await db.insert('meals', {
+        'mealName': 'Crispy Crablets',
+        'price': 280.0,
+        'calories': 550, 
+        'servings': 6,
+        'cookingTime': '12 minutes',
+        'mealPicture': 'assets/meals/Crispy_Crablets.jpg',
+        'category': 'appetizer, snack, seafood, fried, crunchy',
+        'content': 'Whole small crabs (crablets) coated in cornstarch and deep-fried until extremely crispy, often seasoned simply with salt and pepper.',
+        'instructions': '''
+      1. Place the crablets (2 lbs, cleaned) in a bowl and pour in gin or sherry (4 tablespoons, optional). Mix gently.
+      2. Sprinkle with salt (1/2 tablespoon) and ground black pepper (2 teaspoons) and mix well.
+      3. Heat cooking oil (3 cups) in a frying pan or pot.
+      4. Dredge the crablets in cornstarch (1 cup) and deep-fry until crispy.
+      5. Remove from the pan and drain on a plate lined with paper towels.
+      6. Once excess oil has drained, arrange on a serving plate and serve with spicy vinegar dip.
+      ''',
+        'hasDietaryRestrictions': 'contains shellfish (crablets), high fat',
+        'availableFrom': '11:00',
+        'availableTo': '22:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCrabletsId,
+        'ingredientID': 232, 
+        'quantity': 0.5,
+        'unit': 'tablespoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCrabletsId,
+        'ingredientID': 233, 
+        'quantity': 2,
+        'unit': 'teaspoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': crispyCrabletsId,
+        'ingredientID': 237, 
+        'quantity': 3,
+        'unit': 'cups',
+        'content': 'for deep frying'
+      });
+
+      final rellenongAlimasagId = await db.insert('meals', {
+        'mealName': 'Rellenong Alimasag',
+        'price': 400.0,
+        'calories': 350,
+        'servings': 8,
+        'cookingTime': '18 minutes',
+        'mealPicture': 'assets/meals/Rellenong_Alimasag.jpg',
+        'category': 'main dish, seafood, Filipino, fried, stuffed',
+        'content': 'Stuffed crab shells, where the meat is flaked and mixed with diced potatoes, carrots, and seasonings, then returned to the shell and deep-fried.',
+        'instructions': '''
+      1. Heat 2 tablespoons of cooking oil in a pan. Sauté the minced onion (1 medium) and diced tomato (1 medium) until soft.
+      2. Add the diced potato (1 medium) and diced carrot (1 medium). Cook for 3 to 5 minutes.
+      3. Add the chopped long green chili (1) and crab meat (8 crabs), including some of the crab juice for extra flavor. Cook for 2 minutes.
+      4. Stir in dried parsley (3 tsp), garlic powder (2 tsp), salt (2 tsp), and ground black pepper (1 tsp). Remove from heat and transfer to a large bowl.
+      5. Once the mixture has cooled, combine it with bread crumbs (1/2 cup) and raw eggs (2). Mix thoroughly.
+      6. Stuff each crab shell with the mixture.
+      7. Heat 1 cup of cooking oil in a pan. When hot, fry the stuffed crab shells with the stuffing side facing up. Spoon hot oil over the stuffing to cook it slowly.
+      8. Flip the crab shells and fry the other side for 3 to 5 minutes over medium heat.
+      9. Transfer to a serving plate and serve.
+      ''',
+        'hasDietaryRestrictions': 'contains shellfish (crab), contains egg, high fat',
+        'availableFrom': '17:00',
+        'availableTo': '22:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': rellenongAlimasagId,
+        'ingredientID': 133, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'diced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': rellenongAlimasagId,
+        'ingredientID': 120, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'diced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': rellenongAlimasagId,
+        'ingredientID': 248, 
+        'quantity': 0.5,
+        'unit': 'cup',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': rellenongAlimasagId,
+        'ingredientID': 149,
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'minced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': rellenongAlimasagId,
+        'ingredientID': 125, 
+        'quantity': 1,
+        'unit': 'medium',
+        'content': 'diced'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': rellenongAlimasagId,
+        'ingredientID': 232,
+        'quantity': 2,
+        'unit': 'teaspoons',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': rellenongAlimasagId,
+        'ingredientID': 233, 
+        'quantity': 1,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': rellenongAlimasagId,
+        'ingredientID': 237, 
+        'quantity': 1,
+        'unit': 'cup',
+        'content': '1 cup for frying + 2 tbsp for sautéing'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': rellenongAlimasagId,
+        'ingredientID': 177, 
+        'quantity': 2,
+        'unit': 'raw pieces',
+        'content': null
+      });
+
+      final cucumberSaladId = await db.insert('meals', {
+        'mealName': 'Cucumber Salad',
+        'price': 60.0, 
+        'calories': 36, 
+        'servings': 3,
+        'cookingTime': '5 minutes',
+        'mealPicture': 'assets/meals/Cucumber_Salad.jpg',
+        'category': 'side dish, salad, cold, refreshing, savory',
+        'content': 'A simple, refreshing salad made with thinly sliced cucumbers and onions marinated in a sweet and sour vinegar-based dressing.',
+        'instructions': '''
+      1. Wash the cucumber (2 pieces) and pat dry.
+      2. Thinly slice the cucumber crosswise. Peeling the skin is optional.
+      3. Combine salt (1 tsp), ground black pepper (1/8 tsp), sugar (1 tbsp), minced ginger (1 tbsp), and apple cider vinegar or white vinegar (1/4 cup), then mix well.
+      4. Add the sliced cucumber and red onion (1 piece, optional). Refrigerate for 2 hours.
+      5. Serve.
+      ''',
+        'hasDietaryRestrictions': 'vegetarian, vegan, gluten-free, low calorie',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': cucumberSaladId,
+        'ingredientID': 232, 
+        'quantity': 1,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cucumberSaladId,
+        'ingredientID': 233,
+        'quantity': 0.125,
+        'unit': 'teaspoon',
+        'content': null
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cucumberSaladId,
+        'ingredientID': 149,
+        'quantity': 1,
+        'unit': 'piece',
+        'content': 'sliced, optional'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': cucumberSaladId,
+        'ingredientID': 228, 
+        'quantity': 1,
+        'unit': 'tablespoon',
+        'content': null
+      });
+
+      final friedEggplantId = await db.insert('meals', {
+        'mealName': 'Fried Eggplant (Pritong Talong)',
+        'price': 80.0, 
+        'calories': 200, 
+        'servings': 2,
+        'cookingTime': '10 minutes',
+        'mealPicture': 'assets/meals/Fried_Eggplant.jpg',
+        'category': 'side dish, vegetable, Filipino, fried',
+        'content': 'Slices of eggplant lightly coated in flour and pan-fried until tender, typically served with a savory shrimp paste (bagoong) dip.',
+        'instructions': '''
+      1. Slice the large Chinese eggplant (1) in half lengthwise, then cut into 3-inch pieces.
+      2. Dredge the eggplant pieces in all-purpose flour (1/4 cup).
+      3. Heat 4 tablespoons of cooking oil in a pan. When hot, pan-fry the eggplant slices until one side turns dark brown, then flip to cook the other side. Add more oil if needed, as eggplant absorbs oil during frying. Continue cooking until the eggplant is fully done.
+      4. Transfer to a plate and serve with bagoong alamang (3 tbsp) and a dip of soy sauce with chili.
+      5. Eat with rice.
+      ''',
+        'hasDietaryRestrictions': 'vegetarian, vegan (without bagoong), contains gluten',
+        'availableFrom': '11:00',
+        'availableTo': '20:00'
+      });
+
+      await db.insert('meal_ingredients', {
+        'mealID': friedEggplantId,
+        'ingredientID': 237, 
+        'quantity': 6,
+        'unit': 'tablespoons',
+        'content': 'for frying'
+      });
+      await db.insert('meal_ingredients', {
+        'mealID': friedEggplantId,
+        'ingredientID': 247, 
+        'quantity': 0.25,
+        'unit': 'cup',
+        'content': 'for dredging'
+      });
   }
 
    // ========== NEW METHOD: Load meals from JSON ==========
@@ -2819,7 +6141,25 @@ class DatabaseHelper {
   // ========== USER OPERATIONS ==========
   Future<int> insertUser(Map<String, dynamic> user) async {
     final db = await database;
-    return await db.insert('users', user);
+    
+    // 1. Local Save: SQLite ID will likely reset to 1, 2, 3... on reinstall
+    int id = await db.insert('users', user);
+
+    // 2. Cloud Backup: Use Push() to generate a unique key like "-Mz..."
+    try {
+      Map<String, dynamic> cloudData = Map.from(user);
+      cloudData['local_id'] = id; // Optional: Save local ID for reference
+
+      // FIX: Use push() to generate a guaranteed unique ID
+      // This creates a key like "-N8...abc" which NEVER collides with "1" or "2"
+      await FirebaseDatabase.instance.ref("users").push().set(cloudData);
+      
+      print("🚀 User synced safely with unique Push ID");
+    } catch (e) {
+      print("⚠️ Offline: User saved locally only.");
+    }
+
+    return id;
   }
 
   Future<Map<String, dynamic>?> getUserByEmail(String email) async {
@@ -2854,12 +6194,73 @@ class DatabaseHelper {
 
   Future<int> updateUser(int id, Map<String, dynamic> updates) async {
     final db = await database;
-    return await db.update(
+    
+    // 1. Fetch current local data to get the unique Username/Email
+    // We need this to find the correct record in Firebase since IDs don't match anymore
+    final currentUser = await getUserById(id);
+    if (currentUser == null) return 0;
+    String lookupKey = currentUser['username']; // or 'emailAddress'
+
+    // 2. Update Local SQLite
+    int rowsAffected = await db.update(
       'users',
       updates,
       where: 'id = ?',
       whereArgs: [id],
     );
+
+    // 3. Update Firebase (Query First Strategy)
+    try {
+      // Find the node where 'username' matches, regardless of whether the key is "1" or "-Mz..."
+      final snapshot = await FirebaseDatabase.instance.ref("users")
+          .orderByChild("username")
+          .equalTo(lookupKey)
+          .get();
+
+      if (snapshot.exists) {
+        // We found the record! Update it.
+        for (var child in snapshot.children) {
+          await child.ref.update(updates);
+          print("🚀 User updated in Cloud: ${child.key}");
+        }
+      } else {
+        print("⚠️ User not found in cloud, skipping update.");
+      }
+    } catch (e) {
+      print("⚠️ Offline: User update saved locally only. Error: $e");
+    }
+
+    return rowsAffected;
+  }
+
+  Future<int> deleteUser(int id) async { 
+    final db = await database;
+
+    // 1. Fetch current local data to get lookup key
+    final currentUser = await getUserById(id);
+    if (currentUser == null) return 0;
+    String lookupKey = currentUser['username']; 
+
+    // 2. Local Delete
+    int rows = await db.delete('users', where: 'id = ?', whereArgs: [id]);
+    
+    // 3. Cloud Delete (Query First Strategy)
+    try {
+      final snapshot = await FirebaseDatabase.instance.ref("users")
+          .orderByChild("username")
+          .equalTo(lookupKey)
+          .get();
+
+      if (snapshot.exists) {
+        for (var child in snapshot.children) {
+          await child.ref.remove();
+          print("🚀 User deleted from Cloud: ${child.key}");
+        }
+      }
+    } catch (e) {
+      print("Error deleting from cloud: $e");
+    }
+    return rows;
   }
 
     Future<List<String>> getAllMealCategories() async {
@@ -2967,52 +6368,172 @@ class DatabaseHelper {
   }
 
   Future<int> insertMeal(Map<String, dynamic> meal) async {
-  final db = await database;
-  return await db.insert('meals', meal);
-}
+    final db = await database;
+    
+    // 1. Local Save
+    int id = await db.insert('meals', meal);
 
-Future<int> updateMeal(int mealId, Map<String, dynamic> updates) async {
-  final db = await database;
-  return await db.update(
-    'meals',
-    updates,
-    where: 'mealID = ?',
-    whereArgs: [mealId],
-  );
-}
+    // 2. Cloud Backup (Safe Insert)
+    try {
+      Map<String, dynamic> cloudData = Map.from(meal);
+      cloudData['local_id'] = id; // Save local ID for reference
 
-Future<int> deleteMeal(int mealId) async {
-  final db = await database;
-  return await db.delete(
-    'meals',
-    where: 'mealID = ?',
-    whereArgs: [mealId],
-  );
-}
+      // Use push() to generate a unique key (e.g. "-Mz7...")
+      await FirebaseDatabase.instance.ref("meals").push().set(cloudData);
+      print("🚀 Meal synced safely with unique Push ID");
+    } catch (e) {
+       print("⚠️ Offline: Meal saved locally only.");
+    }
+
+    return id;
+  }
+
+  Future<int> updateMeal(int mealId, Map<String, dynamic> updates) async {
+    final db = await database;
+    
+    // 1. Get the CURRENT meal name before updating (to find it in cloud)
+    final currentMeal = await getMealById(mealId);
+    String? searchName = currentMeal?['mealName'];
+
+    // 2. Local Update
+    int rows = await db.update(
+      'meals',
+      updates,
+      where: 'mealID = ?',
+      whereArgs: [mealId],
+    );
+
+    // 3. Cloud Update (Find by Name, then Update)
+    if (searchName != null) {
+      try {
+        final snapshot = await FirebaseDatabase.instance.ref("meals")
+            .orderByChild("mealName")
+            .equalTo(searchName)
+            .get();
+
+        if (snapshot.exists) {
+          for (var child in snapshot.children) {
+            await child.ref.update(updates);
+            print("🚀 Meal updated in Cloud: ${child.key}");
+          }
+        }
+      } catch (e) {
+        print("⚠️ Offline: Meal update saved locally only.");
+      }
+    }
+
+    return rows;
+  }
+
+  Future<int> deleteMeal(int mealId) async {
+    final db = await database;
+    
+    // 1. Get name to find in cloud
+    final currentMeal = await getMealById(mealId);
+    String? searchName = currentMeal?['mealName'];
+
+    // 2. Local Delete
+    int rows = await db.delete(
+      'meals',
+      where: 'mealID = ?',
+      whereArgs: [mealId],
+    );
+
+    // 3. Cloud Delete
+    if (searchName != null) {
+      try {
+        final snapshot = await FirebaseDatabase.instance.ref("meals")
+            .orderByChild("mealName")
+            .equalTo(searchName)
+            .get();
+
+        if (snapshot.exists) {
+          for (var child in snapshot.children) {
+            await child.ref.remove();
+            print("🚀 Meal deleted from Cloud");
+          }
+        }
+      } catch (e) {
+        print("Error deleting from cloud: $e");
+      }
+    }
+    return rows;
+  }
 
   Future<int> insertIngredient(Map<String, dynamic> ingredient) async {
-  final db = await database;
-  return await db.insert('ingredients', ingredient);
-}
+    final db = await database;
+    int id = await db.insert('ingredients', ingredient);
 
-Future<int> updateIngredient(int ingredientId, Map<String, dynamic> updates) async {
-  final db = await database;
-  return await db.update(
-    'ingredients',
-    updates,
-    where: 'ingredientID = ?',
-    whereArgs: [ingredientId],
-  );
-}
+    // Cloud Sync
+    try {
+      Map<String, dynamic> cloudData = Map.from(ingredient);
+      cloudData['local_id'] = id; 
+      // Safe Push
+      await FirebaseDatabase.instance.ref("ingredients").push().set(cloudData);
+    } catch (e) {
+      print("⚠️ Offline: Ingredient saved locally only.");
+    }
+    return id;
+  }
 
-Future<int> deleteIngredient(int ingredientId) async {
-  final db = await database;
-  return await db.delete(
-    'ingredients',
-    where: 'ingredientID = ?',
-    whereArgs: [ingredientId],
-  );
-}
+  Future<int> updateIngredient(int ingredientId, Map<String, dynamic> updates) async {
+    final db = await database;
+    
+    // Get current name to find in cloud
+    final results = await db.query('ingredients', where: 'ingredientID = ?', whereArgs: [ingredientId]);
+    String? searchName = results.isNotEmpty ? results.first['ingredientName'] as String? : null;
+
+    int rows = await db.update(
+      'ingredients',
+      updates,
+      where: 'ingredientID = ?',
+      whereArgs: [ingredientId],
+    );
+
+    if (searchName != null) {
+      try {
+        final snapshot = await FirebaseDatabase.instance.ref("ingredients")
+            .orderByChild("ingredientName")
+            .equalTo(searchName)
+            .get();
+
+        if (snapshot.exists) {
+          for (var child in snapshot.children) {
+            await child.ref.update(updates);
+          }
+        }
+      } catch (e) {
+        print("⚠️ Offline: Ingredient update saved locally only.");
+      }
+    }
+    return rows;
+  }
+
+  Future<int> deleteIngredient(int ingredientId) async {
+    final db = await database;
+    
+    // Get current name
+    final results = await db.query('ingredients', where: 'ingredientID = ?', whereArgs: [ingredientId]);
+    String? searchName = results.isNotEmpty ? results.first['ingredientName'] as String? : null;
+
+    int rows = await db.delete('ingredients', where: 'ingredientID = ?', whereArgs: [ingredientId]);
+
+    if (searchName != null) {
+      try {
+        final snapshot = await FirebaseDatabase.instance.ref("ingredients")
+            .orderByChild("ingredientName")
+            .equalTo(searchName)
+            .get();
+
+        if (snapshot.exists) {
+          for (var child in snapshot.children) {
+            await child.ref.remove();
+          }
+        }
+      } catch (e) { print("Error deleting cloud ingredient"); }
+    }
+    return rows;
+  }
 
 Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) async {
   final db = await database;
@@ -3031,14 +6552,20 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
     return await db.query('users');
   }
 
-  Future<int> deleteUser(int userId) async {
-  final db = await database;
-  return await db.delete(
-    'users',
-    where: 'userID = ?',
-    whereArgs: [userId],
-  );
-}
+/*
+  Future<int> deleteUser(int id) async { // Change userId to id
+    final db = await database;
+    int rows = await db.delete('users', where: 'id = ?', whereArgs: [id]); // Change userID to id
+    
+    // Add Firebase Delete here too!
+    try {
+      await FirebaseDatabase.instance.ref("users/$id").remove();
+    } catch (e) {
+      print("Error deleting from cloud: $e");
+    }
+    return rows;
+  }
+  */
 
   Map<String, List<String>> _substitutions = {};
 
@@ -3107,35 +6634,76 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
 
   Future<int> insertFaq(Map<String, dynamic> faq) async {
     final db = await database;
-    // Set order_num to max + 1
     final maxOrder = await db.rawQuery('SELECT MAX(order_num) as max FROM faqs');
     int newOrder = (maxOrder.first['max'] as int? ?? 0) + 1;
     faq['order_num'] = newOrder;
-    return await db.insert('faqs', faq);
+    
+    int id = await db.insert('faqs', faq);
+
+    try {
+      Map<String, dynamic> cloudData = Map.from(faq);
+      cloudData['local_id'] = id;
+      // Use push() to avoid ID collision
+      await FirebaseDatabase.instance.ref("faqs").push().set(cloudData);
+    } catch (e) {
+      print("⚠️ Offline: FAQ insert saved locally only.");
+    }
+
+    return id;
   }
 
   Future<int> updateFaq(int id, Map<String, dynamic> updates) async {
     final db = await database;
-    return await db.update('faqs', updates, where: 'id = ?', whereArgs: [id]);
+    
+    // Find current question text
+    final results = await db.query('faqs', where: 'id = ?', whereArgs: [id]);
+    String? searchQuestion = results.isNotEmpty ? results.first['question'] as String? : null;
+
+    int rows = await db.update('faqs', updates, where: 'id = ?', whereArgs: [id]);
+
+    if (searchQuestion != null) {
+      try {
+        final snapshot = await FirebaseDatabase.instance.ref("faqs")
+            .orderByChild("question")
+            .equalTo(searchQuestion)
+            .get();
+
+        if (snapshot.exists) {
+          for (var child in snapshot.children) {
+            await child.ref.update(updates);
+          }
+        }
+      } catch (e) {
+        print("⚠️ Offline: FAQ update saved locally only.");
+      }
+    }
+    return rows;
   }
 
   Future<int> deleteFaq(int id) async {
     final db = await database;
-    return await db.delete('faqs', where: 'id = ?', whereArgs: [id]);
-  }
+    
+    // Find current question text
+    final results = await db.query('faqs', where: 'id = ?', whereArgs: [id]);
+    String? searchQuestion = results.isNotEmpty ? results.first['question'] as String? : null;
 
-  Future<void> reorderFaqs(List<Map<String, dynamic>> faqs) async {
-    final db = await database;
-    await db.transaction((txn) async {
-      for (int i = 0; i < faqs.length; i++) {
-        await txn.update(
-          'faqs',
-          {'order_num': i + 1},
-          where: 'id = ?',
-          whereArgs: [faqs[i]['id']],
-        );
-      }
-    });
+    int rows = await db.delete('faqs', where: 'id = ?', whereArgs: [id]);
+
+    if (searchQuestion != null) {
+      try {
+        final snapshot = await FirebaseDatabase.instance.ref("faqs")
+            .orderByChild("question")
+            .equalTo(searchQuestion)
+            .get();
+
+        if (snapshot.exists) {
+          for (var child in snapshot.children) {
+            await child.ref.remove();
+          }
+        }
+      } catch (e) { print("Error deleting cloud FAQ"); }
+    }
+    return rows;
   }
 
   // ========== ABOUT US OPERATIONS ==========
@@ -3147,11 +6715,47 @@ Future<List<Map<String, dynamic>>> getMealsWithIngredient(int ingredientId) asyn
 
   Future<int> updateAboutUsContent(String content) async {
     final db = await database;
+    int rows;
+    
+    // 1. Local Logic (Upsert)
     if (await db.query('about_us').then((res) => res.isEmpty)) {
-      return await db.insert('about_us', {'id': 1, 'content': content});
+      rows = await db.insert('about_us', {'id': 1, 'content': content});
     } else {
-      return await db.update('about_us', {'content': content}, where: 'id = 1');
+      rows = await db.update('about_us', {'content': content}, where: 'id = 1');
     }
+
+    // 2. 🔥 Cloud Sync
+    try {
+      // We force ID 1 for About Us since there is only one
+      await FirebaseDatabase.instance.ref("about_us/1").set({
+        'id': 1,
+        'content': content
+      });
+      print("🚀 About Us synced to Cloud");
+    } catch (e) {
+      print("⚠️ Offline: About Us saved locally only.");
+    }
+
+    return rows;
+  }
+
+  Future<void> _insertUnitConversions(Database db) async {
+    // Basic conversions relative to grams/ml
+    final conversions = [
+      {'unit_name': 'kg', 'grams_per_unit': 1000.0},
+      {'unit_name': 'g', 'grams_per_unit': 1.0},
+      {'unit_name': 'mg', 'grams_per_unit': 0.001},
+      {'unit_name': 'lb', 'grams_per_unit': 453.59},
+      {'unit_name': 'oz', 'grams_per_unit': 28.35},
+      {'unit_name': 'cup', 'grams_per_unit': 240.0}, // approx for water
+      {'unit_name': 'tbsp', 'grams_per_unit': 15.0},
+      {'unit_name': 'tsp', 'grams_per_unit': 5.0},
+    ];
+
+    for (var c in conversions) {
+      await db.insert('unit_conversions', c);
+    }
+    print("✅ Unit conversions seeded.");
   }
 
   Map<String, dynamic> getPriceInfo(Map<String, dynamic> ingredient) {
@@ -3387,16 +6991,16 @@ double convertToGrams(double quantity, String unit, Map<String, dynamic> ingredi
       return quantity * _getPieceWeight(ingredientName, category);
     
     case 'clove':
-      if (ingredientName.contains('garlic')) return quantity * 5.0; // avg garlic clove
+      if (ingredientName.contains('garlic')) return quantity * 5.0;
       return quantity * 2.0; // default for other cloves
     
     case 'head':
-      if (ingredientName.contains('garlic')) return quantity * 50.0; // avg garlic head
+      if (ingredientName.contains('garlic')) return quantity * 50.0;
       if (ingredientName.contains('cabbage')) return quantity * 800.0;
       return quantity * 500.0; // default head weight
     
     case 'bulb':
-      if (ingredientName.contains('onion')) return quantity * 150.0;
+      if (ingredientName.contains('onion')) return quantity * 70.0;
       return quantity * 100.0;
     
     // Packaging units
@@ -3452,9 +7056,9 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
   else if (ingredientName.contains('orange')) return 130.0;
   else if (ingredientName.contains('lemon')) return 60.0;
   else if (ingredientName.contains('lime')) return 50.0;
-  else if (ingredientName.contains('tomato')) return 120.0;
+  else if (ingredientName.contains('tomato')) return 80.0;
   else if (ingredientName.contains('potato')) return 150.0;
-  else if (ingredientName.contains('onion')) return 110.0;
+  else if (ingredientName.contains('onion')) return 70.0;
   else if (ingredientName.contains('sayote')) return 250.0;
   
   // Vegetables
@@ -3568,6 +7172,49 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
     print('Successfully updated prices for $updatedCount meals.');
   }
 
+  Future<void> _insertCompleteSubstitutionData(Database db) async {
+    print("Seeding Substitution Data...");
+    
+    // We need to find IDs first to avoid Foreign Key errors. 
+    // This is a safe way to insert sample substitutions.
+    
+    try {
+      // Example: 1. Chicken -> Tofu (For Vegetarians)
+      // We look up the IDs dynamically
+      final chicken = await db.query('ingredients', where: 'ingredientName LIKE ?', whereArgs: ['%Chicken%'], limit: 1);
+      final tofu = await db.query('ingredients', where: 'ingredientName LIKE ?', whereArgs: ['%Tofu%'], limit: 1);
+
+      if (chicken.isNotEmpty && tofu.isNotEmpty) {
+        await db.insert('substitutions', {
+          'original_ingredient_id': chicken.first['ingredientID'],
+          'substitute_ingredient_id': tofu.first['ingredientID'],
+          'equivalence_ratio': 1.0,
+          'flavor_similarity': 0.6,
+          'notes': 'Good vegetarian alternative',
+          'confidence': 'high'
+        });
+      }
+
+      // Example 2: Pork -> Chicken (For Halal)
+      final pork = await db.query('ingredients', where: 'ingredientName LIKE ?', whereArgs: ['%Pork%'], limit: 1);
+      
+      if (pork.isNotEmpty && chicken.isNotEmpty) {
+        await db.insert('substitutions', {
+          'original_ingredient_id': pork.first['ingredientID'],
+          'substitute_ingredient_id': chicken.first['ingredientID'],
+          'equivalence_ratio': 1.0,
+          'flavor_similarity': 0.8,
+          'notes': 'Halal alternative',
+          'confidence': 'high'
+        });
+      }
+      
+      print("✅ Substitutions table seeded successfully.");
+    } catch (e) {
+      print("⚠️ Error seeding substitutions: $e");
+    }
+  }
+
   // ========== CUSTOMIZED MEALS OPERATIONS ==========
 
   Future<int> saveCustomizedMeal({
@@ -3579,7 +7226,7 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
   }) async {
     final db = await database;
     
-    // Deactivate any existing active customization for this meal and user
+    // Deactivate locally
     await db.update(
       'customized_meals',
       {'is_active': 0},
@@ -3587,7 +7234,8 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
       whereArgs: [originalMealId, userId],
     );
 
-    return await db.insert('customized_meals', {
+    // Save New Locally
+    int id = await db.insert('customized_meals', {
       'original_meal_id': originalMealId,
       'user_id': userId,
       'customized_name': customizedName,
@@ -3597,6 +7245,44 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
       'updated_at': DateTime.now().toIso8601String(),
       'is_active': 1,
     });
+
+    try {
+      Map<String, dynamic> cloudData = {
+        'local_id': id,
+        'original_meal_id': originalMealId,
+        'user_id': userId,
+        'customized_name': customizedName,
+        'original_ingredients': jsonEncode(originalIngredients),
+        'substituted_ingredients': jsonEncode(substitutedIngredients),
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+        'is_active': 1,
+      };
+
+      // 1. Deactivate old cloud records for this user/meal
+      // (This is tricky with Push IDs, so we query first)
+      final oldRecords = await FirebaseDatabase.instance.ref("customized_meals")
+          .orderByChild("user_id")
+          .equalTo(userId)
+          .get();
+          
+      if (oldRecords.exists) {
+        for (var child in oldRecords.children) {
+          final val = child.value as Map;
+          if (val['original_meal_id'] == originalMealId && val['is_active'] == 1) {
+            await child.ref.update({'is_active': 0});
+          }
+        }
+      }
+
+      // 2. Save New Record with Push ID
+      await FirebaseDatabase.instance.ref("customized_meals").push().set(cloudData);
+      print("🚀 Customized Meal synced safely");
+    } catch (e) {
+      print("⚠️ Offline: Customized Meal saved locally only.");
+    }
+
+    return id;
   }
 
   Future<Map<String, dynamic>?> getActiveCustomizedMeal(int originalMealId, int userId) async {
@@ -3694,6 +7380,9 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
     'Crab': [
       'Blue crab', 'Mud crab', 'Curacha', 'Crab'
     ],
+    'Mungbeans': [
+      'Mungbeans', 'Munggo', 'Mongo', 'Green mung bean'
+    ],
     
   };
 
@@ -3748,6 +7437,66 @@ double _getPieceWeight(String ingredientName, String category, [String size = 's
     }
     
     return false;
+  }
+
+  // ==========================================
+  // 🔥 FIREBASE SYNC FUNCTIONS (WITH PLACEHOLDER FIX)
+  // ==========================================
+
+  Future<void> forceUploadToFirebase() async {
+    final db = await database;
+    print("🔥 Starting COMPLETE Cloud Sync...");
+
+    // Helper to upload data OR create a placeholder if empty
+    Future<void> uploadTable(String tableName, String firebaseNode) async {
+      try {
+        final data = await db.query(tableName);
+        
+        if (data.isNotEmpty) {
+          // CASE 1: Data exists - Upload it normally
+          for (var row in data) {
+            dynamic key = row['id'] ?? row['mealID'] ?? row['userID'] ?? row['ingredientID'];
+            if (key != null) {
+              await FirebaseDatabase.instance.ref("$firebaseNode/$key").set(row);
+            }
+          }
+          print("✅ $tableName uploaded (${data.length} items)");
+        } else {
+          // CASE 2: Table is empty - FORCE a placeholder so it appears in Firebase
+          print("⚠️ $tableName is EMPTY. Creating placeholder...");
+          
+          await FirebaseDatabase.instance.ref("$firebaseNode/empty_placeholder").set({
+            "status": "No data yet",
+            "last_checked": DateTime.now().toIso8601String(),
+            "note": "This record exists to keep the folder visible."
+          });
+        }
+      } catch (e) {
+        print("❌ Error uploading $tableName: $e");
+      }
+    }
+
+    // --- 1. Core Data ---
+    await uploadTable('users', 'users');
+    await uploadTable('ingredients', 'ingredients');
+    await uploadTable('meals', 'meals');
+    await uploadTable('meal_ingredients', 'meal_ingredients');
+
+    // --- 2. Information ---
+    await uploadTable('faqs', 'faqs');
+    await uploadTable('about_us', 'about_us');
+
+    // --- 3. Substitution Engine ---
+    await uploadTable('substitutions', 'substitutions');
+    
+    // We actually want REAL data for unit_conversions, see Step 2 below
+    await uploadTable('unit_conversions', 'unit_conversions');
+
+    // --- 4. User Logs ---
+    await uploadTable('meal_substitution_log', 'meal_substitution_log');
+    await uploadTable('customized_meals', 'customized_meals');
+
+    print("🏁 FULL FIREBASE SYNC COMPLETE!");
   }
 
 }

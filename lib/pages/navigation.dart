@@ -4,13 +4,13 @@ import '../information/profile.dart';
 import '../information/about_us.dart';
 import '../information/fAQs.dart';
 import 'index.dart';
+import '../admin/dashboard.dart'; 
 
 class NavigationDrawerWidget extends StatelessWidget {
   final int userId;
   const NavigationDrawerWidget({super.key, required this.userId});
 
-  // CHANGE: Only userId == 1 is admin
-  bool get _isAdmin => userId == 1;
+  bool get _isAdmin => userId == 1; // Assuming Admin is always ID 1
 
   @override
   Widget build(BuildContext context) {
@@ -36,20 +36,23 @@ class NavigationDrawerWidget extends StatelessWidget {
               child: Text(
                 'HealthTingi',
                 style: TextStyle(
-                  fontFamily: 'Exo', // Updated to Exo
+                  fontFamily: 'Exo', 
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
                   color: Colors.white,
                   shadows: [
-                    Shadow(
-                      color: Colors.black26,
-                      offset: Offset(2, 2),
-                      blurRadius: 6,
-                    ),
+                    Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6),
                   ],
                 ),
               ),
             ),
+            
+            // 👇 NEW: Admin Dashboard Link (Only visible to Admin)
+            if (_isAdmin) ...[
+              _drawerButton(context, Icons.dashboard, 'Admin Dashboard'),
+              const SizedBox(height: 8),
+            ],
+
             if (userId != 0)
               Column(
                 children: [
@@ -86,8 +89,16 @@ class NavigationDrawerWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
       onPressed: () {
-        Navigator.pop(context);
+        Navigator.pop(context); // Close drawer first
         switch (label) {
+          // 👇 NEW CASE: Navigate to Dashboard
+          case 'Admin Dashboard':
+            Navigator.pushReplacement( // Use replacement to avoid back-stack loop
+              context,
+              MaterialPageRoute(builder: (context) => AdminDashboardPage(userId: userId)),
+            );
+            break;
+            
           case 'Profile':
             Navigator.push(
               context,
@@ -98,7 +109,7 @@ class NavigationDrawerWidget extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => AboutUsPage(isAdmin: _isAdmin), // ONLY ADMIN
+                builder: (context) => AboutUsPage(isAdmin: _isAdmin), 
               ),
             );
             break;
@@ -106,7 +117,7 @@ class NavigationDrawerWidget extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => FAQSPage(isAdmin: _isAdmin), // ONLY ADMIN
+                builder: (context) => FAQSPage(isAdmin: _isAdmin), 
               ),
             );
             break;
@@ -124,7 +135,7 @@ class NavigationDrawerWidget extends StatelessWidget {
       label: Text(
         label,
         style: const TextStyle(
-          fontFamily: 'Poppins', // Updated to Poppins
+          fontFamily: 'Poppins', 
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),

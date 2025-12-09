@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'database/db_helper.dart';
 import 'pages/home.dart';
 import 'pages/reverse_ingredient.dart';
@@ -10,6 +12,16 @@ import 'searchMeals/categories.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform, // <--- USE THIS
+    );
+    print("✅ Firebase initialized successfully");
+  } catch (e) {
+    print("⚠️ Firebase failed to start: $e");
+  }
   /*
   try {
     await DatabaseHelper().updateAllMealPrices();

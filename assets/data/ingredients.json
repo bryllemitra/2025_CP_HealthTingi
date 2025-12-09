@@ -2178,7 +2178,7 @@
     },
     {
       "ingredientID": 137,
-      "ingredientName": "Mungbeans",
+      "ingredientName": "Mungbeans/Munggo",
       "price": 85.0,
       "calories": 347,
       "nutritionalValue": "When dried, they are a concentrated source of plant-based protein, fiber, and folate. Also provide iron, magnesium, and potassium.",
@@ -3944,6 +3944,38 @@
       "unit_density_tsp": 5.0,
       "unit_density_cup": 240.0,
       "tags": "[\"dairy\", \"creamy\", \"concentrated\", \"baking\"]"
+    },
+    {
+      "ingredientID": 254,
+      "ingredientName": "Pechay",
+      "price": 21.0,
+      "calories": 13,
+      "nutritionalValue": "A leafy green vegetable rich in calcium, phosphorus, potassium, and vitamin A. Very low in calories and often used in soups and stews.",
+      "ingredientPicture": "assets/ingredients/pechay_tie.jpg",
+      "category": "Vegetable, Leafy Green",
+      "price_text": "21/tie",
+      "unit": "tie",
+      "unit_density_tbsp": 5.0,
+      "unit_density_tsp": 2.0,
+      "unit_density_cup": 70.0,
+      "tags": "[\"pechay\", \"bok-choy\", \"leafy-green\", \"nilaga\", \"soup\"]",
+      "additionalPictures": ""
+    },
+    {
+      "ingredientID": 255,
+      "ingredientName": "Alugbati",
+      "price": 20.0,
+      "calories": 19,
+      "nutritionalValue": "Also known as Malabar Spinach. Excellent source of vitamins A and C, iron, and calcium. Contains antioxidants and mucilage which aids in digestion.",
+      "ingredientPicture": "assets/ingredients/alugbati.jpg",
+      "category": "Vegetable, Leafy Green",
+      "price_text": "20/tie",
+      "unit": "tie",
+      "unit_density_tbsp": 3.0,
+      "unit_density_tsp": 1.0,
+      "unit_density_cup": 30.0,
+      "tags": "[\"alugbati\", \"malabar-spinach\", \"visayan\", \"leafy-green\", \"iron-rich\"]",
+      "additionalPictures": ""
     }
   ]
 }

@@ -1,4 +1,4 @@
-// Modified pages/home.dart
+// Modified pages/home.dart with Pull-to-Refresh
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:currency_code_to_currency_symbol/currency_code_to_currency_symbol.dart';
@@ -9,7 +9,7 @@ import 'meal_scan.dart';
 import 'meal_details.dart';
 import '../searchMeals/meal_search.dart';
 import '../searchMeals/user_custom.dart';
-import '../searchMeals/history.dart'; // Added import for history page
+import '../searchMeals/history.dart'; 
 import 'navigation.dart';
 import 'index.dart';
 import '../information/about_us.dart';
@@ -45,6 +45,14 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    // Initial Load
+    _initData();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  // Wrapper to call everything on startup
+  void _initData() {
+    DatabaseHelper().forceUploadToFirebase();
     _loadPopularRecipes();
     _loadAllMeals();
     _loadAllIngredients();
@@ -52,7 +60,24 @@ class _HomePageState extends State<HomePage> {
       _loadUserFavorites();
       _loadRecentlyViewedMeals();
     }
-    _searchController.addListener(_onSearchChanged);
+  }
+
+  Future<void> _onRefresh() async {
+    await DatabaseHelper().forceUploadToFirebase();
+    await _loadPopularRecipes();
+    await _loadAllMeals();
+    await _loadAllIngredients();
+    
+    if (widget.userId != 0) {
+      await _loadUserFavorites();
+      await _loadRecentlyViewedMeals();
+    }
+    
+    setState(() {
+      _cachedCategories = null;
+    });
+    
+    await Future.delayed(const Duration(milliseconds: 600));
   }
 
   @override
@@ -343,7 +368,7 @@ class _HomePageState extends State<HomePage> {
                     child: Icon(
                       isFavorite ? Icons.favorite : Icons.favorite_border,
                       color: isFavorite ? Colors.red : Colors.white70,
-                      size: 20, // Smaller & consistent
+                      size: 20, 
                     ),
                   ),
                 ),
@@ -354,7 +379,7 @@ class _HomePageState extends State<HomePage> {
             child: Text(
               recipe['name'],
               style: const TextStyle(
-                fontFamily: 'Poppins', // Updated to Poppins
+                fontFamily: 'Poppins', 
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
                 color: Color(0xFF184E77),
@@ -435,7 +460,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 ingredientName,
                 style: const TextStyle(
-                  fontFamily: 'Poppins', // Updated to Poppins
+                  fontFamily: 'Poppins', 
                   fontWeight: FontWeight.bold, 
                   fontSize: 12,
                   color: Color(0xFF184E77),
@@ -450,7 +475,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 'Php $price',
                 style: TextStyle(
-                  fontFamily: 'Poppins', // Updated to Poppins
+                  fontFamily: 'Poppins', 
                   fontSize: 11,
                   color: Colors.grey[700],
                   fontWeight: FontWeight.w500,
@@ -533,7 +558,7 @@ class _HomePageState extends State<HomePage> {
               'Recipe Categories',
               style: TextStyle(
                 fontSize: 20,
-                fontFamily: 'Exo', // Updated to EXO
+                fontFamily: 'Exo', 
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 shadows: [
@@ -557,7 +582,7 @@ class _HomePageState extends State<HomePage> {
                   style: const TextStyle(
                     fontSize: 14,
                     color: Colors.white70,
-                    fontFamily: 'Poppins', // Updated to Poppins
+                    fontFamily: 'Poppins', 
                   ),
                 ),
               ),
@@ -600,7 +625,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 category.toUpperCase(),
                 style: const TextStyle(
-                  fontFamily: 'Poppins', // Updated to Poppins
+                  fontFamily: 'Poppins', 
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
@@ -643,7 +668,7 @@ class _HomePageState extends State<HomePage> {
           'Check Your Ingredients',
           style: TextStyle(
             fontSize: 20,
-            fontFamily: 'Exo', // Updated to EXO
+            fontFamily: 'Exo', 
             fontWeight: FontWeight.bold,
             color: Colors.white,
             shadows: [
@@ -678,7 +703,7 @@ class _HomePageState extends State<HomePage> {
           'Popular Recipes',
           style: TextStyle(
             fontSize: 20,
-            fontFamily: 'Exo', // Updated to EXO
+            fontFamily: 'Exo', 
             fontWeight: FontWeight.bold,
             color: Colors.white,
             shadows: [
@@ -723,7 +748,7 @@ class _HomePageState extends State<HomePage> {
               widget.userId == 0 ? "Featured Recipes" : "Today's Specials",
               style: const TextStyle(
                 fontSize: 20,
-                fontFamily: 'Exo', // Updated to EXO
+                fontFamily: 'Exo', 
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 shadows: [
@@ -740,7 +765,7 @@ class _HomePageState extends State<HomePage> {
               widget.userId == 0 
                   ? "Discover delicious recipes to try" 
                   : "Discover new recipes based on your scans",
-              style: const TextStyle(color: Colors.white70, fontFamily: 'Poppins'), // Updated to Poppins
+              style: const TextStyle(color: Colors.white70, fontFamily: 'Poppins'), 
             ),
             const SizedBox(height: 12),
             GestureDetector(
@@ -755,7 +780,7 @@ class _HomePageState extends State<HomePage> {
               child: const Text(
                 "See more recipes →",
                 style: TextStyle(
-                  fontFamily: 'Poppins', // Updated to Poppins
+                  fontFamily: 'Poppins', 
                   fontWeight: FontWeight.bold,
                   color: Colors.yellowAccent,
                   decoration: TextDecoration.underline,
@@ -788,7 +813,7 @@ class _HomePageState extends State<HomePage> {
             "Recently Viewed",
             style: TextStyle(
               fontSize: 20,
-              fontFamily: 'Exo', // Updated to EXO
+              fontFamily: 'Exo', 
               fontWeight: FontWeight.bold,
               color: Colors.white,
               shadows: [
@@ -874,7 +899,7 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 meal['mealName'],
                                 style: const TextStyle(
-                                  fontFamily: 'Poppins', // Updated to Poppins
+                                  fontFamily: 'Poppins', 
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                   color: Color(0xFF184E77),
@@ -887,7 +912,7 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                 'Php ${meal['price']?.toStringAsFixed(2) ?? '0.00'}',
                                 style: const TextStyle(
-                                  fontFamily: 'Poppins', // Updated to Poppins
+                                  fontFamily: 'Poppins', 
                                   fontSize: 14,
                                   color: Colors.black54,
                                 ),
@@ -933,9 +958,9 @@ class _HomePageState extends State<HomePage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -949,7 +974,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 'HealthTingi',
                 style: TextStyle(
-                  fontFamily: 'Exo', // Updated to EXO
+                  fontFamily: 'Exo', 
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
                   color: Colors.white,
@@ -1015,7 +1040,7 @@ class _HomePageState extends State<HomePage> {
     label: Text(
       label,
       style: const TextStyle(
-        fontFamily: 'Poppins', // Updated to Poppins
+        fontFamily: 'Poppins', 
         fontWeight: FontWeight.bold,
         fontSize: 16,
       ),
@@ -1042,7 +1067,7 @@ class _HomePageState extends State<HomePage> {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Exo', // Updated to EXO
+            fontFamily: 'Exo', 
             shadows: [
               Shadow(
                 color: Colors.black26,
@@ -1090,79 +1115,84 @@ class _HomePageState extends State<HomePage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.search, color: Color(0xFF184E77)),
-                        onPressed: _performSearch,
-                      ),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          focusNode: _searchFocusNode,
-                          decoration: const InputDecoration(
-                            hintText: 'Search or Scan your ingredients',
-                            border: InputBorder.none,
-                            hintStyle: TextStyle(color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
-                          ),
-                          style: const TextStyle(color: Colors.black87, fontFamily: 'Poppins'), // Updated to Poppins
-                          onSubmitted: (value) => _performSearch(),
-                          onTap: _navigateToSearchPage,
+    
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: SafeArea(
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.search, color: Color(0xFF184E77)),
+                          onPressed: _performSearch,
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.camera_alt, color: Color(0xFF184E77)),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MealScanPage(userId: widget.userId),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            focusNode: _searchFocusNode,
+                            decoration: const InputDecoration(
+                              hintText: 'Search or Scan your ingredients',
+                              border: InputBorder.none,
+                              hintStyle: TextStyle(color: Colors.black54, fontFamily: 'Poppins'),
                             ),
-                          );
-                        },
-                      ),
-                    ],
+                            style: const TextStyle(color: Colors.black87, fontFamily: 'Poppins'),
+                            onSubmitted: (value) => _performSearch(),
+                            onTap: _navigateToSearchPage,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.camera_alt, color: Color(0xFF184E77)),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MealScanPage(userId: widget.userId),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                _buildCategoryButtons(),
-                _buildSpecialsCard(),
-                _buildPopularRecipesSection(),
-                _buildIngredientsSection(),
-                const SizedBox(height: 32),
-              ],
+                  const SizedBox(height: 24),
+                  _buildCategoryButtons(),
+                  _buildSpecialsCard(),
+                  _buildPopularRecipesSection(),
+                  _buildIngredientsSection(),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
           ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF184E77), // Darker blue for better contrast
+        backgroundColor: const Color(0xFF184E77),
         selectedItemColor: Color(0xFF184E77),
         unselectedItemColor: Color(0xFF184E77).withOpacity(0.7),
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        selectedLabelStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold), // Updated
-        unselectedLabelStyle: const TextStyle(fontFamily: 'Poppins'), // Updated
+        selectedLabelStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontFamily: 'Poppins'),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Scan'),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),

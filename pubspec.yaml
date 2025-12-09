@@ -55,6 +55,9 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  firebase_core: ^4.2.1
+  firebase_database: ^12.1.0
+  firebase_auth: ^6.1.2
 
 dev_dependencies:
   flutter_test:
@@ -163,21 +166,19 @@ flutter:
 
     - assets/fonts/
     - assets/models/labels.txt
-    - assets/models/healthtingi_current.tflite
-    - assets/models/ingredient_scanner.tflite
-    - assets/models/healthtingi_model.tflite
     - assets/models/healthtingi_finetuned_new.tflite
     - assets/models/compatible_model_v2.tflite
     - assets/models/class_info.txt
     - assets/models/class_info.json
-    - assets/models/healthtingi_update2.tflite
     - assets/models/threeokclock_final.tflite
     - assets/models/notsofinalmodel.tflite
     - assets/models/colab_single.tflite
-    - assets/models/kaggle_single.tflite
     - assets/models/finalmedj.tflite
     - assets/models/food_ingredients.tflite
     - assets/models/labels-1.txt
+    - assets/models/final_dynamic_mobile_bestquant.tflite
+    - assets/models/final_float.tflite
+    - assets/models/efficientnet_multilabel.tflite
 
 
   fonts:

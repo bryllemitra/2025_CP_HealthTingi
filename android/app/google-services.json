@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "969688156232",
+    "firebase_url": "https://healthtingi-test-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "healthtingi-test",
+    "storage_bucket": "healthtingi-test.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:969688156232:android:127629a41f5b1a4c34307d",
+        "android_client_info": {
+          "package_name": "com.example.heath_tingi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_bdckbCHWJIGzheYbkwmRyBwMo1GZ9Ew"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

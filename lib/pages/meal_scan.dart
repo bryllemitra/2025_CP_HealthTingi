@@ -43,7 +43,7 @@ class _MealScanPageState extends State<MealScanPage> {
   Future<void> _loadModel() async {
     setState(() => _isModelLoading = true);
     try {
-      _interpreter = await tfl.Interpreter.fromAsset('assets/models/finalmedj.tflite');
+      _interpreter = await tfl.Interpreter.fromAsset('assets/models/efficientnet_multilabel_real40.tflite');
       
       // Create isolate interpreter for async inference (prevents UI blocking)
       _isolateInterpreter = await tfl.IsolateInterpreter.create(
@@ -59,18 +59,45 @@ class _MealScanPageState extends State<MealScanPage> {
           .toList();
 
       // Print model info for debugging
+      debugPrint('=== Model Details ===');
       debugPrint('Model loaded successfully');
+      debugPrint('Model type: MobileNetV2 with sigmoid output');
+      debugPrint('Training configuration:');
+      debugPrint('  - Image size: 224x224');
+      debugPrint('  - Normalization: /255.0 (values in [0, 1])');
+      debugPrint('  - Output: Sigmoid activation (multi-label)');
+      debugPrint('  - Threshold used in training: 0.5');
+      
       debugPrint('Input shape: ${_interpreter!.getInputTensor(0).shape}');
       debugPrint('Input type: ${_interpreter!.getInputTensor(0).type}');
       debugPrint('Output shape: ${_interpreter!.getOutputTensor(0).shape}');
       debugPrint('Output type: ${_interpreter!.getOutputTensor(0).type}');
       debugPrint('Number of labels: ${_labels.length}');
 
+      // Print all labels for debugging
+      debugPrint('Labels loaded:');
+      for (int i = 0; i < _labels.length; i++) {
+        debugPrint('  $i: ${_labels[i]}');
+      }
+
       setState(() {
         _recognitions = _labels
             .map((label) => {'label': label, 'confidence': 0.0})
             .toList();
       });
+
+      // Print detailed model input/output info
+      debugPrint('Model input details:');
+      for (int i = 0; i < _interpreter!.getInputTensors().length; i++) {
+        final tensor = _interpreter!.getInputTensor(i);
+        debugPrint('Input $i: shape=${tensor.shape}, type=${tensor.type}');
+      }
+
+      debugPrint('Model output details:');
+      for (int i = 0; i < _interpreter!.getOutputTensors().length; i++) {
+        final tensor = _interpreter!.getOutputTensor(i);
+        debugPrint('Output $i: shape=${tensor.shape}, type=${tensor.type}');
+      }
     } catch (e) {
       debugPrint('Failed to load model: $e');
       if (mounted) {
@@ -80,19 +107,6 @@ class _MealScanPageState extends State<MealScanPage> {
       }
     }
     setState(() => _isModelLoading = false); 
-
-    // In _loadModel() after creating interpreter:
-    debugPrint('Model input details:');
-    for (int i = 0; i < _interpreter!.getInputTensors().length; i++) {
-      final tensor = _interpreter!.getInputTensor(i);
-      debugPrint('Input $i: shape=${tensor.shape}, type=${tensor.type}');
-    }
-
-    debugPrint('Model output details:');
-    for (int i = 0; i < _interpreter!.getOutputTensors().length; i++) {
-      final tensor = _interpreter!.getOutputTensor(i);
-      debugPrint('Output $i: shape=${tensor.shape}, type=${tensor.type}');
-    }
   }
 
   Future<void> _initializeCamera() async {
@@ -259,62 +273,62 @@ class _MealScanPageState extends State<MealScanPage> {
 
       // Get input tensor info
       final inputTensor = _interpreter!.getInputTensor(0);
-      final inputShape = inputTensor.shape; // This should be [1, 224, 224, 3]
-      final inputSize = inputShape[1]; // This should be 224 for your new model
+      final inputShape = inputTensor.shape; // Should be [1, 224, 224, 3]
+      final inputSize = inputShape[1]; // Should be 224
       
       debugPrint('Processing image with input size: $inputSize');
       debugPrint('Model input shape: $inputShape');
 
-      // Validate expected input size - UPDATED FOR 224x224
+      // Validate input size
       if (inputSize != 224) {
-        debugPrint('WARNING: Model expects $inputSize but training used 224x224');
+        debugPrint('WARNING: Model expects $inputSize but training used 224');
       }
 
-      // Preprocess image with better interpolation - MATCHES YOUR TRAINING SIZE
+      // Resize to 224x224 to match training
       final resizedImage = img.copyResize(
         image, 
-        width: 224,  // FIXED: Hardcoded to match your training size
-        height: 224, // FIXED: Hardcoded to match your training size
+        width: 224,
+        height: 224,
         interpolation: img.Interpolation.cubic
       );
       
-      // CORRECT: Preprocessing that matches your training (simple [0,1] normalization)
-      final inputBuffer = _imageToByteListFloat32(resizedImage, 224); // FIXED: Use 224
-
-      // Reshape the 1D buffer to match the model's 4D input shape [1, 224, 224, 3]
-      final input = inputBuffer.reshape(inputShape); 
-
-      // Prepare output tensor - get its shape first
+      // Preprocess with [0,1] normalization (matches Python training)
+      final inputBuffer = _preprocessImageForMobileNet(resizedImage);
+      
+      // Reshape to match model input
+      final input = inputBuffer.reshape(inputShape);
+      
+      // Prepare output
       final outputShape = _interpreter!.getOutputTensor(0).shape;
       debugPrint('Model output shape: $outputShape');
+      
+      // Create output buffer - shape should be [1, NUM_CLASSES]
       final output = List.filled(
         outputShape.reduce((a, b) => a * b), 
         0.0,
-      ).reshape(outputShape); // Reshape the output list as well
-
+      ).reshape(outputShape);
+      
       debugPrint('Running inference...');
       
-      // Use async inference to prevent UI blocking
       try {
         await _isolateInterpreter!.run(input, output);
       } catch (e) {
-        // This catches errors specifically during the inference execution
         debugPrint('Inference execution failed: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('AI processing error: ${e.toString()}', style: const TextStyle(fontFamily: 'Poppins'))),
           );
         }
-        return; // Exit the function early since inference failed
+        return;
       }
 
       debugPrint('Inference completed, processing results...');
-
-      // Process results
-      final results = _processOutput(output);
+      
+      // Process sigmoid outputs (multi-label classification)
+      final results = _processSigmoidOutput(output);
       setState(() => _recognitions = results);
       
-      // Show all 5 top results with confidence percentages
+      // Show top results
       if (results.isNotEmpty) {
         debugPrint('All ${results.length} results:');
         for (int i = 0; i < results.length; i++) {
@@ -336,7 +350,99 @@ class _MealScanPageState extends State<MealScanPage> {
     }
   }
 
-  // CORRECT: Preprocessing that matches your training (simple [0,1] normalization)
+  // Preprocessing method that exactly matches Python training
+  Float32List _preprocessImageForMobileNet(img.Image image) {
+    // MobileNetV2 expects 224x224 RGB with values in [0, 1]
+    const int inputSize = 224;
+    const int numChannels = 3;
+    
+    final convertedBytes = Float32List(1 * inputSize * inputSize * numChannels);
+    final buffer = Float32List.view(convertedBytes.buffer);
+    
+    int pixelIndex = 0;
+    
+    // Convert image to float32 and normalize to [0, 1]
+    for (var y = 0; y < inputSize; y++) {
+      for (var x = 0; x < inputSize; x++) {
+        // Check if we're within image bounds
+        if (x < image.width && y < image.height) {
+          final pixel = image.getPixel(x, y);
+          
+          // MobileNetV2 expects RGB channels with values in [0, 1]
+          // This matches Python: img = tf.cast(img, tf.float32) / 255.0
+          buffer[pixelIndex++] = pixel.r / 255.0;   // Red
+          buffer[pixelIndex++] = pixel.g / 255.0;   // Green  
+          buffer[pixelIndex++] = pixel.b / 255.0;   // Blue
+        } else {
+          // Pad with zeros if needed (shouldn't happen since we resized)
+          buffer[pixelIndex++] = 0.0;
+          buffer[pixelIndex++] = 0.0;
+          buffer[pixelIndex++] = 0.0;
+        }
+      }
+    }
+    
+    // Debug to verify preprocessing
+    final minVal = buffer.reduce((a, b) => a < b ? a : b);
+    final maxVal = buffer.reduce((a, b) => a > b ? a : b);
+    final meanVal = buffer.reduce((a, b) => a + b) / buffer.length;
+    debugPrint('Input buffer stats - Min: $minVal, Max: $maxVal, Mean: $meanVal');
+    debugPrint('Expected: Values in [0, 1] range (matching Python training)');
+    
+    return convertedBytes;
+  }
+
+  // Process sigmoid outputs for multi-label classification
+  List<dynamic> _processSigmoidOutput(List<dynamic> output) {
+    try {
+      final results = <Map<String, dynamic>>[];
+      
+      // Handle different output formats
+      List<dynamic> predictions;
+      if (output is List && output.isNotEmpty) {
+        if (output[0] is List) {
+          // Output shape is [1, NUM_CLASSES]
+          predictions = output[0] as List<dynamic>;
+        } else {
+          predictions = output;
+        }
+      } else {
+        throw Exception('Unexpected output format');
+      }
+      
+      debugPrint('Processing ${predictions.length} predictions with ${_labels.length} labels');
+      
+      // For sigmoid outputs, each value is independent probability
+      for (int i = 0; i < predictions.length && i < _labels.length; i++) {
+        final confidence = (predictions[i] as num).toDouble();
+        
+        // MobileNetV2 with sigmoid outputs probabilities in [0, 1]
+        // Use threshold to filter (0.3 threshold for mobile, was 0.5 in training)
+        if (confidence > 0.3) {
+          results.add({
+            'label': _labels[i],
+            'confidence': confidence,
+          });
+        }
+      }
+      
+      // Sort by confidence (highest first)
+      results.sort((a, b) => (b['confidence'] as double).compareTo(a['confidence'] as double));
+      
+      // Return top 5 results
+      final finalResults = results.take(5).toList();
+      
+      debugPrint('Returning ${finalResults.length} filtered results');
+      return finalResults;
+      
+    } catch (e) {
+      debugPrint('Error processing output: $e');
+      // Return empty results on error
+      return [];
+    }
+  }
+
+  // Old method kept for reference but not used (compatible with old model if needed)
   Float32List _imageToByteListFloat32(img.Image image, int inputSize) {
     final convertedBytes = Float32List(1 * inputSize * inputSize * 3);
     final buffer = Float32List.view(convertedBytes.buffer);
@@ -346,8 +452,7 @@ class _MealScanPageState extends State<MealScanPage> {
       for (var j = 0; j < inputSize; j++) {
         final pixel = image.getPixel(j, i);
         
-        // CORRECT: Simple normalization to [0, 1] range - MATCHES YOUR TRAINING
-        // Your Python training code: rescale=1./255
+        // Simple normalization to [0, 1] range
         buffer[pixelIndex++] = pixel.r / 255.0;   // Red
         buffer[pixelIndex++] = pixel.g / 255.0;   // Green  
         buffer[pixelIndex++] = pixel.b / 255.0;   // Blue
@@ -362,53 +467,6 @@ class _MealScanPageState extends State<MealScanPage> {
     debugPrint('Expected range: 0.0 to 1.0 (matching training)');
     
     return convertedBytes;
-  }
-
-  List<dynamic> _processOutput(List<dynamic> output) {
-    try {
-      final results = <Map<String, dynamic>>[];
-      
-      // Handle different output formats
-      List<dynamic> predictions;
-      if (output is List && output.isNotEmpty) {
-        if (output[0] is List) {
-          predictions = output[0] as List<dynamic>;
-        } else {
-          predictions = output;
-        }
-      } else {
-        throw Exception('Unexpected output format');
-      }
-      
-      debugPrint('Processing ${predictions.length} predictions with ${_labels.length} labels');
-      
-      for (int i = 0; i < predictions.length && i < _labels.length; i++) {
-        final confidence = (predictions[i] as num).toDouble();
-        results.add({
-          'label': _labels[i],
-          'confidence': confidence,
-        });
-      }
-      
-      results.sort((a, b) => (b['confidence'] as double).compareTo(a['confidence'] as double));
-      
-      // Filter results with confidence > threshold (adjust as needed)
-      final filteredResults = results.where((result) => 
-          (result['confidence'] as double) > 0.10).toList();
-          
-      final finalResults = filteredResults.take(5).toList();
-      
-      debugPrint('Returning ${finalResults.length} filtered results');
-      return finalResults.isNotEmpty ? finalResults : results.take(5).toList();
-      
-    } catch (e) {
-      debugPrint('Error processing output: $e');
-      // Return default results on error
-      return _labels.take(5).map((label) => {
-        'label': label, 
-        'confidence': 0.0
-      }).toList();
-    }
   }
 
   @override
@@ -585,8 +643,8 @@ class _MealScanPageState extends State<MealScanPage> {
         selectedItemColor: Color(0xFF184E77),
         unselectedItemColor: Color(0xFF184E77).withOpacity(0.7),
         currentIndex: 0,
-        selectedLabelStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold), // Added Poppins
-        unselectedLabelStyle: const TextStyle(fontFamily: 'Poppins'), // Added Poppins
+        selectedLabelStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontFamily: 'Poppins'),
         onTap: (index) {
           switch (index) {
             case 0:

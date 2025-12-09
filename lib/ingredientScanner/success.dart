@@ -22,12 +22,17 @@ class ScanSuccessPage extends StatelessWidget {
     final detected = recognitions!
         .where((recognition) => 
             recognition['confidence'] != null && 
-            recognition['confidence'] > 0.1) // Adjust threshold as needed
+            recognition['confidence'] > 0.3) // Adjust threshold as needed
         .map((recognition) {
             final label = recognition['label'].toString();
-            // FIX: Insert a space before any capital letter that isn't the first letter.
-            // This converts "GroundBeef" -> "Ground Beef" so it matches your database.
-            return label.replaceAllMapped(RegExp(r'(?<!^)(?=[A-Z])'), (match) => ' ');
+            
+            // 1. Fix spacing for CamelCase (e.g. GroundBeef -> Ground Beef)
+            String processedLabel = label.replaceAllMapped(RegExp(r'(?<!^)(?=[A-Z])'), (match) => ' ');
+
+            if (processedLabel == 'Munggo') return 'Mungbeans/Munggo'; 
+            if (processedLabel == 'Petchay') return 'Pechay';
+            
+            return processedLabel;
         })
         .toSet() // Remove duplicates
         .toList();
