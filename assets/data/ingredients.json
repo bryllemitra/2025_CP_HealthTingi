@@ -3976,6 +3976,54 @@
       "unit_density_cup": 30.0,
       "tags": "[\"alugbati\", \"malabar-spinach\", \"visayan\", \"leafy-green\", \"iron-rich\"]",
       "additionalPictures": ""
-    }
+    },
+
+
+
+   {
+      "ingredientID": 256,
+      "ingredientName": "Baking Powder (Double-Acting)",
+      "price": "35.00", 
+      "calories": "8", 
+      "nutritionalValue": "A chemical leavening agent typically composed of a base (sodium bicarbonate), one or more acid salts, and a starch (like cornstarch) to absorb moisture. It releases carbon dioxide gas upon mixing and again when heated, causing baked goods to rise. It is high in sodium and may contribute significant calcium to a recipe. (Per 1 tbsp serving: 4g Carbs, 1460mg Sodium)",
+      "ingredientPicture": "assets/ingredients/baking_powder.jpg",
+      "category": "Baking Ingredient, Leavening Agent, Powder",
+      "price_text": "PHP 35.00 (approx. for a 100g can of popular brand)",
+      "unit": "tbsp",
+      "unit_density_tbsp": "14.0",
+      "unit_density_tsp": "4.7", 
+      "unit_density_cup": "224.0",
+      "additionalPictures": "[\"leavening-agent\", \"double-acting\", \"bicarbonate\"]"
+},
+{
+      "ingredientID": 257,
+      "ingredientName": "Water (H₂O)",
+      "price": "0.00", 
+      "calories": "0", 
+      "nutritionalValue": "A clear, tasteless, odorless, and calorie-free liquid essential for life. It is the solvent for cellular activity and regulation of body temperature. May contain trace amounts of minerals like Calcium, Magnesium, and Potassium, depending on the source (e.g., spring water, mineral water).",
+      "ingredientPicture": "assets/ingredients/water.jpg",
+      "category": "Liquid, Essential Ingredient, Solvent",
+      "price_text": "Generally free (tap water) or variable (bottled water)",
+      "unit": "cup",
+      "unit_density_tbsp": "14.79",
+      "unit_density_tsp": "4.93", 
+      "unit_density_cup": "236.59",
+      "additionalPictures": "[\"h2o\", \"liquid\", \"purified\"]"
+},
+{
+      "ingredientID": 258,
+      "ingredientName": "Mayonnaise",
+      "price": "190.00", 
+      "calories": "90", 
+      "nutritionalValue": "A rich, creamy emulsion of oil, pasteurized egg yolks, and an acid (like vinegar or lemon juice). It is a concentrated source of fat and contains Omega-3 and Omega-6 fatty acids, along with Vitamin K. Due to its composition, it is virtually free of carbohydrates and protein. (Per 1 tbsp serving: 10g Fat, 0g Carbs, 0g Protein)",
+      "ingredientPicture": "assets/ingredients/mayonnaise.jpg",
+      "category": "Condiment, Emulsion, Spread, Fat",
+      "price_text": "PHP 190.00 (approx. for a 470mL jar of a leading brand)",
+      "unit": "tbsp",
+      "unit_density_tbsp": "13.7",
+      "unit_density_tsp": "4.6", 
+      "unit_density_cup": "219.6",
+      "additionalPictures": "[\"emulsion\", \"sandwich-spread\", \"dressing\"]"
+}
   ]
 }
