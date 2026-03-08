@@ -40,24 +40,20 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
     super.dispose();
   }
 
-  // --- HELPER: Parse Quantity (Copied from meal_details.dart) ---
   double _parseQuantity(String quantityStr) {
     if (quantityStr.contains('.') && double.tryParse(quantityStr) != null) {
       return double.parse(quantityStr);
     }
-    
-    // First try to parse common fractions
+
     final fractionMap = {
       '⅛': 0.125, '¼': 0.25, '⅓': 0.333, '⅜': 0.375,
       '½': 0.5, '⅝': 0.625, '⅔': 0.666, '¾': 0.75, '⅞': 0.875
     };
-    
-    // Check if it's already a fraction character
+
     if (fractionMap.containsKey(quantityStr.trim())) {
       return fractionMap[quantityStr.trim()]!;
     }
-    
-    // Handle fractions like "1/4", "1/2", "3/4"
+
     if (quantityStr.contains('/')) {
       List<String> parts = quantityStr.split('/');
       if (parts.length == 2) {
@@ -66,19 +62,13 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
         return numerator / denominator;
       }
     }
-    // Handle whole numbers and decimals
     return double.tryParse(quantityStr) ?? 1.0;
   }
 
-  // --- HELPER: Calculate Real Cost (Adapted from meal_details.dart) ---
   Future<double> _calculateRealMealCost(int mealId) async {
     double total = 0.0;
-    
-    // 1. Fetch Ingredients and Customizations
     final originalIngredients = await _dbHelper.getMealIngredients(mealId);
     Map<String, dynamic> subs = {};
-    
-    // Only check customizations if user is logged in
     if (widget.userId != 0) {
       final customizedMeal = await _dbHelper.getActiveCustomizedMeal(mealId, widget.userId);
       if (customizedMeal != null) {
@@ -86,20 +76,16 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
       }
     }
 
-    // 2. Process ORIGINAL Ingredients
     for (var ing in originalIngredients) {
       String name = ing['ingredientName']?.toString() ?? '';
-
-      // CHECK: Is this ingredient modified?
       if (subs.containsKey(name)) {
         final subData = subs[name];
         String type = subData['type'];
 
         if (type == 'removed') {
-          continue; // Skip cost completely
+          continue;
         } 
         else if (type == 'substituted') {
-          // Calculate cost of the SUBSTITUTE instead of original
           String newName = subData['value'];
           String qtyStr = subData['quantity'] ?? '1 piece';
           
@@ -121,11 +107,10 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                total += (grams * price) / baseGrams;
              }
           }
-          continue; // Done with this ingredient
+          continue;
         }
       }
 
-      // Handle UNTOUCHED Original Ingredients
       double price = ing['price'] as double? ?? 0.0;
       double qty = _parseQuantity(ing['quantity']?.toString() ?? '0');
       String unit = ing['unit']?.toString() ?? 'piece';
@@ -139,7 +124,6 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
       }
     }
 
-    // 3. Process NEWLY ADDED Ingredients
     for (var entry in subs.entries) {
       if (entry.value['type'] == 'new') {
         String name = entry.key;
@@ -173,16 +157,9 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
     final meals = await _dbHelper.getAllMeals();
     final List<Map<String, dynamic>> updatedMeals = [];
 
-    // Iterate through all meals and calculate dynamic price
     for (var meal in meals) {
-      // Create a modifiable copy of the meal map
       var mealMap = Map<String, dynamic>.from(meal);
-      
-      // Calculate the real cost based on ingredients and user customization
       double calculatedPrice = await _calculateRealMealCost(meal['mealID']);
-      
-      // If we calculated a valid price (> 0), use it. 
-      // Otherwise fallback to the static price column if calculation failed or meal has no ingredients.
       if (calculatedPrice > 0) {
         mealMap['price'] = calculatedPrice;
       } else {
@@ -195,11 +172,10 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
     return updatedMeals;
   }
 
-  // --- MODIFIED: Sorting Logic ---
   List<Map<String, dynamic>> _filterMealsByBudget(
       List<Map<String, dynamic>> meals, double budget) {
     try {
-      // 1. Separate into two lists: Affordable (<= budget) and Over Budget (> budget)
+      // Separate into two lists: Affordable (<= budget) and Over Budget (> budget)
       List<Map<String, dynamic>> affordable = [];
       List<Map<String, dynamic>> overBudget = [];
 
@@ -212,23 +188,21 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
         }
       }
 
-      // 2. Sort Affordable Meals: Price DESCENDING (Closest to budget at top)
-      // Example: Budget 50. Items: 30, 48. -> Result: 48, 30.
+      // Sort Affordable Meals: Price DESCENDING (Closest to budget at top)
       affordable.sort((a, b) {
         double priceA = (a['price'] as num).toDouble();
         double priceB = (b['price'] as num).toDouble();
         return priceB.compareTo(priceA); 
       });
 
-      // 3. Sort Over Budget Meals: Price ASCENDING (Closest to budget at top)
-      // Example: Budget 50. Items: 55, 100. -> Result: 55, 100.
+      // Sort Over Budget Meals: Price ASCENDING (Closest to budget at top)
       overBudget.sort((a, b) {
         double priceA = (a['price'] as num).toDouble();
         double priceB = (b['price'] as num).toDouble();
         return priceA.compareTo(priceB);
       });
 
-      // 4. Combine: Affordable first, then Over Budget
+      // Combine: Affordable first, then Over Budget
       return [...affordable, ...overBudget];
 
     } catch (e) {
@@ -278,7 +252,6 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
             ),
           ),
         ).then((_) {
-          // Refresh the list when returning from details (in case customization changed)
           setState(() {
             _mealsFuture = _fetchMeals();
           });
@@ -304,7 +277,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
               borderRadius: BorderRadius.circular(12),
               child: meal['mealPicture'] != null
                   ? (meal['mealPicture'].toString().startsWith('http')
-                      ? CachedNetworkImage( // 🟢 Magically handles offline caching!
+                      ? CachedNetworkImage(
                           imageUrl: meal['mealPicture'],
                           width: 80,
                           height: 60,
@@ -312,7 +285,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                           placeholder: (context, url) => Container(width: 80, height: 60, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0))),
                           errorWidget: (context, url, error) => Container(width: 80, height: 60, color: Colors.grey[200], child: const Icon(Icons.fastfood, color: Colors.grey)),
                         )
-                      : Image.asset( // 🟢 Handle Local Assets
+                      : Image.asset(
                           meal['mealPicture'],
                           width: 80,
                           height: 60,
@@ -478,7 +451,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
       onPressed: () {
-        Navigator.pop(context); // Close drawer first
+        Navigator.pop(context);
         switch (label) {
           case 'About Us':
             Navigator.push(

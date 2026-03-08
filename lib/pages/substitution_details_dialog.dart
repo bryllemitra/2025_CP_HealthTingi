@@ -41,8 +41,7 @@ class _SubstitutionDetailsDialogState extends State<SubstitutionDetailsDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            
-            // Original ingredient
+
             _buildIngredientCard(
               'Original',
               original['ingredient'],
@@ -54,8 +53,7 @@ class _SubstitutionDetailsDialogState extends State<SubstitutionDetailsDialog> {
             const SizedBox(height: 12),
             const Icon(Icons.arrow_downward, color: Color(0xFF76C893), size: 24),
             const SizedBox(height: 12),
-            
-            // Substitute ingredient
+
             _buildIngredientCard(
               'Substitute',
               substitute['ingredient'],
@@ -65,8 +63,6 @@ class _SubstitutionDetailsDialogState extends State<SubstitutionDetailsDialog> {
             ),
             
             const SizedBox(height: 16),
-            
-            // Deltas
             Card(
               color: Colors.grey[50],
               child: Padding(

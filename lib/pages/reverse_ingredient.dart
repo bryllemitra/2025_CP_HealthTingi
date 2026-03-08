@@ -22,11 +22,7 @@ class ReverseIngredientPage extends StatefulWidget {
 class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
   late List<String> allIngredients;
   Set<String> crossedOutIngredients = {};
-  
-  // Stores details (quantity/unit) for ingredients.
   Map<String, Map<String, String>> ingredientDetails = {};
-  
-  // Stores original recipe values to use as fallbacks
   Map<String, Map<String, String>> originalDefaults = {};
 
   List<Map<String, dynamic>> recentChanges = [];
@@ -34,12 +30,8 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
   Map<String, String> ingredientDisplay = {};
   bool showAlternatives = false;
   Map<String, List<String>> ingredientAlternatives = {};
-  
-  // Dynamic similar meals loaded from database
   List<Map<String, dynamic>> similarMeals = [];
   bool isLoadingSimilarMeals = false;
-  
-  // Add ingredient functionality
   bool showAddIngredient = false;
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> availableIngredients = [];
@@ -58,8 +50,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       'Oil',
       'Soy Sauce',
     ];
-    
-    // Initialize display and safe defaults
+
     for (final ingredient in allIngredients) {
       ingredientDisplay[ingredient] = ingredient;
       if (!ingredientDetails.containsKey(ingredient)) {
@@ -87,7 +78,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     });
   }
 
-  // --- NEW: Load Original Quantities from DB ---
   Future<void> _loadOriginalMealIngredients() async {
     try {
       final dbHelper = DatabaseHelper();
@@ -97,8 +87,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
 
       for (var ing in originalIngredients) {
         final name = ing['ingredientName'] as String;
-        
-        // Format quantity (e.g., 0.25 -> "0.25", 2.0 -> "2")
         dynamic rawQty = ing['quantity'];
         String qty = '1';
         if (rawQty != null) {
@@ -251,17 +239,13 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
           } else if (substituteType == 'removed') {
             newCrossedOut.add(original);
             newIngredientDisplay[original] = original;
-            // Keep original details for reference even if removed
             newIngredientDetails[original] = originalDefaults[original] ?? {'qty': '1', 'unit': 'piece'};
           } else if (substituteType == 'substituted') {
             newSelectedAlternatives[original] = substituteValue;
             newIngredientDisplay[original] = substituteValue;
             newIngredientDetails[original] = parseQuantity(substituteData['quantity']);
           } else {
-            // TYPE == 'ORIGINAL'
             newIngredientDisplay[original] = original;
-            
-            // Priority: 1. Saved Quantity, 2. Original Recipe Default, 3. '1 piece' fallback
             if (substituteData['quantity'] != null) {
                newIngredientDetails[original] = parseQuantity(substituteData['quantity']);
             } else {
@@ -325,12 +309,10 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       } else if (!allIngredients.contains(ingredientName)) {
         allIngredients.add(ingredientName);
         ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
-        ingredientDisplay[ingredientName] = ingredientName; // Ensure display name exists
+        ingredientDisplay[ingredientName] = ingredientName;
       } else {
         ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
       }
-      
-      // Force a display refresh for the new ingredient
       if (!ingredientDisplay.containsKey(ingredientName)) {
         ingredientDisplay[ingredientName] = ingredientName;
       }
@@ -487,7 +469,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     }
   }
 
-  // REPLACE your existing _saveCustomizedMeal with this:
   Future<void> _saveCustomizedMeal() async {
     try {
       final dbHelper = DatabaseHelper();
@@ -509,27 +490,23 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         String formattedQtyString = '$userQty $userUnit';
 
         if (selectedAlternatives.containsKey(ingredientName)) {
-          // SUBSTITUTED
           substitutedIngredientsMap[ingredientName] = {
             'type': 'substituted',
             'value': selectedAlternatives[ingredientName]!,
             'quantity': formattedQtyString 
           };
         } else if (crossedOutIngredients.contains(ingredientName)) {
-          // REMOVED
           substitutedIngredientsMap[ingredientName] = {
             'type': 'removed',
             'value': 'REMOVED'
           };
         } else if (!originalIngredientNames.contains(ingredientName)) {
-          // NEW ADDITION
           substitutedIngredientsMap[ingredientName] = {
             'type': 'new',
             'value': ingredientName,
             'quantity': formattedQtyString 
           };
         } else {
-          // ORIGINAL (WITH POTENTIAL QTY EDITS)
           substitutedIngredientsMap[ingredientName] = {
             'type': 'original',
             'value': ingredientName,
@@ -537,8 +514,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
           };
         }
       }
-      
-      // Handle ingredients removed from the list entirely
+
       for (final originalName in originalIngredientNames) {
         if (!allIngredients.contains(originalName)) {
           originalIngredientsMap[originalName] = originalName;
@@ -561,7 +537,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Customization Saved!'), backgroundColor: Colors.green),
         );
-        Navigator.pop(context); // Triggers the .then() in meal_details
+        Navigator.pop(context);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -722,8 +698,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                         itemBuilder: (context, index) {
                           final meal = similarMeals[index];
                           final name = meal['mealName'] as String? ?? 'Unknown Meal';
-                          
-                          // CHANGED: Use Counts instead of Percentage
                           final matching = meal['matching_ingredients'] ?? 0;
                           final total = meal['total_ingredients'] ?? 0;
                           
@@ -766,7 +740,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 subtitle: Text(
-                                  '$matching/$total match', // CHANGED DISPLAY
+                                  '$matching/$total match',
                                   style: const TextStyle(
                                     fontFamily: 'Orbitron',
                                     fontSize: 12,
@@ -963,7 +937,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                             ],
                                           ),
                                         ),
-                                        // --- UPDATED: Show subtitle if not crossed out ---
                                         if (!isCrossed && ingredientDetails.containsKey(ingredient))
                                           Text(
                                             "${ingredientDetails[ingredient]!['qty']} ${ingredientDetails[ingredient]!['unit']}",
@@ -978,7 +951,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        // --- UPDATED: Edit Button ---
                                         if (!isCrossed)
                                           IconButton(
                                             icon: const Icon(Icons.edit, color: Colors.blueAccent, size: 20),

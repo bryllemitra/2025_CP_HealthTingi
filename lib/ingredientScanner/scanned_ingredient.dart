@@ -30,10 +30,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isLoadingRecipes = false;
-  
-  // NEW: Debounce timer for search
   Timer? _searchDebounce;
-  // NEW: Cache for search results
   final Map<String, List<Map<String, dynamic>>> _searchCache = {};
 
   @override
@@ -78,12 +75,8 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
     }
   }
 
-  // NEW: Optimized search handler with debouncing
   void _onSearchChanged(String value) {
-    // Cancel previous timer if it exists
     _searchDebounce?.cancel();
-    
-    // Set new timer for debouncing
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
       if (_searchQuery != value) {
         setState(() {
@@ -93,11 +86,8 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
     });
   }
 
-  // NEW: Optimized filtered ingredients with caching
   List<Map<String, dynamic>> get filteredIngredients {
     if (_searchQuery.isEmpty) return [];
-    
-    // Check cache first
     if (_searchCache.containsKey(_searchQuery)) {
       return _searchCache[_searchQuery]!;
     }
@@ -109,11 +99,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
       final name = ing['ingredientName']?.toString().toLowerCase() ?? '';
       return name.contains(lowerQuery) && !lowerExisting.contains(name);
     }).toList();
-    
-    // Cache the results
     _searchCache[_searchQuery] = results;
-    
-    // Limit cache size to prevent memory issues
     if (_searchCache.length > 20) {
       final firstKey = _searchCache.keys.first;
       _searchCache.remove(firstKey);
@@ -135,7 +121,6 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
           ? user['dietaryRestriction']?.toString().toLowerCase().trim() ?? ''
           : '';
 
-      // EXPAND INGREDIENTS WITH SPECIFIC CUTS
       final expandedIngredients = await dbHelper.expandIngredientVariations(ingredients);
       print('Originally scanned: $ingredients');
       print('Expanded to: $expandedIngredients');
@@ -196,7 +181,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
           if (matchingIngredients > 1) {
             multiGroups.putIfAbsent(matchingIngredients, () => []).add(recipeData);
           } else if (matchingIngredients == 1) {
-            // Find which original ingredient caused this match
+            // Find original ingredient caused this match
             final originalMatch = ingredients.firstWhere(
               (originalIng) => matchingIng.any((match) => 
                   _isIngredientVariationMatch(originalIng, match)),
@@ -209,26 +194,18 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
 
       List<Map<String, dynamic>> orderedGroups = [];
 
-      // Sort multi groups by match count descending
       final matchKeys = multiGroups.keys.toList()..sort((a, b) => b.compareTo(a));
       for (var key in matchKeys) {
         var groupRecipes = multiGroups[key]!;
         
         // Enhanced sorting - prioritize main ingredients and no conflicts
         groupRecipes.sort((a, b) {
-          // First, prioritize meals where scanned ingredients are first ingredients
           if (a['isMainIngredient'] && !b['isMainIngredient']) return -1;
           if (!a['isMainIngredient'] && b['isMainIngredient']) return 1;
-          
-          // Then, prioritize meals without dietary conflicts
           if (a['hasConflict'] && !b['hasConflict']) return 1;
           if (!a['hasConflict'] && b['hasConflict']) return -1;
-          
-          // Finally, by match count (should already be grouped by this)
           return b['matchingIngredients'].compareTo(a['matchingIngredients']);
         });
-        
-        // Limit to 5 meals per group
         if (groupRecipes.length > 5) {
           groupRecipes = groupRecipes.sublist(0, 5);
         }
@@ -240,27 +217,18 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
         });
       }
 
-      // Add single groups in order of originally scanned ingredients
       for (var originalIng in ingredients) {
         var groupRecipes = singleGroups[originalIng] ?? [];
-        
-        // Enhanced sorting for single groups
         groupRecipes.sort((a, b) {
           final isFirstIngredientA = a['isMainIngredient'];
           final isFirstIngredientB = b['isMainIngredient'];
-          
-          // First, prioritize meals where this specific ingredient is the main ingredient
           if (isFirstIngredientA && !isFirstIngredientB) return -1;
           if (!isFirstIngredientA && isFirstIngredientB) return 1;
-          
-          // Then, prioritize meals without dietary conflicts
           if (a['hasConflict'] && !b['hasConflict']) return 1;
           if (!a['hasConflict'] && b['hasConflict']) return -1;
           
           return 0;
         });
-        
-        // Limit to 5 meals per group
         if (groupRecipes.length > 5) {
           groupRecipes = groupRecipes.sublist(0, 5);
         }
@@ -286,15 +254,10 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
     }
   }
 
-  // Helper method for ingredient variation matching
   bool _isIngredientVariationMatch(String ingredient1, String ingredient2) {
     final ing1 = ingredient1.toLowerCase();
     final ing2 = ingredient2.toLowerCase();
-    
-    // Exact match
     if (ing1 == ing2) return true;
-    
-    // Check if they're variations of the same base ingredient
     final baseIngredients = ['chicken', 'pork', 'beef', 'fish', 'shrimp', 'egg'];
     for (var base in baseIngredients) {
       if (ing1.contains(base) && ing2.contains(base)) {
@@ -329,7 +292,6 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Fixed Header
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Row(
@@ -363,7 +325,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                         child: Text(
                           "Scanned Ingredients",
                           style: TextStyle(
-                            fontFamily: 'Exo', // Updated to Exo
+                            fontFamily: 'Exo',
                             color: Colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -384,7 +346,6 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                 ),
               ),
 
-              // Scrollable Content
               Expanded(
                 child: Container(
                   decoration: const BoxDecoration(
@@ -394,7 +355,6 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                   child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
-                      // Search Section
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -414,7 +374,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                             const Text(
                               "Can't find an ingredient?",
                               style: TextStyle(
-                                fontFamily: 'Exo', // Updated to Exo
+                                fontFamily: 'Exo',
                                 fontSize: 14,
                                 color: Color(0xFF184E77),
                                 fontWeight: FontWeight.w600,
@@ -435,11 +395,11 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                               ),
                               child: TextField(
                                 controller: _searchController,
-                                style: const TextStyle(fontFamily: 'Poppins'), // Updated
+                                style: const TextStyle(fontFamily: 'Poppins'),
                                 decoration: const InputDecoration(
                                   prefixIcon: Icon(Icons.search, color: Color(0xFF184E77)),
                                   hintText: "Search ingredients...",
-                                  hintStyle: TextStyle(fontFamily: 'Poppins'), // Updated
+                                  hintStyle: TextStyle(fontFamily: 'Poppins'),
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                 ),
@@ -471,7 +431,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                               const Text(
                                 "Search Results",
                                 style: TextStyle(
-                                  fontFamily: 'Exo', // Updated to Exo
+                                  fontFamily: 'Exo',
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF184E77),
@@ -513,7 +473,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                     title: Text(
                                       name,
                                       style: const TextStyle(
-                                        fontFamily: 'Poppins', // Updated to Poppins
+                                        fontFamily: 'Poppins',
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
                                         color: Color(0xFF184E77),
@@ -523,7 +483,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                     ),
                                     subtitle: Text(
                                       '${ing['calories'] ?? 'N/A'} kcal',
-                                      style: const TextStyle(fontSize: 12, fontFamily: 'Poppins'), // Updated
+                                      style: const TextStyle(fontSize: 12, fontFamily: 'Poppins'),
                                     ),
                                     trailing: Container(
                                       padding: const EdgeInsets.all(6),
@@ -555,7 +515,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                       fontSize: 12,
                                       color: Colors.grey,
                                       fontStyle: FontStyle.italic,
-                                      fontFamily: 'Poppins', // Updated
+                                      fontFamily: 'Poppins',
                                     ),
                                   ),
                                 ),
@@ -565,8 +525,6 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                       ],
 
                       const SizedBox(height: 24),
-
-                      // Detected Ingredients Section
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -586,7 +544,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                             const Text(
                               "Detected Ingredients",
                               style: TextStyle(
-                                fontFamily: 'Exo', // Updated to Exo
+                                fontFamily: 'Exo',
                                 fontWeight: FontWeight.bold,
                                 fontSize: 20,
                                 color: Color(0xFF184E77),
@@ -643,7 +601,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                         Text(
                                           ingredient,
                                           style: const TextStyle(
-                                            fontFamily: 'Poppins', // Updated to Poppins
+                                            fontFamily: 'Poppins',
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                             color: Color(0xFF184E77),
@@ -656,7 +614,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                             style: const TextStyle(
                                               fontSize: 11,
                                               color: Colors.grey,
-                                              fontFamily: 'Poppins', // Updated
+                                              fontFamily: 'Poppins',
                                             ),
                                           ),
                                       ],
@@ -670,8 +628,6 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                       ),
 
                       const SizedBox(height: 24),
-
-                      // Recipe Suggestions Section
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -691,7 +647,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                             const Text(
                               "Recipe Suggestions",
                               style: TextStyle(
-                                fontFamily: 'Exo', // Updated to Exo
+                                fontFamily: 'Exo',
                                 fontWeight: FontWeight.bold,
                                 fontSize: 20,
                                 color: Color(0xFF184E77),
@@ -724,7 +680,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 color: Colors.grey,
-                                                fontFamily: 'Poppins', // Updated to Poppins
+                                                fontFamily: 'Poppins',
                                               ),
                                               textAlign: TextAlign.center,
                                             ),
@@ -761,7 +717,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.white,
-                                                    fontFamily: 'Exo', // Updated to Exo
+                                                    fontFamily: 'Exo',
                                                   ),
                                                 ),
                                               ),
@@ -795,13 +751,12 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                       ),
                                                       child: Column(
                                                         children: [
-                                                          // Recipe Image
                                                           ClipRRect(
                                                             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                                                             child: Stack(
                                                               children: [
                                                                 (recipe['mealPicture']?.toString().startsWith('http') ?? false)
-                                                                ? CachedNetworkImage( // 🟢 Cached Recipe Image
+                                                                ? CachedNetworkImage(
                                                                     imageUrl: recipe['mealPicture'], width: double.infinity, height: 120, fit: BoxFit.cover,
                                                                     placeholder: (context, url) => Container(width: double.infinity, height: 120, color: const Color(0xFFF3F2DF), child: const Center(child: CircularProgressIndicator())),
                                                                     errorWidget: (context, url, error) => Container(width: double.infinity, height: 120, color: const Color(0xFFF3F2DF), child: const Icon(Icons.restaurant, size: 40, color: Color(0xFF184E77))),
@@ -829,7 +784,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                     ),
                                                                   ),
                                                                 ),
-                                                                // NEW: Main Ingredient Badge
+
                                                                 if (recipe['isMainIngredient'])
                                                                   Positioned(
                                                                     top: 8,
@@ -851,7 +806,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                               fontSize: 10,
                                                                               color: Colors.white,
                                                                               fontWeight: FontWeight.bold,
-                                                                              fontFamily: 'Poppins', // Updated
+                                                                              fontFamily: 'Poppins',
                                                                             ),
                                                                           ),
                                                                         ],
@@ -861,8 +816,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                               ],
                                                             ),
                                                           ),
-                                                          
-                                                          // Recipe Info
+
                                                           Padding(
                                                             padding: const EdgeInsets.all(16),
                                                             child: Column(
@@ -885,7 +839,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                     fontWeight: FontWeight.bold,
                                                                     fontSize: 16,
                                                                     color: Color(0xFF184E77),
-                                                                    fontFamily: 'Exo', // Updated to Exo
+                                                                    fontFamily: 'Exo',
                                                                   ),
                                                                   maxLines: 2,
                                                                   overflow: TextOverflow.ellipsis,
@@ -912,7 +866,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                         fontSize: 10,
                                                                         color: Colors.orange[700],
                                                                         fontWeight: FontWeight.w500,
-                                                                        fontFamily: 'Poppins', // Updated
+                                                                        fontFamily: 'Poppins',
                                                                       ),
                                                                     ),
                                                                   ),
@@ -930,7 +884,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                             style: const TextStyle(
                                                                               fontSize: 12,
                                                                               color: Colors.grey,
-                                                                              fontFamily: 'Poppins', // Updated
+                                                                              fontFamily: 'Poppins',
                                                                             ),
                                                                           ),
                                                                           if (recipe['matchingList'] != null && recipe['matchingList'].isNotEmpty)
@@ -940,7 +894,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                                 fontSize: 10,
                                                                                 color: Color(0xFF184E77),
                                                                                 fontWeight: FontWeight.w500,
-                                                                                fontFamily: 'Poppins', // Updated
+                                                                                fontFamily: 'Poppins',
                                                                               ),
                                                                               maxLines: 1,
                                                                               overflow: TextOverflow.ellipsis,
@@ -973,7 +927,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                                         'View Recipe',
                                                                         style: TextStyle(
                                                                           fontSize: 12,
-                                                                          fontFamily: 'Poppins', // Updated to Poppins
+                                                                          fontFamily: 'Poppins',
                                                                         ),
                                                                       ),
                                                                     ),
@@ -1004,8 +958,6 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                       ),
 
                       const SizedBox(height: 20),
-                      
-                      // Subtle Footer
                       const Center(
                         child: Text(
                           'Discover delicious recipes with your ingredients',
@@ -1014,7 +966,7 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                             fontSize: 12,
                             fontStyle: FontStyle.italic,
                             letterSpacing: 1.2,
-                            fontFamily: 'Poppins', // Updated
+                            fontFamily: 'Poppins', 
                           ),
                         ),
                       ),

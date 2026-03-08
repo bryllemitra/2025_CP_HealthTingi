@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:photo_view/photo_view.dart';
-// 🟢 PDF GENERATION IMPORTS
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -83,22 +82,16 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
     });
   }
 
-  // 🟢 HELPER: Parse quantities like "1/2", "1.5", "¼"
   double _parseQuantity(String quantityStr) {
     if (quantityStr.trim().isEmpty) return 0.0;
     String cleanStr = quantityStr.trim();
-    
-    // Handle decimals directly
-    if (double.tryParse(cleanStr) != null) return double.parse(cleanStr);
 
-    // Handle unicode fractions
+    if (double.tryParse(cleanStr) != null) return double.parse(cleanStr);
     final fractionMap = {
       '⅛': 0.125, '¼': 0.25, '⅓': 0.333, '⅜': 0.375,
       '½': 0.5, '⅝': 0.625, '⅔': 0.666, '¾': 0.75, '⅞': 0.875
     };
     if (fractionMap.containsKey(cleanStr)) return fractionMap[cleanStr]!;
-
-    // Handle slash fractions "1/2"
     if (cleanStr.contains('/')) {
       List<String> parts = cleanStr.split('/');
       if (parts.length == 2) {
@@ -108,14 +101,12 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
       }
     }
     
-    // Fallback regex for "1.5 kg" (strips text)
     final match = RegExp(r'\d+(\.\d+)?').firstMatch(cleanStr);
     if (match != null) return double.tryParse(match.group(0)!) ?? 0.0;
     
     return 0.0;
   }
 
-  // 🟢 UPDATED PDF GENERATOR: Calculates ACTUAL Cost
   Future<void> _generateAndPrintPdf() async {
     final font = await PdfGoogleFonts.openSansRegular();
     final fontBold = await PdfGoogleFonts.openSansBold();
@@ -124,7 +115,6 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
     List<List<dynamic>> tableData = [];
 
     for (var meal in _filteredMeals) {
-      // 1. Fetch ingredients
       List<Map<String, dynamic>> ingredients = [];
       try {
         ingredients = await dbHelper.getMealIngredients(meal['mealID'] ?? meal['id']);
@@ -142,18 +132,11 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
           String name = ing['ingredientName'] ?? 'Unknown';
           String qtyStr = ing['quantity']?.toString() ?? '0';
           String unit = ing['unit']?.toString() ?? 'piece';
-          
-          // --- COST CALCULATION LOGIC ---
+
           double qty = _parseQuantity(qtyStr);
-          
-          // Get base price per unit from DB
           double basePrice = (ing['price'] as num?)?.toDouble() ?? 0.0;
           String baseUnit = ing['base_unit']?.toString() ?? unit;
-
-          // Convert Recipe Unit -> Grams
           double recipeGrams = dbHelper.convertToGrams(qty, unit, ing);
-          
-          // Convert Base Price Unit -> Grams (e.g. 1 kg = 1000g)
           double baseGrams = dbHelper.convertToGrams(1.0, baseUnit, ing);
 
           double itemCost = 0.0;
@@ -162,14 +145,10 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
           }
           
           calculatedTotalCost += itemCost;
-          // -----------------------------
-
-          // Add to list with calculated price
           ingredientBreakdown += "• $qtyStr $unit $name - Php ${itemCost.toStringAsFixed(2)}\n";
         }
       }
 
-      // If no ingredients, fall back to manual price, otherwise use calculated
       double displayPrice = (calculatedTotalCost > 0) 
           ? calculatedTotalCost 
           : (meal['price'] as num?)?.toDouble() ?? 0.0;
@@ -177,7 +156,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
       tableData.add([
         meal['mealName']?.toString() ?? 'N/A',
         ingredientBreakdown, 
-        'Php ${displayPrice.toStringAsFixed(2)}', // 🟢 Uses Computed Price
+        'Php ${displayPrice.toStringAsFixed(2)}',
         '${meal['calories']?.toString() ?? '0'} cal',
         meal['servings']?.toString() ?? '1',
         meal['cookingTime']?.toString() ?? 'N/A',
@@ -252,9 +231,9 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C),
+              Color(0xFF76C893), 
+              Color(0xFF184E77), 
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -266,7 +245,6 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with back button
                 Row(
                   children: [
                     IconButton(
@@ -296,7 +274,6 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                         ),
                       ),
                     ),
-                    // 🟢 PDF Download Button
                     IconButton(
                       icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
                       tooltip: 'Download Breakdown PDF',
@@ -306,8 +283,6 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                 ),
                 
                 const SizedBox(height: 20),
-                
-                // Stats Overview Cards
                 Row(
                   children: [
                     Expanded(
@@ -340,8 +315,6 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                 ),
                 
                 const SizedBox(height: 24),
-                
-                // Search Bar
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.9),
@@ -393,8 +366,6 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                 ),
                 
                 const SizedBox(height: 16),
-                
-                // Results count
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text(
@@ -419,8 +390,6 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                 ),
                 
                 const SizedBox(height: 16),
-                
-                // Meals List
                 Expanded(
                   child: _isLoading
                       ? const Center(
@@ -977,8 +946,6 @@ class _MealCard extends StatelessWidget {
         child: Icon(Icons.restaurant, color: const Color(0xFF184E77).withOpacity(0.7)),
       );
     }
-    
-    // 🟢 Handle Firebase URLs
     if (path.startsWith('http')) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),

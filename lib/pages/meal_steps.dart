@@ -73,7 +73,6 @@ class _MealStepsPageState extends State<MealStepsPage> {
         } else {
           timer.cancel();
           _stepTimers[index] = null;
-          // Auto-advance to next step if not the last
           if (_currentStepIndex < steps.length - 1) {
             _currentStepIndex++;
             _startStepTimer(_currentStepIndex, steps);
@@ -123,7 +122,7 @@ class _MealStepsPageState extends State<MealStepsPage> {
           'Cooking Quest: ${widget.mealData['mealName']}',
           style: const TextStyle(
             color: Colors.white,
-            fontFamily: 'Exo', // Updated to Exo
+            fontFamily: 'Exo',
             fontWeight: FontWeight.bold,
             shadows: [
               Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 6),
@@ -221,7 +220,7 @@ class _MealStepsPageState extends State<MealStepsPage> {
                                           '${step['number']}',
                                           style: TextStyle(
                                             color: isCurrent ? const Color(0xFF184E77) : Colors.black54,
-                                            fontFamily: 'Exo', // Updated to Exo
+                                            fontFamily: 'Exo',
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -229,7 +228,7 @@ class _MealStepsPageState extends State<MealStepsPage> {
                                 title: Text(
                                   step['title'],
                                   style: TextStyle(
-                                    fontFamily: 'Exo', // Updated to Exo
+                                    fontFamily: 'Exo',
                                     fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
                                     color: isCurrent ? const Color(0xFF184E77) : (isCompleted ? Colors.grey[600] : Colors.black87),
                                   ),
@@ -240,7 +239,7 @@ class _MealStepsPageState extends State<MealStepsPage> {
                                     Text(
                                       step['content'],
                                       style: TextStyle(
-                                        fontFamily: 'Poppins', // Updated to Poppins
+                                        fontFamily: 'Poppins',
                                         fontSize: 14,
                                         color: isCurrent ? Colors.black87 : (isCompleted ? Colors.grey[600] : Colors.black54),
                                       ),
@@ -251,7 +250,7 @@ class _MealStepsPageState extends State<MealStepsPage> {
                                         child: Text(
                                           'Time Left: ${(_stepRemainingTimes[idx]! ~/ 60)}:${(_stepRemainingTimes[idx]! % 60).toString().padLeft(2, '0')}',
                                           style: TextStyle(
-                                            fontFamily: 'Poppins', // Updated to Poppins
+                                            fontFamily: 'Poppins',
                                             fontWeight: FontWeight.bold,
                                             color: isCurrent ? Colors.red[600] : Colors.grey[600],
                                           ),
@@ -261,7 +260,7 @@ class _MealStepsPageState extends State<MealStepsPage> {
                                       Text(
                                         'Estimated: ${step['duration'] ~/ 60} mins',
                                         style: TextStyle(
-                                          fontFamily: 'Poppins', // Updated to Poppins
+                                          fontFamily: 'Poppins',
                                           fontSize: 12,
                                           color: isCurrent ? Colors.black54 : Colors.grey[600],
                                         ),
@@ -293,7 +292,7 @@ class _MealStepsPageState extends State<MealStepsPage> {
                                                 child: const Text(
                                                   'Back',
                                                   style: TextStyle(
-                                                    fontFamily: 'Poppins', // Updated to Poppins
+                                                    fontFamily: 'Poppins',
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.w600,
                                                   ),
@@ -320,8 +319,6 @@ class _MealStepsPageState extends State<MealStepsPage> {
                                                       _stepRemainingTimes.clear();
                                                       _stepOriginalDurations.clear();
                                                       await _saveToCompletedHistory();
-
-                                                      // Parse estimated time
                                                       int estimated = 0;
                                                       final cookingTime = widget.mealData['cookingTime'] as String? ?? '';
                                                       final timeMatch = RegExp(r'(\d+)(?:-(\d+))?').firstMatch(cookingTime);
@@ -331,7 +328,6 @@ class _MealStepsPageState extends State<MealStepsPage> {
                                                         estimated = (min1 + min2) ~/ 2;
                                                       }
 
-                                                      // Navigate to completion screen
                                                       Navigator.pushReplacement(
                                                         context,
                                                         MaterialPageRoute(
@@ -358,7 +354,7 @@ class _MealStepsPageState extends State<MealStepsPage> {
                                                   child: Text(
                                                     _currentStepIndex == steps.length - 1 ? 'Complete Quest' : 'Next Step',
                                                     style: const TextStyle(
-                                                      fontFamily: 'Poppins', // Updated to Poppins
+                                                      fontFamily: 'Poppins',
                                                       fontSize: 16,
                                                       fontWeight: FontWeight.w600,
                                                     ),

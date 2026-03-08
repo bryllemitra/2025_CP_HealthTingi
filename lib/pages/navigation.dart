@@ -1,4 +1,3 @@
-// Modified navigation.dart with UI consistency to login.dart theme
 import 'package:flutter/material.dart';
 import '../information/profile.dart';
 import '../information/about_us.dart';
@@ -10,7 +9,7 @@ class NavigationDrawerWidget extends StatelessWidget {
   final int userId;
   const NavigationDrawerWidget({super.key, required this.userId});
 
-  bool get _isAdmin => userId == 1; // Assuming Admin is always ID 1
+  bool get _isAdmin => userId == 1;
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +45,7 @@ class NavigationDrawerWidget extends StatelessWidget {
                 ),
               ),
             ),
-            
-            // 👇 NEW: Admin Dashboard Link (Only visible to Admin)
+
             if (_isAdmin) ...[
               _drawerButton(context, Icons.dashboard, 'Admin Dashboard'),
               const SizedBox(height: 8),
@@ -89,11 +87,10 @@ class NavigationDrawerWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
       onPressed: () {
-        Navigator.pop(context); // Close drawer first
+        Navigator.pop(context);
         switch (label) {
-          // 👇 NEW CASE: Navigate to Dashboard
           case 'Admin Dashboard':
-            Navigator.pushReplacement( // Use replacement to avoid back-stack loop
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => AdminDashboardPage(userId: userId)),
             );

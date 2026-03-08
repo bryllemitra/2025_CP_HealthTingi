@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:photo_view/photo_view.dart';
-// 🟢 NEW IMPORTS FOR PDF GENERATION
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -112,11 +111,11 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
             pw.Table.fromTextArray(
               headers: ['Name', 'Category', 'Price', 'Calories', 'Nutritional Value'],
               columnWidths: {
-                0: const pw.FlexColumnWidth(2),   // Name
-                1: const pw.FlexColumnWidth(1.5), // Category
-                2: const pw.FlexColumnWidth(1),   // Price
-                3: const pw.FlexColumnWidth(1),   // Calories
-                4: const pw.FlexColumnWidth(3),   // Nutri Value
+                0: const pw.FlexColumnWidth(2), 
+                1: const pw.FlexColumnWidth(1.5), 
+                2: const pw.FlexColumnWidth(1),   
+                3: const pw.FlexColumnWidth(1),   
+                4: const pw.FlexColumnWidth(3), 
               },
               data: _filteredIngredients.map((item) {
                 return [
@@ -172,7 +171,6 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with back button
                 Row(
                   children: [
                     IconButton(
@@ -202,7 +200,6 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                         ),
                       ),
                     ),
-                    // 🟢 PDF Download Button
                     IconButton(
                       icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
                       tooltip: 'Download PDF Report',
@@ -212,8 +209,6 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                 ),
                 
                 const SizedBox(height: 20),
-                
-                // Stats Overview Cards
                 Row(
                   children: [
                     Expanded(
@@ -246,8 +241,6 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                 ),
                 
                 const SizedBox(height: 24),
-                
-                // Search Bar
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.9),
@@ -298,8 +291,6 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                 ),
                 
                 const SizedBox(height: 16),
-                
-                // Results count
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text(
@@ -324,8 +315,6 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                 ),
                 
                 const SizedBox(height: 16),
-                
-                // Ingredients List
                 Expanded(
                   child: _isLoading
                       ? const Center(
@@ -471,8 +460,6 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                     label: 'Nutritional Value',
                     icon: Icons.health_and_safety,
                   ),
-                  
-                  // Standard Image Selection UI
                   const SizedBox(height: 20),
                   const Text(
                     'Default Ingredient Image',

@@ -29,14 +29,11 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
     _ingredientFuture = _fetchIngredientDetails();
   }
 
-  // --- FIX 2: PREVENT DUPLICATES USING SET<INT> ---
   Future<List<Map<String, dynamic>>> _fetchRelatedMeals() async {
     try {
       final allMeals = await _dbHelper.getAllMeals();
       final List<Map<String, dynamic>> distinctMeals = [];
-      final Set<int> addedMealIds = {}; // Track IDs to prevent duplicates
-
-      // Helper function to safely add meals
+      final Set<int> addedMealIds = {}; 
       void addMealIfUnique(Map<String, dynamic> meal) {
         final id = meal['mealID'] as int;
         if (!addedMealIds.contains(id)) {
@@ -45,7 +42,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
         }
       }
 
-      // 1. Check Meal Name, Category, or Content string match
       for (var meal in allMeals) {
         final mealName = meal['mealName']?.toString().toLowerCase() ?? '';
         final categories = meal['category']?.toString().toLowerCase() ?? '';
@@ -59,11 +55,8 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
         }
       }
 
-      // 2. Check Database Ingredient Relationships
       for (var meal in allMeals) {
-        // Skip if we already added this meal to save processing time
         if (addedMealIds.contains(meal['mealID'])) continue;
-
         final mealIngredients = await _dbHelper.getMealIngredients(meal['mealID']);
         final hasIngredient = mealIngredients.any((ingredient) {
           final ingName = ingredient['ingredientName']?.toString().toLowerCase() ?? '';
@@ -95,7 +88,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
     }
   }
 
-  // === FULL-SCREEN IMAGE VIEWER (Unchanged) ===
   void _showFullScreenImage(String imagePath) {
     showDialog(
       context: context,
@@ -106,7 +98,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
             Center(
               child: InteractiveViewer(
                 child: imagePath.startsWith('http')
-                  ? CachedNetworkImage( // 🟢 Cached Zoom
+                  ? CachedNetworkImage(
                       imageUrl: imagePath, fit: BoxFit.contain,
                       placeholder: (context, url) => const CircularProgressIndicator(color: Colors.white),
                       errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 80, color: Colors.white70),
@@ -161,7 +153,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Exo', // Updated to Exo
+            fontFamily: 'Exo',
             fontSize: 22,
             letterSpacing: 1.1,
             shadows: [
@@ -205,7 +197,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // === CLICKABLE HEADER IMAGE ===
                   GestureDetector(
                     onTap: () => _showFullScreenImage(imagePath),
                     child: SizedBox(
@@ -214,7 +205,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                       child: Stack(
                         children: [
                           imagePath.startsWith('http')
-                            ? CachedNetworkImage( // 🟢 Cached Header
+                            ? CachedNetworkImage( 
                                 imageUrl: imagePath, fit: BoxFit.cover, width: double.infinity, height: double.infinity,
                                 placeholder: (context, url) => Container(color: const Color(0xFF184E77), child: const Center(child: CircularProgressIndicator(color: Colors.white))),
                                 errorWidget: (context, url, error) => Container(color: const Color(0xFF184E77), child: const Icon(Icons.fastfood, size: 100, color: Colors.white24)),
@@ -255,8 +246,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                       ),
                     ),
                   ),
-
-                  // === WHITE CARD — OVERLAPS IMAGE BY 40px ===
                   Transform.translate(
                     offset: const Offset(0, -40),
                     child: Container(
@@ -268,7 +257,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // === INGREDIENT NAME PILL ===
                           Center(
                             child: Container(
                               margin: const EdgeInsets.only(bottom: 24),
@@ -289,7 +277,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                 style: const TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'Exo', // Updated to Exo
+                                  fontFamily: 'Exo',
                                   color: Colors.white,
                                   letterSpacing: 1.2,
                                 ),
@@ -298,7 +286,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                             ),
                           ),
 
-                          // === INGREDIENT DETAILS CARD ===
                           Container(
                             width: double.infinity,
                             decoration: BoxDecoration(
@@ -322,7 +309,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                     style: TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: 'Exo', // Updated to Exo
+                                      fontFamily: 'Exo',
                                       color: Color(0xFF184E77),
                                     ),
                                   ),
@@ -358,7 +345,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
-                                            fontFamily: 'Exo', // Updated to Exo
+                                            fontFamily: 'Exo',
                                             color: Color(0xFF184E77),
                                           ),
                                         ),
@@ -373,8 +360,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                           ),
 
                           const SizedBox(height: 32),
-
-                          // === RELATED MEALS SECTION ===
                           Container(
                             width: double.infinity,
                             decoration: BoxDecoration(
@@ -398,7 +383,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                     style: TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: 'Exo', // Updated to Exo
+                                      fontFamily: 'Exo',
                                       color: Color(0xFF184E77),
                                     ),
                                   ),
@@ -446,9 +431,8 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                           ),
                                         );
                                       }
-                                      // --- FIX 1 PART A: Increased Height ---
                                       return SizedBox(
-                                        height: 250, // Increased from 220 to 250 to prevent overflow
+                                        height: 250,
                                         child: ListView.builder(
                                           scrollDirection: Axis.horizontal,
                                           itemCount: relatedMeals.length,
@@ -474,7 +458,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                                 fontSize: 12,
                                 fontStyle: FontStyle.italic,
                                 letterSpacing: 1.2,
-                                fontFamily: 'Poppins', // Updated to Poppins
+                                fontFamily: 'Poppins',
                               ),
                             ),
                           ),
@@ -491,7 +475,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
     );
   }
 
-  // Helper widgets for loading/error
   Widget _buildLoadingBackground() {
     return Container(
       decoration: const BoxDecoration(
@@ -551,7 +534,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Colors.grey,
-                    fontFamily: 'Poppins', // Updated to Poppins
+                    fontFamily: 'Poppins',
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -561,7 +544,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF184E77),
-                    fontFamily: 'Poppins', // Updated to Poppins
+                    fontFamily: 'Poppins',
                   ),
                 ),
               ],
@@ -607,7 +590,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
             Expanded(
               child: Text(
                 value.trim(),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF184E78), fontFamily: 'Poppins'), // Updated to Poppins
+                style: const TextStyle(fontSize: 14, color: Color(0xFF184E78), fontFamily: 'Poppins'),
               ),
             ),
           ],
@@ -617,7 +600,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
     return [
       const Text(
         "Nutritional information not available",
-        style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic, fontFamily: 'Poppins'), // Updated to Poppins
+        style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic, fontFamily: 'Poppins'),
       )
     ];
   }
@@ -643,7 +626,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
       },
       child: Container(
         width: 180,
-        margin: const EdgeInsets.only(right: 16, bottom: 8), // Added bottom margin for shadow
+        margin: const EdgeInsets.only(right: 16, bottom: 8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -656,7 +639,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
           ],
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Use minimum necessary space
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
@@ -664,7 +647,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
               child: Stack(
                 children: [
                   imagePath.startsWith('http')
-                    ? CachedNetworkImage( // 🟢 Cached Related Meal
+                    ? CachedNetworkImage(
                         imageUrl: imagePath, height: 120, width: double.infinity, fit: BoxFit.cover,
                         placeholder: (context, url) => Container(height: 120, color: const Color(0xFFF3F2DF), child: const Center(child: CircularProgressIndicator())),
                         errorWidget: (context, url, error) => Container(height: 120, color: const Color(0xFFF3F2DF), child: const Icon(Icons.fastfood, size: 40, color: Color(0xFF184E77))),
@@ -689,9 +672,6 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                 ],
               ),
             ),
-            // --- FIX 1 PART B: Expanded/Flexible ---
-            // Use Flexible or Expanded so the text column takes up available space
-            // without pushing boundaries if content is large.
             Flexible(
               fit: FlexFit.loose,
               child: Padding(
@@ -705,7 +685,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: Color(0xFF184E77),
-                        fontFamily: 'Exo', // Updated to Exo
+                        fontFamily: 'Exo',
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -723,7 +703,7 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                           color: Color(0xFF184E77),
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
-                          fontFamily: 'Exo', // Updated to Exo for price
+                          fontFamily: 'Exo',
                         ),
                       ),
                     ),

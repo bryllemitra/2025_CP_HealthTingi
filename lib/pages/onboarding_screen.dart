@@ -1,4 +1,3 @@
-// onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'meal_scan.dart';
 
@@ -19,7 +18,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   static const Color activeDotColor = Color(0xFF10B981);      
   static const Color inactiveDotColor = Color(0xFF6EE7B7);     
 
-  // List of onboarding pages
   final List<Widget> _onboardingPages = [
     const OnboardingPage(
       image: Icons.camera_alt_rounded,
@@ -61,9 +59,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C), 
+              Color(0xFF76C893), 
+              Color(0xFF184E77), 
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -72,7 +70,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Page View
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
@@ -84,7 +81,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
 
-              // Page Indicator Dots
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List<Widget>.generate(
@@ -105,13 +101,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Next / Get Started Button - RICH GREEN
               Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: ElevatedButton(
                   onPressed: _onNext,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: buttonColor,           // Emerald Green
+                    backgroundColor: buttonColor,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
@@ -125,7 +120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ? 'Get Started'
                         : 'Next',
                     style: const TextStyle(
-                      fontFamily: 'Poppins', // Updated Font
+                      fontFamily: 'Poppins',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -141,7 +136,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-// === ONBOARDING PAGE WITH WHITE ICONS ===
 class OnboardingPage extends StatelessWidget {
   final IconData image;
   final String title;
@@ -161,20 +155,19 @@ class OnboardingPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // WHITE ICON
           Icon(
             image,
             size: 100,
-            color: _OnboardingScreenState.iconColor, // White
+            color: _OnboardingScreenState.iconColor, 
           ),
           const SizedBox(height: 32),
           Text(
             title,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 28, // Increased slightly
-              fontWeight: FontWeight.w800, // Thicker weight
-              fontFamily: 'Exo', // Updated Font
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Exo',
               shadows: [
                 Shadow(
                   color: Colors.black26,
@@ -191,8 +184,8 @@ class OnboardingPage extends StatelessWidget {
             style: const TextStyle(
               color: Colors.white, 
               fontSize: 16,
-              fontFamily: 'Poppins', // Updated Font
-              height: 1.5, // Better line height for readability
+              fontFamily: 'Poppins',
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),

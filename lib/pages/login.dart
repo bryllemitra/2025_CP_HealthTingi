@@ -216,7 +216,7 @@ class _LoginPageState extends State<LoginPage> {
                         hintText: 'Email or Username',
                         hintStyle: const TextStyle(fontFamily: 'Poppins', color: Colors.black54),
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.8), // Slightly more opaque for readability
+                        fillColor: Colors.white.withOpacity(0.8),
                         prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF184E77)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(20),

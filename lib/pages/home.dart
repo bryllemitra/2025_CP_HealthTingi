@@ -1,7 +1,5 @@
-// Modified pages/home.dart with Smart Sync
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:currency_code_to_currency_symbol/currency_code_to_currency_symbol.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'dart:async';
@@ -46,14 +44,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Initial Load
     _initData();
     _searchController.addListener(_onSearchChanged);
   }
-
-  // Wrapper to call everything on startup
   void _initData() {
-    // MODIFIED: Use Smart Sync to prevent duplicates
     DatabaseHelper().syncCloudToLocal();
     
     _loadPopularRecipes();
@@ -66,7 +60,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _onRefresh() async {
-    // MODIFIED: Use Smart Sync here too
     await DatabaseHelper().syncCloudToLocal();
     
     await _loadPopularRecipes();
@@ -298,7 +291,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildMealImage(String imagePath) {
     if (imagePath.startsWith('http')) {
-      return CachedNetworkImage( // 🟢 Cached
+      return CachedNetworkImage(
         imageUrl: imagePath, height: 100, width: double.infinity, fit: BoxFit.cover,
         placeholder: (context, url) => Container(height: 100, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
         errorWidget: (context, url, error) => Container(height: 100, color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
@@ -881,7 +874,7 @@ class _HomePageState extends State<HomePage> {
                           width: 150,
                           height: double.infinity,
                           child: (meal['mealPicture']?.toString().startsWith('http') ?? false)
-                            ? CachedNetworkImage( // 🟢 Cached
+                            ? CachedNetworkImage(
                                 imageUrl: meal['mealPicture'],
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) => Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-//import 'package:tflite_flutter/tflite_flutter.dart';
 import 'dart:io';
 import 'scanned_ingredient.dart';
 
@@ -17,24 +16,19 @@ class ScanSuccessPage extends StatelessWidget {
 
   List<String> getDetectedIngredients() {
     if (recognitions == null || recognitions!.isEmpty) return [];
-    
-    // Filter by confidence threshold and get unique ingredients
     final detected = recognitions!
         .where((recognition) => 
             recognition['confidence'] != null && 
-            recognition['confidence'] > 0.3) // Adjust threshold as needed
+            recognition['confidence'] > 0.3)
         .map((recognition) {
             final label = recognition['label'].toString();
-            
-            // 1. Fix spacing for CamelCase (e.g. GroundBeef -> Ground Beef)
             String processedLabel = label.replaceAllMapped(RegExp(r'(?<!^)(?=[A-Z])'), (match) => ' ');
-
             if (processedLabel == 'Munggo') return 'Mungbeans/Munggo'; 
             if (processedLabel == 'Petchay') return 'Pechay';
             
             return processedLabel;
         })
-        .toSet() // Remove duplicates
+        .toSet()
         .toList();
     
     return detected;
@@ -62,7 +56,6 @@ class ScanSuccessPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Success Message
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 32),
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -83,7 +76,7 @@ class ScanSuccessPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Exo', // Updated to Exo
+                      fontFamily: 'Exo',
                       color: Color(0xFF184E77),
                       letterSpacing: 1.1,
                     ),
@@ -91,8 +84,6 @@ class ScanSuccessPage extends StatelessWidget {
                 ),
                 
                 const SizedBox(height: 30),
-
-                // Scanned Image
                 if (imagePath != null)
                   Container(
                     width: 220,
@@ -141,7 +132,6 @@ class ScanSuccessPage extends StatelessWidget {
                     ),
                   ),
 
-                // Detected Ingredients
                 if (detectedIngredients.isNotEmpty) ...[
                   const SizedBox(height: 30),
                   
@@ -165,7 +155,7 @@ class ScanSuccessPage extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
-                            fontFamily: 'Exo', // Updated to Exo
+                            fontFamily: 'Exo',
                             color: Color(0xFF184E77),
                           ),
                         ),
@@ -184,7 +174,7 @@ class ScanSuccessPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins', // Added Poppins
+                                fontFamily: 'Poppins',
                                 color: Color(0xFF184E77),
                               ),
                             ),
@@ -196,8 +186,6 @@ class ScanSuccessPage extends StatelessWidget {
                 ],
 
                 const SizedBox(height: 40),
-
-                // View Ingredients Button
                 SizedBox(
                   width: 280,
                   child: ElevatedButton(
@@ -225,7 +213,7 @@ class ScanSuccessPage extends StatelessWidget {
                     child: Text(
                       'VIEW INGREDIENT/S',
                       style: TextStyle(
-                        fontFamily: 'Poppins', // Updated to Poppins
+                        fontFamily: 'Poppins',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
@@ -235,8 +223,6 @@ class ScanSuccessPage extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 20),
-
-                // Scan Again Button
                 GestureDetector(
                   onTap: () {
                     Navigator.pop(context);
@@ -253,7 +239,7 @@ class ScanSuccessPage extends StatelessWidget {
                       child: Text(
                         'SCAN AGAIN',
                         style: TextStyle(
-                          fontFamily: 'Poppins', // Updated to Poppins
+                          fontFamily: 'Poppins',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -265,8 +251,6 @@ class ScanSuccessPage extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 20),
-
-                // Subtle Footer
                 const Text(
                   'Eat Smart. Live Better.',
                   style: TextStyle(
@@ -274,7 +258,7 @@ class ScanSuccessPage extends StatelessWidget {
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
                     letterSpacing: 1.2,
-                    fontFamily: 'Poppins', // Added Poppins
+                    fontFamily: 'Poppins',
                   ),
                 ),
               ],

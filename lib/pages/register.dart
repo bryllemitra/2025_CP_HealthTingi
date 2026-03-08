@@ -377,7 +377,7 @@ class _RegisterPageState extends State<RegisterPage> {
       TextInputType? keyboardType, 
       String? Function(String?)? validator,
       bool isOptional = false,
-      Widget? suffixIcon}) {  // Add this parameter
+      Widget? suffixIcon}) { 
     return TextFormField(
       controller: controller,
       obscureText: isObscure,
@@ -395,7 +395,7 @@ class _RegisterPageState extends State<RegisterPage> {
           Icons.text_fields,
           color: const Color(0xFF184E77),
         ),
-        suffixIcon: suffixIcon,  // Add suffix icon here
+        suffixIcon: suffixIcon,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide.none,
@@ -551,7 +551,7 @@ class _RegisterPageState extends State<RegisterPage> {
             _buildTextField(
               passwordController, 
               'Password', 
-              isObscure: _obscurePassword,  // Use the state variable
+              isObscure: _obscurePassword, 
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Password is required';
@@ -564,7 +564,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 }
                 return null;
               },
-              // Add suffix icon for password visibility toggle
+
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -777,8 +777,6 @@ class _RegisterPageState extends State<RegisterPage> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 20),
-
-        // TERMS CARD — FULL WIDTH, SCROLLABLE
         Expanded(
           child: Container(
             width: double.infinity,
@@ -822,8 +820,6 @@ We may update these terms as the app improves. Any changes will be reflected in 
         ),
 
         const SizedBox(height: 16),
-
-        // "I AGREE" CHECKBOX — ONLY AFTER SCROLLING
         if (hasReadTerms)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -986,9 +982,9 @@ We may update these terms as the app improves. Any changes will be reflected in 
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C),
+              Color(0xFF76C893), 
+              Color(0xFF184E77), 
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

@@ -4,7 +4,7 @@ import '../database/db_helper.dart';
 import 'ingredients.dart';
 import 'meals.dart';
 import 'users.dart';
-import '../pages/navigation.dart'; // Import the navigation drawer
+import '../pages/navigation.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   final int userId;
@@ -25,8 +25,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   late String popularMealValue = 'Loading...';
   late String mostUsedIngredientValue = 'Loading...';
   late String activeSessionsValue = 'N/A';
-  
-  // New data for charts
   List<Map<String, dynamic>> userGrowthData = [];
   List<Map<String, dynamic>> topIngredientsData = [];
   List<Map<String, dynamic>> monthlyUserData = [];
@@ -40,32 +38,25 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Future<void> _loadData() async {
     final dbHelper = DatabaseHelper();
     final db = await dbHelper.database;
-
-    // Get admin details
     final admin = await dbHelper.getUserById(widget.userId);
     if (admin != null) {
       adminName = '${admin['firstName']} ${admin['lastName']}';
     }
 
-    // Total Users
     final users = await db.query('users');
     totalUsersValue = users.length.toString();
 
-    // Total Meals
     final meals = await db.query('meals');
     totalMealsValue = meals.length.toString();
 
-    // Total Ingredients
     final ingredients = await db.query('ingredients');
     ingredientsValue = ingredients.length.toString();
 
-    // New Users Today (as proxy for Active Today, since no login tracking)
     final todayResult = await db.rawQuery(
       "SELECT COUNT(*) FROM users WHERE strftime('%Y-%m-%d', createdAt) = strftime('%Y-%m-%d', 'now')"
     );
     activeTodayValue = (sqflite.Sqflite.firstIntValue(todayResult) ?? 0).toString();
 
-    // User Growth
     final thisMonthResult = await db.rawQuery(
       "SELECT COUNT(*) FROM users WHERE strftime('%Y-%m', createdAt) = strftime('%Y-%m', 'now')"
     );
@@ -81,7 +72,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         : ((thisMonth - lastMonth) / lastMonth) * 100;
     userGrowthValue = '${growth > 0 ? '+' : ''}${growth.toStringAsFixed(0)}% this month';
 
-    // Most Used Ingredient
     final mostIngResult = await db.rawQuery(
       '''
       SELECT i.ingredientName, COUNT(mi.ingredientID) as count 
@@ -96,7 +86,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         ? mostIngResult.first['ingredientName'] as String? ?? 'None' 
         : 'None';
 
-    // Popular Meal (based on favorites count across users)
     final allUsers = await db.query('users');
     Map<int, int> mealCounts = {};
     for (var user in allUsers) {
@@ -118,17 +107,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       popularMealValue = 'None';
     }
 
-    // Active Sessions (not tracked, so N/A)
     activeSessionsValue = 'N/A';
-
-    // Load chart data
     await _loadChartData(db);
 
     setState(() {});
   }
 
   Future<void> _loadChartData(sqflite.Database db) async {
-    // User growth over last 6 months
     final monthlyResult = await db.rawQuery('''
       SELECT strftime('%Y-%m', createdAt) as month, 
              COUNT(*) as count
@@ -145,7 +130,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       };
     }).toList();
 
-    // Top 5 most used ingredients
     final topIngredientsResult = await db.rawQuery('''
       SELECT i.ingredientName, COUNT(mi.ingredientID) as usageCount 
       FROM ingredients i 
@@ -184,9 +168,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -194,12 +178,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(16.0), // Reduced padding
+            padding: const EdgeInsets.all(16.0),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Welcome Section
                   Card(
                     elevation: 10,
                     color: Colors.white.withOpacity(0.9),
@@ -215,7 +198,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           Text(
                             'Welcome, $adminName!',
                             style: const TextStyle(
-                              fontSize: 22, // Slightly smaller
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF184E77),
                               shadows: [
@@ -227,11 +210,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 6), // Reduced spacing
+                          const SizedBox(height: 6),
                           Text(
                             'User ID: ${widget.userId}',
                             style: const TextStyle(
-                              fontSize: 14, // Smaller font
+                              fontSize: 14,
                               color: Colors.black87,
                             ),
                           ),
@@ -240,13 +223,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     ),
                   ),
                   
-                  const SizedBox(height: 16), // Reduced spacing
+                  const SizedBox(height: 16),
                   
-                  // Management Section
                   Text(
                     'Management',
                     style: const TextStyle(
-                      fontSize: 20, // Slightly smaller
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       shadows: [
@@ -258,13 +240,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12), // Reduced spacing
+                  const SizedBox(height: 12),
 
                   GridView.count(
                     crossAxisCount: 2,
-                    crossAxisSpacing: 12, // Reduced spacing
-                    mainAxisSpacing: 12, // Reduced spacing
-                    childAspectRatio: 1.2, // Slightly smaller aspect ratio
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.2,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
@@ -322,13 +304,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     ],
                   ),
 
-                  const SizedBox(height: 16), // Reduced spacing
+                  const SizedBox(height: 16),
 
-                  // Analytics Charts Section
                   Text(
                     'Analytics & Insights',
                     style: const TextStyle(
-                      fontSize: 20, // Slightly smaller
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       shadows: [
@@ -340,9 +321,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12), // Reduced spacing
+                  const SizedBox(height: 12), 
 
-                  // User Growth Chart
                   Card(
                     elevation: 8,
                     color: Colors.white.withOpacity(0.85),
@@ -356,25 +336,25 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.trending_up, color: Colors.green, size: 20), // Smaller icon
+                              const Icon(Icons.trending_up, color: Colors.green, size: 20),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'User Growth (Last 6 Months)',
                                   style: const TextStyle(
-                                    fontSize: 16, // Smaller font
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF184E77),
                                   ),
-                                  maxLines: 2, // Allow wrapping
+                                  maxLines: 2,
                                   overflow: TextOverflow.visible,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12), // Reduced spacing
+                          const SizedBox(height: 12),
                           Container(
-                            height: 160, // Reduced height
+                            height: 160,
                             child: monthlyUserData.isEmpty
                                 ? const Center(child: CircularProgressIndicator())
                                 : _buildUserGrowthChart(),
@@ -384,9 +364,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     ),
                   ),
 
-                  const SizedBox(height: 12), // Reduced spacing
+                  const SizedBox(height: 12),
 
-                  // Top Ingredients Chart
                   Card(
                     elevation: 8,
                     color: Colors.white.withOpacity(0.85),
@@ -400,25 +379,25 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.kitchen, color: Colors.orange, size: 20), // Smaller icon
+                              const Icon(Icons.kitchen, color: Colors.orange, size: 20),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'Top 5 Most Used Ingredients',
                                   style: const TextStyle(
-                                    fontSize: 16, // Smaller font
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF184E77),
                                   ),
-                                  maxLines: 2, // Allow wrapping
+                                  maxLines: 2,
                                   overflow: TextOverflow.visible,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12), // Reduced spacing
+                          const SizedBox(height: 12),
                           Container(
-                            height: 200, // Reduced height
+                            height: 200,
                             child: topIngredientsData.isEmpty
                                 ? const Center(child: CircularProgressIndicator())
                                 : _buildIngredientsChart(),
@@ -428,7 +407,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     ),
                   ),
 
-                  const SizedBox(height: 8), // Small bottom padding
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
@@ -464,11 +443,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         final data = monthlyUserData[index];
         final month = data['month'] as String;
         final count = data['count'] as int;
-        final height = (count / maxCount) * 80; // Reduced max height
+        final height = (count / maxCount) * 80;
 
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10), // Reduced margin
-          width: 45, // Slightly smaller width
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          width: 45,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -490,7 +469,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               ),
               const SizedBox(height: 4),
               Container(
-                width: 25, // Smaller width
+                width: 25,
                 height: height,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
@@ -503,11 +482,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               ),
               const SizedBox(height: 6),
               Container(
-                height: 28, // Slightly smaller height
+                height: 28,
                 child: Text(
                   _formatMonth(month),
                   style: const TextStyle(
-                    fontSize: 9, // Smaller font
+                    fontSize: 9,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -539,7 +518,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         double availableWidth = MediaQuery.of(context).size.width - 120;
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 12), // Reduced margin
+          margin: const EdgeInsets.only(bottom: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -551,7 +530,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     child: Text(
                       name,
                       style: const TextStyle(
-                        fontSize: 13, // Smaller font
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -562,7 +541,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   Text(
                     '$count uses',
                     style: const TextStyle(
-                      fontSize: 11, // Smaller font
+                      fontSize: 11,
                       color: Colors.grey,
                       fontWeight: FontWeight.bold,
                     ),
@@ -571,7 +550,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               ),
               const SizedBox(height: 6),
               Container(
-                height: 18, // Smaller height
+                height: 18,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
@@ -579,7 +558,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 ),
                 child: Stack(
                   children: [
-                    // Background bar
                     Container(
                       width: availableWidth * percentage,
                       decoration: BoxDecoration(
@@ -589,7 +567,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    // Percentage text
                     if (percentage > 0.3)
                       Positioned(
                         left: 6,
@@ -597,7 +574,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         child: Text(
                           '${(percentage * 100).toStringAsFixed(0)}%',
                           style: const TextStyle(
-                            fontSize: 9, // Smaller font
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -746,7 +723,7 @@ class _QuickStatButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(12.0), // Reduced padding
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -756,19 +733,19 @@ class _QuickStatButton extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(6), // Reduced padding
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: color.withOpacity(0.2),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(icon, color: color, size: 20), // Smaller icon
+                      child: Icon(icon, color: color, size: 20),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         value,
                         style: const TextStyle(
-                          fontSize: 18, // Smaller font
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF184E77),
                         ),
@@ -783,7 +760,7 @@ class _QuickStatButton extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 12, // Smaller font
+                  fontSize: 12,
                   color: Colors.black87,
                 ),
                 maxLines: 2,
@@ -834,14 +811,14 @@ class _ManagementCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 36, color: Colors.black87), // Smaller icon
+              Icon(icon, size: 36, color: Colors.black87),
               const SizedBox(height: 6),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6.0),
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 14, // Smaller font
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
@@ -891,7 +868,7 @@ class _AnalyticsItem extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 14, // Smaller font
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,
               ),
@@ -903,7 +880,7 @@ class _AnalyticsItem extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 14, // Smaller font
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
