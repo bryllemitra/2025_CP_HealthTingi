@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:async';
 import 'ingredient_details.dart';
 import '../pages/meal_scan.dart';
@@ -496,12 +497,16 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                       child: ing['ingredientPicture'] != null
                                           ? ClipRRect(
                                               borderRadius: BorderRadius.circular(20),
-                                              child: Image.asset(
-                                                ing['ingredientPicture'],
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) =>
-                                                    const Icon(Icons.fastfood, size: 20, color: Color(0xFF184E77)),
-                                              ),
+                                              child: ing['ingredientPicture'].startsWith('http')
+                                                ? CachedNetworkImage(
+                                                    imageUrl: ing['ingredientPicture'], fit: BoxFit.cover,
+                                                    placeholder: (context, url) => const CircularProgressIndicator(strokeWidth: 2),
+                                                    errorWidget: (context, url, error) => const Icon(Icons.fastfood, size: 20, color: Color(0xFF184E77)),
+                                                  )
+                                                : Image.asset(
+                                                    ing['ingredientPicture'], fit: BoxFit.cover,
+                                                    errorBuilder: (c, e, s) => const Icon(Icons.fastfood, size: 20, color: Color(0xFF184E77)),
+                                                  ),
                                             )
                                           : const Icon(Icons.fastfood, size: 20, color: Color(0xFF184E77)),
                                     ),
@@ -621,13 +626,16 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                         if (detail?['ingredientPicture'] != null)
                                           ClipRRect(
                                             borderRadius: BorderRadius.circular(12),
-                                            child: Image.asset(
-                                              detail!['ingredientPicture'],
-                                              width: 24,
-                                              height: 24,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) => const Icon(Icons.fastfood, size: 16, color: Color(0xFF184E77)),
-                                            ),
+                                            child: detail!['ingredientPicture'].startsWith('http')
+                                              ? CachedNetworkImage(
+                                                  imageUrl: detail!['ingredientPicture'], width: 24, height: 24, fit: BoxFit.cover,
+                                                  placeholder: (context, url) => const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1)),
+                                                  errorWidget: (context, url, error) => const Icon(Icons.fastfood, size: 16, color: Color(0xFF184E77)),
+                                                )
+                                              : Image.asset(
+                                                  detail!['ingredientPicture'], width: 24, height: 24, fit: BoxFit.cover,
+                                                  errorBuilder: (c, e, s) => const Icon(Icons.fastfood, size: 16, color: Color(0xFF184E77)),
+                                                ),
                                           )
                                         else
                                           const Icon(Icons.fastfood, size: 16, color: Color(0xFF184E77)),
@@ -792,13 +800,16 @@ class _ScannedIngredientPageState extends State<ScannedIngredientPage> {
                                                             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                                                             child: Stack(
                                                               children: [
-                                                                Image.asset(
-                                                                  recipe['mealPicture'] ?? 'assets/placeholder.jpg',
-                                                                  width: double.infinity,
-                                                                  height: 120,
-                                                                  fit: BoxFit.cover,
-                                                                  errorBuilder: (context, error, stackTrace) =>
-                                                                      Container(
+                                                                (recipe['mealPicture']?.toString().startsWith('http') ?? false)
+                                                                ? CachedNetworkImage( // 🟢 Cached Recipe Image
+                                                                    imageUrl: recipe['mealPicture'], width: double.infinity, height: 120, fit: BoxFit.cover,
+                                                                    placeholder: (context, url) => Container(width: double.infinity, height: 120, color: const Color(0xFFF3F2DF), child: const Center(child: CircularProgressIndicator())),
+                                                                    errorWidget: (context, url, error) => Container(width: double.infinity, height: 120, color: const Color(0xFFF3F2DF), child: const Icon(Icons.restaurant, size: 40, color: Color(0xFF184E77))),
+                                                                  )
+                                                                : Image.asset(
+                                                                    recipe['mealPicture'] ?? 'assets/placeholder.jpg',
+                                                                    width: double.infinity, height: 120, fit: BoxFit.cover,
+                                                                    errorBuilder: (_, __, ___) => Container(
                                                                         width: double.infinity,
                                                                         height: 120,
                                                                         color: const Color(0xFFF3F2DF),

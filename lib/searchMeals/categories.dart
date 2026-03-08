@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../database/db_helper.dart';
 import '../pages/meal_details.dart';
 
@@ -23,7 +24,7 @@ class _CategoryPageState extends State<CategoryPage> {
   String? errorMessage;
   Set<int> favoriteMealIds = {};
   TextEditingController searchController = TextEditingController();
-  final DatabaseHelper _dbHelper = DatabaseHelper(); // Initialized here for reuse
+  final DatabaseHelper _dbHelper = DatabaseHelper();
   String _searchQuery = '';
 
   @override
@@ -40,7 +41,6 @@ class _CategoryPageState extends State<CategoryPage> {
     super.dispose();
   }
 
-  // --- START NEW PRICE LOGIC ---
   double _parseQuantity(String quantityStr) {
     if (quantityStr.contains('.') && double.tryParse(quantityStr) != null) {
       return double.parse(quantityStr);
@@ -156,7 +156,6 @@ class _CategoryPageState extends State<CategoryPage> {
 
     return total;
   }
-  // --- END NEW PRICE LOGIC ---
 
   Future<void> _loadUserFavorites() async {
     final user = await _dbHelper.getUserById(widget.userId);
@@ -175,16 +174,12 @@ class _CategoryPageState extends State<CategoryPage> {
   Future<void> _loadCategoryMeals() async {
     try {
       final allMeals = await _dbHelper.getAllMeals();
-
-      // 1. Filter by category first
       final categoryMeals = allMeals.where((meal) {
         final categories = (meal['category'] as String?)?.split(', ') ?? [];
         return categories.contains(widget.category);
       }).toList();
 
       List<Map<String, dynamic>> updatedMeals = [];
-
-      // 2. Calculate real price for each meal
       for (var meal in categoryMeals) {
         var mealMap = Map<String, dynamic>.from(meal);
         double calculatedPrice = await _calculateRealMealCost(meal['mealID']);
@@ -286,15 +281,18 @@ class _CategoryPageState extends State<CategoryPage> {
                 child: SizedBox(
                   height: 100,
                   width: double.infinity,
-                  child: Image.asset(
-                    meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.fastfood,
-                          size: 40, color: Colors.grey),
-                    ),
-                  ),
+                  child: (meal['mealPicture']?.toString().startsWith('http') ?? false)
+                      ? CachedNetworkImage(
+                          imageUrl: meal['mealPicture'],
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+                          errorWidget: (context, url, error) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                        )
+                      : Image.asset(
+                          meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                        ),
                 ),
               ),
               Positioned(
@@ -321,7 +319,7 @@ class _CategoryPageState extends State<CategoryPage> {
                     child: Text(
                       meal['mealName'],
                       style: const TextStyle(
-                        fontFamily: 'Exo', // Updated to Exo
+                        fontFamily: 'Exo',
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color(0xFF184E77),
@@ -340,7 +338,7 @@ class _CategoryPageState extends State<CategoryPage> {
                         child: Text(
                           "Est. ${meal['cookingTime']}",
                           style: const TextStyle(
-                              fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'), // Updated
+                              fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -358,7 +356,7 @@ class _CategoryPageState extends State<CategoryPage> {
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                             color: Colors.black54,
-                            fontFamily: 'Exo', // Updated to Exo
+                            fontFamily: 'Exo',
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -396,7 +394,7 @@ class _CategoryPageState extends State<CategoryPage> {
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
-                        fontFamily: 'Poppins', // Updated
+                        fontFamily: 'Poppins',
                       ),
                     ),
                   ),
@@ -453,12 +451,12 @@ class _CategoryPageState extends State<CategoryPage> {
                         ),
                         child: TextField(
                           controller: searchController,
-                          style: const TextStyle(fontFamily: 'Poppins'), // Updated
+                          style: const TextStyle(fontFamily: 'Poppins'),
                           decoration: InputDecoration(
                             hintText:
                                 'Search ${widget.category.toLowerCase()} meals',
                             hintStyle: const TextStyle(
-                                fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'), // Updated
+                                fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'),
                             suffixIcon: searchController.text.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear,
@@ -484,7 +482,7 @@ class _CategoryPageState extends State<CategoryPage> {
                         ? Center(
                             child: Text(
                               errorMessage!,
-                              style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                              style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                             ),
                           )
                         : filteredMeals.isEmpty
@@ -493,7 +491,7 @@ class _CategoryPageState extends State<CategoryPage> {
                                   _searchQuery.isNotEmpty
                                       ? 'No meals found matching your search'
                                       : 'No meals found in this category',
-                                  style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                                  style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                                 ),
                               )
                             : GridView.builder(

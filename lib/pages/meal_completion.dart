@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
 
 class MealCompletionPage extends StatefulWidget {
@@ -80,9 +81,11 @@ class _MealCompletionPageState extends State<MealCompletionPage> {
                         builder: (context) => GestureDetector(
                           onTap: () => Navigator.pop(context),
                           child: PhotoView(
-                            imageProvider: widget.mealPicture.startsWith('assets/')
-                                ? AssetImage(widget.mealPicture)
-                                : FileImage(File(widget.mealPicture)),
+                            imageProvider: widget.mealPicture.startsWith('http')
+                                ? CachedNetworkImageProvider(widget.mealPicture) as ImageProvider
+                                : widget.mealPicture.startsWith('assets/')
+                                    ? AssetImage(widget.mealPicture)
+                                    : FileImage(File(widget.mealPicture)),
                             backgroundDecoration: const BoxDecoration(color: Colors.black),
                             minScale: PhotoViewComputedScale.contained,
                             maxScale: PhotoViewComputedScale.covered * 4.0,
@@ -93,19 +96,29 @@ class _MealCompletionPageState extends State<MealCompletionPage> {
                     },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: widget.mealPicture.startsWith('assets/')
-                          ? Image.asset(
-                              widget.mealPicture,
+                      child: widget.mealPicture.startsWith('http')
+                          ? CachedNetworkImage( // 🟢 Cached Main Image
+                              imageUrl: widget.mealPicture,
                               height: 200,
                               width: double.infinity,
                               fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(height: 200, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+                              errorWidget: (context, url, error) => Container(height: 200, color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
                             )
-                          : Image.file(
-                              File(widget.mealPicture),
-                              height: 200,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
+                          : widget.mealPicture.startsWith('assets/')
+                              ? Image.asset( 
+                                  widget.mealPicture,
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  File(widget.mealPicture),
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(height: 200, color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                                ),
                     ),
                   ),
                   const SizedBox(height: 24),

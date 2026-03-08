@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../database/db_helper.dart';
 import '../pages/home.dart';
 import '../pages/budget_plan.dart';
@@ -41,9 +42,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
     super.dispose();
   }
 
-  // --- START NEW LOGIC FROM BUDGET_PLAN ---
-
-  // Helper: Parse Quantity
   double _parseQuantity(String quantityStr) {
     if (quantityStr.contains('.') && double.tryParse(quantityStr) != null) {
       return double.parse(quantityStr);
@@ -69,7 +67,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
     return double.tryParse(quantityStr) ?? 1.0;
   }
 
-  // Helper: Calculate Real Cost
   Future<double> _calculateRealMealCost(int mealId) async {
     double total = 0.0;
     
@@ -161,7 +158,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
     return total;
   }
 
-  // Updated _fetchMeals to use the calculation logic
   Future<List<Map<String, dynamic>>> _fetchMeals() async {
     final meals = await _dbHelper.getAllMeals();
     final List<Map<String, dynamic>> updatedMeals = [];
@@ -181,7 +177,6 @@ class _MealSearchPageState extends State<MealSearchPage> {
     }
     return updatedMeals;
   }
-  // --- END NEW LOGIC ---
 
   Future<List<Map<String, dynamic>>> _fetchIngredients() async {
     final ingredients = await _dbHelper.getAllIngredients();
@@ -370,148 +365,157 @@ class _MealSearchPageState extends State<MealSearchPage> {
         ? (meal['price'] as double).toStringAsFixed(2)
         : meal['price']?.toString() ?? '0.00';
 
-    return Container(
-      width: 160,
-      height: 240,
-      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                child: SizedBox(
-                  height: 100,
-                  width: double.infinity,
-                  child: Image.asset(
-                    meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
-                    ),
-                  ),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+
+        double cardWidth = constraints.maxWidth.isInfinite ? 160 : constraints.maxWidth;
+
+        return Container(
+          width: cardWidth,
+          height: 240,
+          margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
-              if (widget.userId != 0)
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: GestureDetector(
-                    onTap: () => _toggleFavorite(meal['mealID']),
-                    child: Icon(
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? Colors.red : Colors.white70,
-                      size: 20,
-                    ),
-                  ),
-                ),
             ],
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
                 children: [
-                  Flexible(
-                    child: Text(
-                      meal['mealName'],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Color(0xFF184E77),
-                        fontFamily: 'Exo', // Updated to Exo
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    child: SizedBox(
+                      height: 100,
+                      width: double.infinity,
+                      child: (meal['mealPicture']?.toString().startsWith('http') ?? false)
+                          ? CachedNetworkImage(
+                              imageUrl: meal['mealPicture'],
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+                              errorWidget: (context, url, error) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                            )
+                          : Image.asset(
+                              meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                            ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, size: 12, color: Color(0xFF184E77)),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          "Est. ${meal['cookingTime']}",
-                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  if (widget.userId != 0)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: GestureDetector(
+                        onTap: () => _toggleFavorite(meal['mealID']),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : Colors.white70,
+                          size: 20,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          "Php $price",
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black54,
-                            fontFamily: 'Exo', // Updated to Exo for price
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFB5E48C),
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      minimumSize: const Size.fromHeight(30),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MealDetailsPage(
-                            mealId: meal['mealID'],
-                            userId: widget.userId,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      "VIEW INSTRUCTIONS",
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.3,
-                        fontFamily: 'Poppins', // Updated to Poppins
                       ),
                     ),
-                  ),
                 ],
               ),
-            ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        meal['mealName'],
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Color(0xFF184E77),
+                          fontFamily: 'Exo', 
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time, size: 12, color: Color(0xFF184E77)),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              "Est. ${meal['cookingTime']}",
+                              style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              "Php $price",
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black54,
+                                fontFamily: 'Exo',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFB5E48C),
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          minimumSize: const Size.fromHeight(30),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MealDetailsPage(
+                                mealId: meal['mealID'],
+                                userId: widget.userId,
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          "VIEW INSTRUCTIONS",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.3,
+                            fontFamily: 'Poppins', 
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      }
     );
   }
 
@@ -550,16 +554,17 @@ class _MealSearchPageState extends State<MealSearchPage> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                imagePath,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.fastfood, size: 25, color: Colors.grey),
-                  );
-                },
-              ),
+              child: imagePath.startsWith('http')
+                  ? Image.network(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 25, color: Colors.grey)),
+                    )
+                  : Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 25, color: Colors.grey)),
+                    ),
             ),
           ),
           Flexible(
@@ -571,7 +576,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   fontWeight: FontWeight.bold,
                   fontSize: 11,
                   color: Color(0xFF184E77),
-                  fontFamily: 'Exo', // Updated to Exo
+                  fontFamily: 'Exo', 
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -587,7 +592,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 fontSize: 10,
                 color: Colors.grey[700],
                 fontWeight: FontWeight.w500,
-                fontFamily: 'Exo', // Updated to Exo for price
+                fontFamily: 'Exo', 
               ),
             ),
           ),
@@ -621,7 +626,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   fontSize: 9,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.3,
-                  fontFamily: 'Poppins', // Updated to Poppins
+                  fontFamily: 'Poppins', 
                 ),
               ),
             ),
@@ -649,7 +654,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: Colors.white,
-                  fontFamily: 'Exo', // Updated to Exo
+                  fontFamily: 'Exo', 
                   shadows: [
                     Shadow(
                       color: Colors.black26,
@@ -673,7 +678,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                 },
                 child: const Text(
                   "Browse All",
-                  style: TextStyle(fontSize: 12, color: Colors.white70, fontFamily: 'Poppins'), // Updated to Poppins
+                  style: TextStyle(fontSize: 12, color: Colors.white70, fontFamily: 'Poppins'), 
                 ),
               ),
             ],
@@ -706,7 +711,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
               fontWeight: FontWeight.bold,
               fontSize: 18,
               color: Colors.white,
-              fontFamily: 'Exo', // Updated to Exo
+              fontFamily: 'Exo', 
               shadows: [
                 Shadow(
                   color: Colors.black26,
@@ -765,10 +770,10 @@ class _MealSearchPageState extends State<MealSearchPage> {
                   ),
                   child: TextField(
                     controller: _searchController,
-                    style: const TextStyle(fontFamily: 'Poppins'), // Updated
+                    style: const TextStyle(fontFamily: 'Poppins'), 
                     decoration: const InputDecoration(
                       hintText: 'Search meals or ingredients...',
-                      hintStyle: TextStyle(fontFamily: 'Poppins'), // Updated
+                      hintStyle: TextStyle(fontFamily: 'Poppins'), 
                       suffixIcon: Icon(Icons.search, color: Color(0xFF184E77)),
                       border: InputBorder.none,
                     ),
@@ -839,7 +844,7 @@ class _MealSearchPageState extends State<MealSearchPage> {
                               const Center(
                                 child: Padding(
                                   padding: EdgeInsets.all(16.0),
-                                  child: Text("No meals or ingredients found matching your search", style: TextStyle(color: Colors.white, fontFamily: 'Poppins')), // Updated
+                                  child: Text("No meals or ingredients found matching your search", style: TextStyle(color: Colors.white, fontFamily: 'Poppins')), 
                                 ),
                               ),
 

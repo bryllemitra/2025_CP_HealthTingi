@@ -1,4 +1,3 @@
-// Modified information/about_us.dart
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 
@@ -13,7 +12,7 @@ class AboutUsPage extends StatefulWidget {
 
 class _AboutUsPageState extends State<AboutUsPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
-  String _content = '';          // <-- now non-nullable (will be set in _loadContent)
+  String _content = '';
   bool _isLoading = true;
 
   @override
@@ -53,7 +52,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
             onPressed: () async {
               await _dbHelper.updateAboutUsContent(controller.text);
               Navigator.pop(context);
-              _loadContent();               // <-- refresh UI after save
+              _loadContent();
             },
             child: const Text('Save'),
           ),
@@ -70,9 +69,9 @@ class _AboutUsPageState extends State<AboutUsPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77), 
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -94,7 +93,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
                         child: Text(
                           'About Us',
                           style: TextStyle(
-                            fontFamily: 'Exo', // Updated to Exo
+                            fontFamily: 'Exo',
                             fontWeight: FontWeight.bold,
                             fontSize: 24,
                             color: Colors.white,
@@ -109,7 +108,6 @@ class _AboutUsPageState extends State<AboutUsPage> {
                         ),
                       ),
                     ),
-                    // ------------------- EDIT BUTTON (ADMIN ONLY) -------------------
                     if (widget.isAdmin)
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.white),
@@ -117,7 +115,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
                         tooltip: 'Edit About Us',
                       )
                     else
-                      const SizedBox(width: 48), // Balance the layout with back button
+                      const SizedBox(width: 48),
                   ],
                 ),
               ),
@@ -147,10 +145,10 @@ class _AboutUsPageState extends State<AboutUsPage> {
                                     ],
                                   ),
                                   child: Text(
-                                    _content,               // <-- now guaranteed non-null
+                                    _content,
                                     style: const TextStyle(
                                       fontSize: 16,
-                                      fontFamily: 'Poppins', // Updated to Poppins
+                                      fontFamily: 'Poppins',
                                       color: Color(0xFF184E77),
                                       height: 1.6,
                                     ),
@@ -165,7 +163,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
                                     fontSize: 12,
                                     fontStyle: FontStyle.italic,
                                     letterSpacing: 1.2,
-                                    fontFamily: 'Poppins', // Updated to Poppins
+                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                               ],

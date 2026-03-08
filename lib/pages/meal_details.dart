@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../database/db_helper.dart';
 import 'dart:async';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -31,7 +32,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
   Timer? _carouselTimer;
   List<String> _imagePaths = [];
   Map<String, dynamic>? _customizedMeal;
-  bool _showCustomized = false;
+  bool _showCustomized = true;
 
   @override
   void initState() {
@@ -141,18 +142,20 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
 
   Future<void> _loadCustomizedMeal() async {
     if (widget.userId == 0) return;
-   
     try {
       final dbHelper = DatabaseHelper();
       final customized = await dbHelper.getActiveCustomizedMeal(widget.mealId, widget.userId);
-     
       if (mounted) {
         setState(() {
           _customizedMeal = customized;
+          // Only force the switch to 'true' if we found a customization
+          if (customized != null) {
+            _showCustomized = false; 
+          }
         });
       }
     } catch (e) {
-      print('Error loading customized meal: $e');
+      debugPrint('Error loading customized meal: $e');
     }
   }
 
@@ -219,8 +222,33 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     try {
       final dbHelper = DatabaseHelper();
       final meal = await dbHelper.getMealById(widget.mealId);
-      final ingredients = await dbHelper.getMealIngredients(widget.mealId);
+      
+      // 1. Fetch ingredients and convert to a growable List for sorting
+      List<Map<String, dynamic>> ingredients = List.from(await dbHelper.getMealIngredients(widget.mealId));
+      
       if (meal == null) throw Exception('Meal not found');
+
+      // 2. Define Category Priority Logic
+      // Lower numbers appear first (Protein = 1, Veggies = 2, etc.)
+      int getPriority(String? category) {
+        String cat = category?.toLowerCase() ?? '';
+        if (cat.contains('protein') || cat.contains('meat') || cat.contains('fish') || cat.contains('main dish')) return 1;
+        if (cat.contains('vegetable') || cat.contains('produce') || cat.contains('soup')) return 2;
+        if (cat.contains('pantry') || cat.contains('spice') || cat.contains('condiment') || cat.contains('herb')) return 3;
+        return 4; // Default for everything else
+      }
+
+      // 3. Apply the Sort
+      ingredients.sort((a, b) {
+        int priorityA = getPriority(a['category']);
+        int priorityB = getPriority(b['category']);
+        
+        if (priorityA != priorityB) {
+          return priorityA.compareTo(priorityB);
+        }
+        // If categories have the same priority, sort alphabetically by name
+        return (a['ingredientName'] ?? '').compareTo(b['ingredientName'] ?? '');
+      });
 
       final steps = parseSteps(meal['instructions'] ?? '');
 
@@ -241,7 +269,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
       final userRestriction = user['dietaryRestriction']?.toString().toLowerCase().trim() ?? '';
       final mealRestrictionsString = meal['hasDietaryRestrictions']?.toString().toLowerCase() ?? '';
       final mealRestrictions = mealRestrictionsString.split(',').map((r) => r.trim()).toList();
-     
+      
       final userHasRestriction = (user['hasDietaryRestriction'] ?? 0) == 1;
       final hasSpecificRestriction = userHasRestriction &&
           userRestriction.isNotEmpty &&
@@ -265,104 +293,72 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     }
   }
 
+  double _calculateItemPrice(DatabaseHelper db, String qtyStr, Map<String, dynamic> ing) {
+    try {
+      final parts = qtyStr.split(' ');
+      // Handle cases where quantity might be missing or malformed
+      double qty = _parseQuantity(parts.isNotEmpty ? parts[0] : '1');
+      String unit = parts.length > 1 ? parts.sublist(1).join(' ') : (ing['unit'] ?? 'piece');
+      
+      double price = (ing['price'] as num?)?.toDouble() ?? 0.0;
+      
+      double grams = db.convertToGrams(qty, unit, ing);
+      // Determine base unit for conversion (e.g., price is per 'kg')
+      double baseGrams = db.convertToGrams(1.0, ing['base_unit'] ?? ing['unit'] ?? 'piece', ing);
+      
+      return baseGrams > 0 ? (grams * price) / baseGrams : 0.0;
+    } catch (e) {
+      debugPrint('Price calculation error: $e');
+      return 0.0;
+    }
+  }
+
   // === NEW METHOD: Calculate total price adjusting for Substitutions/Removals/Additions ===
   Future<double> _calculateAdjustedTotal(List<Map<String, dynamic>> originalIngredients) async {
     double total = 0.0;
     final dbHelper = DatabaseHelper();
+    
+    // Ensure we have the latest customization data
+    Map<String, dynamic> subs = (_showCustomized && _customizedMeal != null) 
+        ? _customizedMeal!['substituted_ingredients'] ?? {} 
+        : {};
 
-    // 1. Get Customizations
-    Map<String, dynamic> subs = {};
-    if (_showCustomized && _customizedMeal != null) {
-      subs = _customizedMeal!['substituted_ingredients'] ?? {};
-    }
-
-    // 2. Process ORIGINAL Ingredients
     for (var ing in originalIngredients) {
       String name = ing['ingredientName']?.toString() ?? '';
 
-      // CHECK: Is this ingredient modified?
       if (_showCustomized && subs.containsKey(name)) {
         final subData = subs[name];
-        String type = subData['type'];
-
-        if (type == 'removed') {
-          continue; // Skip cost completely
-        } 
-        else if (type == 'substituted') {
-          // Calculate cost of the SUBSTITUTE instead of original
-          String newName = subData['value'];
-          String qtyStr = subData['quantity'] ?? '1 piece';
-          
-          // Parse "2 cups" -> qty: 2.0, unit: "cups"
-          double qty = 1.0;
-          String unit = 'piece';
-          final match = RegExp(r'^((?:\d*\.?\d+)|(?:\d+\s*/\s*\d+)|[⅛¼⅓⅜½⅝⅔¾⅞])\s*(.*)$').firstMatch(qtyStr);
-          if (match != null) {
-             qty = _parseQuantity(match.group(1) ?? '1');
-             unit = match.group(2)?.trim() ?? 'piece';
-          }
-
-          // Fetch price of the NEW ingredient from DB
-          final newIng = await dbHelper.getIngredientByName(newName);
+        if (subData['type'] == 'removed') continue;
+        
+        if (subData['type'] == 'substituted') {
+          // Look up the NEW ingredient's data for the correct price
+          final newIng = await dbHelper.getIngredientByName(subData['value']);
           if (newIng != null) {
-             double grams = dbHelper.convertToGrams(qty, unit, newIng);
-             // For ingredients table, 'unit' column IS the base unit
-             double baseGrams = dbHelper.convertToGrams(1.0, newIng['unit'] ?? 'piece', newIng);
-             double price = newIng['price'] as double? ?? 0.0;
-             
-             if (baseGrams > 0) {
-               total += (grams * price) / baseGrams;
-             }
+            total += _calculateItemPrice(dbHelper, subData['quantity'] ?? '1 piece', newIng);
           }
-          continue; // Done with this ingredient
+          continue;
         }
       }
-
-      // Handle UNTOUCHED Original Ingredients (Apply the Unit Fix here too)
-      double price = ing['price'] as double? ?? 0.0;
-      double qty = _parseQuantity(ing['quantity']?.toString() ?? '0');
-      String unit = ing['unit']?.toString() ?? 'piece';
-      // Use base_unit from the joined query, or fallback to 'unit'
-      String baseUnit = ing['base_unit']?.toString() ?? ing['unit']?.toString() ?? 'piece'; 
-
-      double grams = dbHelper.convertToGrams(qty, unit, ing);
-      double baseGrams = dbHelper.convertToGrams(1.0, baseUnit, ing);
       
-      if (baseGrams > 0) {
-        total += (grams * price) / baseGrams;
-      }
+      // Use customized quantity string if available, otherwise original
+      String qtyStr = (_showCustomized && subs.containsKey(name) && subs[name]['quantity'] != null)
+          ? subs[name]['quantity']
+          : "${ing['quantity']} ${ing['unit']}";
+          
+      total += _calculateItemPrice(dbHelper, qtyStr, ing);
     }
 
-    // 3. Process NEWLY ADDED Ingredients
+    // Add costs for entirely NEW ingredients added via Search
     if (_showCustomized) {
       for (var entry in subs.entries) {
         if (entry.value['type'] == 'new') {
-          String name = entry.key;
-          String qtyStr = entry.value['quantity'] ?? '1 piece';
-
-          // Parse quantity
-          double qty = 1.0;
-          String unit = 'piece';
-          final match = RegExp(r'^((?:\d*\.?\d+)|(?:\d+\s*/\s*\d+)|[⅛¼⅓⅜½⅝⅔¾⅞])\s*(.*)$').firstMatch(qtyStr);
-          if (match != null) {
-             qty = _parseQuantity(match.group(1) ?? '1');
-             unit = match.group(2)?.trim() ?? 'piece';
-          }
-
-          final newIng = await dbHelper.getIngredientByName(name);
+          final newIng = await dbHelper.getIngredientByName(entry.key);
           if (newIng != null) {
-             double grams = dbHelper.convertToGrams(qty, unit, newIng);
-             double baseGrams = dbHelper.convertToGrams(1.0, newIng['unit'] ?? 'piece', newIng);
-             double price = newIng['price'] as double? ?? 0.0;
-
-             if (baseGrams > 0) {
-               total += (grams * price) / baseGrams;
-             }
+            total += _calculateItemPrice(dbHelper, entry.value['quantity'] ?? '1 piece', newIng);
           }
         }
       }
     }
-
     return total;
   }
 
@@ -453,116 +449,93 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
     final dbHelper = DatabaseHelper(); // Create instance
 
     for (var ing in ingredients) {
-      final name = ing['ingredientName']?.toString() ?? 'Unknown';
-      String displayName = name;
-      String quantity = ing['quantity']?.toString() ?? '';
-      String unit = ing['unit']?.toString() ?? '';
-      String content = ing['content']?.toString() ?? '';
+    final name = ing['ingredientName']?.toString() ?? 'Unknown';
+    String displayName = name;
+    
+    // Default to original recipe values
+    String quantity = ing['quantity']?.toString() ?? '';
+    String unit = ing['unit']?.toString() ?? '';
+    String content = ing['content']?.toString() ?? '';
+    Map<String, dynamic> priceLookupIng = ing; 
 
-      if (substituted != null && substituted.containsKey(name)) {
-        final sub = substituted[name];
-        final value = sub is Map ? sub['value'] : sub;
-        if (value == 'REMOVED') continue;
-        if (value != name) displayName = value;
+    // --- NEW: Apply Customization Overrides for Display ---
+    if (substituted != null && substituted.containsKey(name)) {
+      final sub = substituted[name];
+      final type = sub is Map ? sub['type'] : '';
+      final value = sub is Map ? sub['value'] : sub;
+
+      if (value == 'REMOVED' || type == 'removed') continue;
+
+      if (type == 'substituted') {
+        displayName = value;
+        // Look up the NEW ingredient data to get the correct base unit for cost
+        final newIngData = await dbHelper.getIngredientByName(value);
+        if (newIngData != null) priceLookupIng = newIngData;
       }
 
-      double? price = ing['price'] as double?;
-      double cost = 0.0;
-
-      if (price != null && quantity.isNotEmpty) {
-        double qtyValue = _parseQuantity(quantity);
-        String qtyUnit = unit.toLowerCase();
-        double grams = dbHelper.convertToGrams(qtyValue, qtyUnit, ing);
-        double baseUnitGrams = dbHelper.convertToGrams(1.0, ing['base_unit']?.toString().toLowerCase() ?? 'piece', ing);
-        if (baseUnitGrams > 0) {
-          double pricePerGram = price / baseUnitGrams;
-          cost = grams * pricePerGram;
+      // Update the quantity and unit from your saved customization map
+      if (sub is Map && sub['quantity'] != null) {
+        String qStr = sub['quantity']; // Format: "3 cloves"
+        List<String> parts = qStr.split(' ');
+        if (parts.length >= 2) {
+          quantity = parts[0];
+          unit = parts.sublist(1).join(' ');
+        } else {
+          quantity = qStr;
+          unit = '';
         }
       }
-
-      String displayQuantity = _formatQuantityForDisplay(quantity);
-
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Ingredient details - takes most of the space
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Main ingredient line
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: 'Poppins', // Updated to Poppins
-                          color: Colors.black87,
-                          fontStyle: substituted != null &&
-                                  substituted.containsKey(name) &&
-                                  (substituted[name] is Map
-                                      ? substituted[name]['value'] != name
-                                      : substituted[name] != name)
-                              ? FontStyle.italic
-                              : FontStyle.normal,
-                        ),
-                        children: [
-                          if (displayQuantity.isNotEmpty)
-                            TextSpan(
-                              text: '$displayQuantity ',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          if (unit.isNotEmpty)
-                            TextSpan(text: '$unit '),
-                          TextSpan(text: displayName),
-                        ],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    // Content/preparation details on a new line if needed
-                    if (content.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          '($content)',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontFamily: 'Poppins', // Updated to Poppins
-                            color: Colors.black54,
-                            fontStyle: FontStyle.italic,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              // Price - fixed width
-              Container(
-                width: 110, // Fixed width for price to ensure alignment
-                child: Text(
-                  'Php ${cost.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Exo', // Updated to Exo for price emphasis
-                    color: Color(0xFF76C893),
-                  ),
-                  textAlign: TextAlign.right,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
     }
+
+    // Recalculate cost for THIS specific row based on the updated quantity/unit
+    double cost = _calculateItemPrice(dbHelper, "$quantity $unit", priceLookupIng);
+    String displayQuantity = _formatQuantityForDisplay(quantity);
+
+    widgets.add(
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Poppins',
+                        color: Colors.black87,
+                        fontStyle: (displayName != name) ? FontStyle.italic : FontStyle.normal,
+                      ),
+                      children: [
+                        if (displayQuantity.isNotEmpty)
+                          TextSpan(text: '$displayQuantity ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        if (unit.isNotEmpty) TextSpan(text: '$unit '),
+                        TextSpan(text: displayName),
+                      ],
+                    ),
+                  ),
+                  if (content.isNotEmpty && displayName == name)
+                    Text('($content)', style: const TextStyle(fontSize: 12, fontFamily: 'Poppins', color: Colors.black54, fontStyle: FontStyle.italic)),
+                ],
+              ),
+            ),
+            Container(
+              width: 110,
+              child: Text(
+                'Php ${cost.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, fontFamily: 'Exo', color: Color(0xFF76C893)),
+                textAlign: TextAlign.right,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
     if (substituted != null) {
       for (final e in substituted.entries) {
@@ -674,10 +647,19 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
               builder: (context, index) {
                 final path = _imagePaths[index];
                 final isAsset = path.startsWith('assets/');
+                final isNetwork = path.startsWith('http');
+                
+                ImageProvider provider;
+                if (isNetwork) {
+                  provider = CachedNetworkImageProvider(path); // 🟢 Offline caching for zoom!
+                } else if (isAsset) {
+                  provider = AssetImage(path);
+                } else {
+                  provider = FileImage(File(path));
+                }
+
                 return PhotoViewGalleryPageOptions(
-                  imageProvider: isAsset
-                      ? AssetImage(path)
-                      : FileImage(File(path)) as ImageProvider,
+                  imageProvider: provider,
                   minScale: PhotoViewComputedScale.contained,
                   maxScale: PhotoViewComputedScale.covered * 4,
                 );
@@ -999,7 +981,9 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                             )
                                           : FutureBuilder<List<Widget>>(
                                               future: _buildIngredientWidgets(
-                                                  ingredients, _showCustomized ? _customizedMeal!['substituted_ingredients'] : null),
+                                              ingredients, (_showCustomized && _customizedMeal != null) 
+                                                  ? _customizedMeal!['substituted_ingredients'] 
+                                                  : null),
                                               builder: (c, s) {
                                                 if (s.connectionState == ConnectionState.waiting) {
                                                   return const Center(child: CircularProgressIndicator());
@@ -1019,9 +1003,9 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                         icon: const Icon(Icons.edit, size: 20),
                                         label: Text(_customizedMeal != null ? 'Modify Customization' : 'Change Ingredients',
                                             style: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600)),
-                                        onPressed: () {
+                                        onPressed: () async {
                                           final names = ingredients.map((i) => i['ingredientName'] as String).toList();
-                                          Navigator.push(
+                                          await Navigator.push(
                                             context,
                                             MaterialPageRoute(
                                               builder: (_) => ReverseIngredientPage(
@@ -1030,10 +1014,15 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                                                 mealId: widget.mealId,
                                               ),
                                             ),
-                                          ).then((_) {
-                                            _loadCustomizedMeal();
-                                            setState(() => _showCustomized = false);
-                                          });
+                                          );
+                                          await _loadCustomizedMeal();  
+                                          
+                                          if (mounted) {
+                                            setState(() {
+                                              _mealDataFuture = _loadMealData();
+                                              _showCustomized = _customizedMeal != null; 
+                                            });
+                                          }
                                         },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.white,
@@ -1159,6 +1148,7 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
               itemBuilder: (context, index) {
                 final path = _imagePaths[index];
                 final isAsset = path.startsWith('assets/');
+                final isNetwork = path.startsWith('http');
                 return GestureDetector(
                   behavior: HitTestBehavior.translucent, // Critical for emulator
                   onTap: () {
@@ -1169,13 +1159,20 @@ class _MealDetailsPageState extends State<MealDetailsPage> {
                     width: double.infinity,
                     height: 300,
                     color: Colors.black12,
-                    child: isAsset
-                        ? Image.asset(
-                            path,
+                    child: isNetwork 
+                        ? CachedNetworkImage( // 🟢 Offline caching applied
+                            imageUrl: path,
                             fit: BoxFit.cover,
-                            errorBuilder: (c, e, s) => _buildErrorImage(),
+                            placeholder: (context, url) => Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+                            errorWidget: (context, url, error) => _buildErrorImage(),
                           )
-                        : FutureBuilder<bool>(
+                        : isAsset
+                            ? Image.asset(
+                                path,
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, e, s) => _buildErrorImage(),
+                              )
+                            : FutureBuilder<bool>(
                             future: File(path).exists(),
                             builder: (context, snapshot) {
                               if (snapshot.data == true) {

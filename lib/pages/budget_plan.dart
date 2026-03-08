@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../database/db_helper.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'home.dart';
 import 'meal_scan.dart';
 import '../searchMeals/meal_search.dart';
@@ -194,17 +195,42 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
     return updatedMeals;
   }
 
+  // --- MODIFIED: Sorting Logic ---
   List<Map<String, dynamic>> _filterMealsByBudget(
       List<Map<String, dynamic>> meals, double budget) {
     try {
-      meals.sort((a, b) {
-        final aPrice = (a['price'] as num).toDouble();
-        final bPrice = (b['price'] as num).toDouble();
-        final aDiff = (aPrice - budget).abs();
-        final bDiff = (bPrice - budget).abs();
-        return aDiff.compareTo(bDiff);
+      // 1. Separate into two lists: Affordable (<= budget) and Over Budget (> budget)
+      List<Map<String, dynamic>> affordable = [];
+      List<Map<String, dynamic>> overBudget = [];
+
+      for (var meal in meals) {
+        double price = (meal['price'] as num).toDouble();
+        if (price <= budget) {
+          affordable.add(meal);
+        } else {
+          overBudget.add(meal);
+        }
+      }
+
+      // 2. Sort Affordable Meals: Price DESCENDING (Closest to budget at top)
+      // Example: Budget 50. Items: 30, 48. -> Result: 48, 30.
+      affordable.sort((a, b) {
+        double priceA = (a['price'] as num).toDouble();
+        double priceB = (b['price'] as num).toDouble();
+        return priceB.compareTo(priceA); 
       });
-      return meals;
+
+      // 3. Sort Over Budget Meals: Price ASCENDING (Closest to budget at top)
+      // Example: Budget 50. Items: 55, 100. -> Result: 55, 100.
+      overBudget.sort((a, b) {
+        double priceA = (a['price'] as num).toDouble();
+        double priceB = (b['price'] as num).toDouble();
+        return priceA.compareTo(priceB);
+      });
+
+      // 4. Combine: Affordable first, then Over Budget
+      return [...affordable, ...overBudget];
+
     } catch (e) {
       debugPrint('Error sorting meals by budget: $e');
       return [];
@@ -277,18 +303,22 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: meal['mealPicture'] != null
-                  ? Image.asset(
-                      meal['mealPicture'],
-                      width: 80,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 80,
-                        height: 60,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.fastfood, color: Colors.grey),
-                      ),
-                    )
+                  ? (meal['mealPicture'].toString().startsWith('http')
+                      ? CachedNetworkImage( // 🟢 Magically handles offline caching!
+                          imageUrl: meal['mealPicture'],
+                          width: 80,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(width: 80, height: 60, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0))),
+                          errorWidget: (context, url, error) => Container(width: 80, height: 60, color: Colors.grey[200], child: const Icon(Icons.fastfood, color: Colors.grey)),
+                        )
+                      : Image.asset( // 🟢 Handle Local Assets
+                          meal['mealPicture'],
+                          width: 80,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(width: 80, height: 60, color: Colors.grey[200], child: const Icon(Icons.fastfood, color: Colors.grey)),
+                        ))
                   : Container(
                       width: 80,
                       height: 60,
@@ -304,7 +334,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                   Text(
                     meal['mealName'],
                     style: const TextStyle(
-                      fontFamily: 'Poppins', // Updated to Poppins
+                      fontFamily: 'Poppins', 
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       color: Color(0xFF184E77),
@@ -313,7 +343,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                   Text(
                     "Php ${meal['price'].toStringAsFixed(2)}",
                     style: const TextStyle(
-                      fontFamily: 'Poppins', // Updated to Poppins
+                      fontFamily: 'Poppins', 
                       fontSize: 12,
                       color: Colors.black54,
                     ),
@@ -340,7 +370,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
           "Meals at Php ${section['budget']}",
           style: const TextStyle(
             fontSize: 20,
-            fontFamily: 'Exo', // Updated to Exo
+            fontFamily: 'Exo', 
             fontWeight: FontWeight.bold,
             color: Colors.white,
             shadows: [
@@ -353,9 +383,9 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
           ),
         ),
         const SizedBox(height: 12),
-        ...meals.take(3).map((meal) => _buildMealCard(context, meal)).toList(),
+        ...meals.take(6).map((meal) => _buildMealCard(context, meal)).toList(),
         const SizedBox(height: 8),
-        if (meals.length > 3)
+        if (meals.length > 6)
           Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
@@ -373,7 +403,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
               child: const Text(
                 "See more →",
                 style: TextStyle(
-                  fontFamily: 'Poppins', // Updated to Poppins
+                  fontFamily: 'Poppins', 
                   color: Colors.yellowAccent,
                   decoration: TextDecoration.underline,
                   fontWeight: FontWeight.w600,
@@ -393,9 +423,9 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C), 
+              Color(0xFF76C893), 
+              Color(0xFF184E77), 
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -409,7 +439,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
               child: Text(
                 'HealthTingi',
                 style: TextStyle(
-                  fontFamily: 'Exo', // Updated to Exo
+                  fontFamily: 'Exo', 
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
                   color: Colors.white,
@@ -453,13 +483,13 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
           case 'About Us':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AboutUsPage()),
+              MaterialPageRoute(builder: (context) => const AboutUsPage(isAdmin: false)),
             );
             break;
           case 'FAQs':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const FAQSPage()),
+              MaterialPageRoute(builder: (context) => const FAQSPage(isAdmin: false)),
             );
             break;
           case 'Exit Guest Mode':
@@ -475,7 +505,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
       label: Text(
         label, 
         style: const TextStyle(
-          fontFamily: 'Poppins', // Updated to Poppins
+          fontFamily: 'Poppins', 
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),
@@ -494,7 +524,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Exo', // Updated to Exo
+            fontFamily: 'Exo', 
             fontSize: 22,
             shadows: [
               Shadow(
@@ -530,9 +560,9 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C), 
+              Color(0xFF76C893), 
+              Color(0xFF184E77), 
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -566,7 +596,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                           : 'Enter your budget to get suggested meals that match or come close to it.',
                       style: const TextStyle(
                         color: Color(0xFF184E77),
-                        fontFamily: 'Poppins', // Updated to Poppins
+                        fontFamily: 'Poppins', 
                         fontSize: 14,
                       ),
                       textAlign: TextAlign.center,
@@ -592,7 +622,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                         "Enter Budget (in numbers)",
                         style: TextStyle(
                           fontSize: 20,
-                          fontFamily: 'Exo', // Updated to Exo
+                          fontFamily: 'Exo', 
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                           shadows: [
@@ -607,7 +637,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                       const SizedBox(height: 12),
                       TextField(
                         controller: _budgetController,
-                        style: const TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins'), // Updated to Poppins
+                        style: const TextStyle(color: Color(0xFF184E77), fontFamily: 'Poppins'), 
                         keyboardType: TextInputType.numberWithOptions(decimal: true),
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -622,7 +652,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                             borderSide: BorderSide.none,
                           ),
                           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                          hintStyle: const TextStyle(color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
+                          hintStyle: const TextStyle(color: Colors.black54, fontFamily: 'Poppins'), 
                         ),
                         onChanged: (value) {
                           if (value.isEmpty) {
@@ -676,7 +706,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
                       letterSpacing: 1.2,
-                      fontFamily: 'Poppins', // Updated to Poppins
+                      fontFamily: 'Poppins', 
                     ),
                   ),
                 ),
@@ -686,7 +716,7 @@ class _BudgetPlanPageState extends State<BudgetPlanPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF184E77), // Darker blue for better contrast
+        backgroundColor: const Color(0xFF184E77), 
         selectedItemColor: Color(0xFF184E77),
         unselectedItemColor: Color(0xFF184E77).withOpacity(0.7),
         currentIndex: 3,

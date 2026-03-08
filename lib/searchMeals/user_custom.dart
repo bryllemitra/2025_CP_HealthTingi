@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../database/db_helper.dart';
 import '../pages/meal_details.dart';
 
@@ -37,7 +38,6 @@ class _UserCustomPageState extends State<UserCustomPage> {
     super.dispose();
   }
 
-  // --- START NEW PRICE LOGIC ---
   double _parseQuantity(String quantityStr) {
     if (quantityStr.contains('.') && double.tryParse(quantityStr) != null) {
       return double.parse(quantityStr);
@@ -153,7 +153,6 @@ class _UserCustomPageState extends State<UserCustomPage> {
 
     return total;
   }
-  // --- END NEW PRICE LOGIC ---
 
   Future<void> _loadUserFavorites() async {
     final user = await _dbHelper.getUserById(widget.userId);
@@ -172,10 +171,7 @@ class _UserCustomPageState extends State<UserCustomPage> {
       final original = await _dbHelper.getMealById(custom['original_meal_id']);
       
       if (original != null) {
-        // Create a modifiable copy of the original meal
         var mutableMeal = Map<String, dynamic>.from(original);
-        
-        // Calculate the real cost dynamically
         double realCost = await _calculateRealMealCost(original['mealID']);
         if (realCost > 0) {
           mutableMeal['price'] = realCost;
@@ -270,14 +266,18 @@ class _UserCustomPageState extends State<UserCustomPage> {
                 child: SizedBox(
                   height: 100,
                   width: double.infinity,
-                  child: Image.asset(
-                    meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
-                    ),
-                  ),
+                  child: (meal['mealPicture']?.toString().startsWith('http') ?? false)
+                      ? CachedNetworkImage(
+                          imageUrl: meal['mealPicture'],
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+                          errorWidget: (context, url, error) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                        )
+                      : Image.asset(
+                          meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                        ),
                 ),
               ),
               if (widget.userId != 0)
@@ -308,7 +308,7 @@ class _UserCustomPageState extends State<UserCustomPage> {
                         fontWeight: FontWeight.bold, 
                         fontSize: 14,
                         color: Color(0xFF184E77),
-                        fontFamily: 'Exo', // Updated to Exo
+                        fontFamily: 'Exo',
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -322,7 +322,7 @@ class _UserCustomPageState extends State<UserCustomPage> {
                       Flexible(
                         child: Text(
                           "Est. ${meal['cookingTime']}",
-                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
+                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -340,7 +340,7 @@ class _UserCustomPageState extends State<UserCustomPage> {
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                             color: Colors.black54,
-                            fontFamily: 'Exo', // Updated to Exo for price emphasis
+                            fontFamily: 'Exo',
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -377,7 +377,7 @@ class _UserCustomPageState extends State<UserCustomPage> {
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
-                        fontFamily: 'Poppins', // Updated to Poppins
+                        fontFamily: 'Poppins',
                       ),
                     ),
                   ),
@@ -433,10 +433,10 @@ class _UserCustomPageState extends State<UserCustomPage> {
                         ),
                         child: TextField(
                           controller: _searchController,
-                          style: const TextStyle(fontFamily: 'Poppins'), // Updated
+                          style: const TextStyle(fontFamily: 'Poppins'),
                           decoration: InputDecoration(
                             hintText: 'Search ${_getTitle().toLowerCase()}',
-                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'), // Updated
+                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear, color: Color(0xFF184E77)),
@@ -463,14 +463,14 @@ class _UserCustomPageState extends State<UserCustomPage> {
                       return Center(
                         child: Text(
                           'Error: ${snapshot.error}',
-                          style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                          style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                         ),
                       );
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(
                         child: Text(
                           'No customized meals available',
-                          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                         ),
                       );
                     }
@@ -481,7 +481,7 @@ class _UserCustomPageState extends State<UserCustomPage> {
                       return const Center(
                         child: Text(
                           'No meals found matching your criteria',
-                          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                         ),
                       );
                     }

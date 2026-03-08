@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+  import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../database/db_helper.dart';
 import '../pages/meal_details.dart';
 
@@ -49,9 +50,6 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
     }
   }
 
-  // --- START NEW LOGIC ---
-  
-  // Helper: Parse Quantity
   double _parseQuantity(String quantityStr) {
     if (quantityStr.contains('.') && double.tryParse(quantityStr) != null) {
       return double.parse(quantityStr);
@@ -77,7 +75,6 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
     return double.tryParse(quantityStr) ?? 1.0;
   }
 
-  // Helper: Calculate Real Cost
   Future<double> _calculateRealMealCost(int mealId) async {
     double total = 0.0;
     
@@ -169,7 +166,6 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
     return total;
   }
 
-  // Updated _fetchMeals
   Future<List<Map<String, dynamic>>> _fetchMeals() async {
     final meals = await _dbHelper.getAllMeals();
     final List<Map<String, dynamic>> updatedMeals = [];
@@ -189,8 +185,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
     }
     return updatedMeals;
   }
-  // --- END NEW LOGIC ---
-
+ 
   void _onSearchChanged() {
     setState(() {
       _searchQuery = _searchController.text.toLowerCase();
@@ -323,14 +318,18 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                 child: SizedBox(
                   height: 100,
                   width: double.infinity,
-                  child: Image.asset(
-                    meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
-                    ),
-                  ),
+                  child: (meal['mealPicture']?.toString().startsWith('http') ?? false)
+                      ? CachedNetworkImage(
+                          imageUrl: meal['mealPicture'],
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+                          errorWidget: (context, url, error) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                        )
+                      : Image.asset(
+                          meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                        ),
                 ),
               ),
               if (widget.userId != 0)
@@ -361,7 +360,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color(0xFF184E77),
-                        fontFamily: 'Exo', // Updated to Exo
+                        fontFamily: 'Exo',
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -375,7 +374,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                       Flexible(
                         child: Text(
                           "Est. ${meal['cookingTime']}",
-                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
+                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -393,7 +392,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                             color: Colors.black54,
-                            fontFamily: 'Exo', // Updated to Exo for price emphasis
+                            fontFamily: 'Exo',
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -430,7 +429,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
-                        fontFamily: 'Poppins', // Updated to Poppins
+                        fontFamily: 'Poppins',
                       ),
                     ),
                   ),
@@ -486,10 +485,10 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                         ),
                         child: TextField(
                           controller: _searchController,
-                          style: const TextStyle(fontFamily: 'Poppins'), // Updated
+                          style: const TextStyle(fontFamily: 'Poppins'),
                           decoration: InputDecoration(
                             hintText: 'Search ${_getTitle().toLowerCase()}',
-                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'), // Updated
+                            hintStyle: const TextStyle(fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear, color: Color(0xFF184E77)),
@@ -516,14 +515,14 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                       return Center(
                         child: Text(
                           'Error: ${snapshot.error}',
-                          style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                          style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                         ),
                       );
                     } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(
                         child: Text(
                           'No meals available',
-                          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                         ),
                       );
                     }
@@ -535,7 +534,7 @@ class _PriceSearchPageState extends State<PriceSearchPage> {
                       return const Center(
                         child: Text(
                           'No meals found matching your criteria',
-                          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                         ),
                       );
                     }

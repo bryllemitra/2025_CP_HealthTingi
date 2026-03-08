@@ -11,9 +11,9 @@ class TermsAndConditionsPage extends StatelessWidget {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C), 
+              Color(0xFF76C893), 
+              Color(0xFF184E77),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -50,7 +50,7 @@ class TermsAndConditionsPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 48), // Balance the layout with back button
+                    const SizedBox(width: 48),
                   ],
                 ),
               ),
@@ -61,7 +61,6 @@ class TermsAndConditionsPage extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Logo with soft highlight glow
                         Container(
                           decoration: BoxDecoration(
                             boxShadow: [

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'firebase_options.dart';
-import 'database/db_helper.dart';
+import 'database/db_helper.dart'; 
 import 'pages/home.dart';
 import 'pages/reverse_ingredient.dart';
 import 'pages/index.dart';
@@ -12,24 +13,38 @@ import 'searchMeals/categories.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
 
   try {
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform, // <--- USE THIS
+      options: DefaultFirebaseOptions.currentPlatform,
     );
-    print("✅ Firebase initialized successfully");
+    try {
+      FirebaseDatabase.instance.setPersistenceEnabled(true);
+    } catch (e) {
+      print("Persistence already enabled (safe to ignore on restart): $e");
+    }
+
+    print("Firebase initialized successfully");
   } catch (e) {
-    print("⚠️ Firebase failed to start: $e");
+    print("Firebase failed to start: $e");
   }
-  /*
+
   try {
-    await DatabaseHelper().updateAllMealPrices();
-    print("Meal prices updated successfully on startup.");
+    final dbHelper = DatabaseHelper();
+    
+    await dbHelper.database; 
+    print("🔄 Starting background Cloud Sync...");
+    
+    dbHelper.syncCloudToLocal().then((_) {
+      print("Background Cloud Sync Finished");
+    }).catchError((e) {
+      print("Background Sync interrupted (likely offline): $e");
+    });
+    
   } catch (e) {
-    print("Error updating meal prices: $e");
+    print("Error during startup preparation: $e");
   }
-  */
+
   runApp(const MyApp());
 }
 

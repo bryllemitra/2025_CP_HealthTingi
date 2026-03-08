@@ -1,4 +1,3 @@
-// Updated admin/meals.dart with multiple image support
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import 'dart:io';
@@ -6,6 +5,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:photo_view/photo_view.dart';
+// 🟢 PDF GENERATION IMPORTS
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class AdminMealsPage extends StatefulWidget {
   final int userId;
@@ -46,61 +49,205 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
     final dbHelper = DatabaseHelper();
     final meals = await dbHelper.getAllMeals();
 
-    int avail = 0;
     int veg = 0;
     for (var meal in meals) {
-      if (_isMealAvailable(meal)) avail++;
-      if ((meal['hasDietaryRestrictions'] ?? '').toString().toLowerCase().contains('vegetarian')) veg++;
+      String cat = (meal['category'] ?? '').toString().toLowerCase();
+      if (cat.contains('vegetable') || cat.contains('vegan') || cat.contains('vegetarian')) {
+        veg++;
+      }
     }
 
     setState(() {
       _meals = meals;
+      _filteredMeals = meals; 
       totalMeals = meals.length;
-      availableMeals = avail;
+      availableMeals = meals.length; 
       vegetarianMeals = veg;
       _isLoading = false;
     });
-    _filterMeals();
   }
 
-  void _filterMeals() {
+  void _filterMeals(String query) {
     setState(() {
-      if (_searchQuery.isEmpty) {
+      _searchQuery = query;
+      if (query.isEmpty) {
         _filteredMeals = _meals;
       } else {
         _filteredMeals = _meals.where((meal) {
           final name = meal['mealName']?.toString().toLowerCase() ?? '';
           final category = meal['category']?.toString().toLowerCase() ?? '';
-          return name.contains(_searchQuery.toLowerCase()) || category.contains(_searchQuery.toLowerCase());
+          return name.contains(query.toLowerCase()) || 
+                 category.contains(query.toLowerCase());
         }).toList();
       }
     });
   }
 
-  bool _isMealAvailable(Map<String, dynamic> meal) {
-    final fromStr = meal['availableFrom'] as String?;
-    final toStr = meal['availableTo'] as String?;
-    if (fromStr == null || toStr == null) return false;
+  // 🟢 HELPER: Parse quantities like "1/2", "1.5", "¼"
+  double _parseQuantity(String quantityStr) {
+    if (quantityStr.trim().isEmpty) return 0.0;
+    String cleanStr = quantityStr.trim();
+    
+    // Handle decimals directly
+    if (double.tryParse(cleanStr) != null) return double.parse(cleanStr);
 
-    try {
-      final fromParts = fromStr.split(':').map(int.parse).toList();
-      final toParts = toStr.split(':').map(int.parse).toList();
-      final fromTime = TimeOfDay(hour: fromParts[0], minute: fromParts[1]);
-      final toTime = TimeOfDay(hour: toParts[0], minute: toParts[1]);
-      final now = TimeOfDay.now();
-      final nowMinutes = now.hour * 60 + now.minute;
-      final fromMinutes = fromTime.hour * 60 + fromTime.minute;
-      final toMinutes = toTime.hour * 60 + toTime.minute;
-      return nowMinutes >= fromMinutes && nowMinutes <= toMinutes;
-    } catch (e) {
-      return false;
+    // Handle unicode fractions
+    final fractionMap = {
+      '⅛': 0.125, '¼': 0.25, '⅓': 0.333, '⅜': 0.375,
+      '½': 0.5, '⅝': 0.625, '⅔': 0.666, '¾': 0.75, '⅞': 0.875
+    };
+    if (fractionMap.containsKey(cleanStr)) return fractionMap[cleanStr]!;
+
+    // Handle slash fractions "1/2"
+    if (cleanStr.contains('/')) {
+      List<String> parts = cleanStr.split('/');
+      if (parts.length == 2) {
+        double n = double.tryParse(parts[0].trim()) ?? 1.0;
+        double d = double.tryParse(parts[1].trim()) ?? 1.0;
+        if (d != 0) return n / d;
+      }
     }
+    
+    // Fallback regex for "1.5 kg" (strips text)
+    final match = RegExp(r'\d+(\.\d+)?').firstMatch(cleanStr);
+    if (match != null) return double.tryParse(match.group(0)!) ?? 0.0;
+    
+    return 0.0;
+  }
+
+  // 🟢 UPDATED PDF GENERATOR: Calculates ACTUAL Cost
+  Future<void> _generateAndPrintPdf() async {
+    final font = await PdfGoogleFonts.openSansRegular();
+    final fontBold = await PdfGoogleFonts.openSansBold();
+    final dbHelper = DatabaseHelper();
+
+    List<List<dynamic>> tableData = [];
+
+    for (var meal in _filteredMeals) {
+      // 1. Fetch ingredients
+      List<Map<String, dynamic>> ingredients = [];
+      try {
+        ingredients = await dbHelper.getMealIngredients(meal['mealID'] ?? meal['id']);
+      } catch (e) {
+        print("Error fetching ingredients: $e");
+      }
+
+      String ingredientBreakdown = "";
+      double calculatedTotalCost = 0.0;
+
+      if (ingredients.isEmpty) {
+        ingredientBreakdown = "No ingredients listed";
+      } else {
+        for (var ing in ingredients) {
+          String name = ing['ingredientName'] ?? 'Unknown';
+          String qtyStr = ing['quantity']?.toString() ?? '0';
+          String unit = ing['unit']?.toString() ?? 'piece';
+          
+          // --- COST CALCULATION LOGIC ---
+          double qty = _parseQuantity(qtyStr);
+          
+          // Get base price per unit from DB
+          double basePrice = (ing['price'] as num?)?.toDouble() ?? 0.0;
+          String baseUnit = ing['base_unit']?.toString() ?? unit;
+
+          // Convert Recipe Unit -> Grams
+          double recipeGrams = dbHelper.convertToGrams(qty, unit, ing);
+          
+          // Convert Base Price Unit -> Grams (e.g. 1 kg = 1000g)
+          double baseGrams = dbHelper.convertToGrams(1.0, baseUnit, ing);
+
+          double itemCost = 0.0;
+          if (baseGrams > 0) {
+            itemCost = (recipeGrams * basePrice) / baseGrams;
+          }
+          
+          calculatedTotalCost += itemCost;
+          // -----------------------------
+
+          // Add to list with calculated price
+          ingredientBreakdown += "• $qtyStr $unit $name - Php ${itemCost.toStringAsFixed(2)}\n";
+        }
+      }
+
+      // If no ingredients, fall back to manual price, otherwise use calculated
+      double displayPrice = (calculatedTotalCost > 0) 
+          ? calculatedTotalCost 
+          : (meal['price'] as num?)?.toDouble() ?? 0.0;
+
+      tableData.add([
+        meal['mealName']?.toString() ?? 'N/A',
+        ingredientBreakdown, 
+        'Php ${displayPrice.toStringAsFixed(2)}', // 🟢 Uses Computed Price
+        '${meal['calories']?.toString() ?? '0'} cal',
+        meal['servings']?.toString() ?? '1',
+        meal['cookingTime']?.toString() ?? 'N/A',
+      ]);
+    }
+
+    final doc = pw.Document();
+
+    doc.addPage(
+      pw.MultiPage(
+        maxPages: 1000, 
+        theme: pw.ThemeData.withFont(
+          base: font,
+          bold: fontBold,
+        ),
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            pw.Header(
+              level: 0,
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('Meal Cost Breakdown Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                  pw.Text('Generated: ${DateTime.now().toString().split('.')[0]}', style: const pw.TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Table.fromTextArray(
+              headers: ['Meal Name', 'Ingredients & Computed Cost', 'Total Cost', 'Cals', 'Serv', 'Time'],
+              columnWidths: {
+                0: const pw.FlexColumnWidth(1.5), 
+                1: const pw.FlexColumnWidth(3),   
+                2: const pw.FlexColumnWidth(1),   
+                3: const pw.FlexColumnWidth(0.8), 
+                4: const pw.FlexColumnWidth(0.6), 
+                5: const pw.FlexColumnWidth(0.8), 
+              },
+              data: tableData,
+              border: pw.TableBorder.all(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white, fontSize: 10),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.blue900),
+              rowDecoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey300))),
+              cellStyle: const pw.TextStyle(fontSize: 9), 
+              cellAlignment: pw.Alignment.topLeft,
+              cellAlignments: {
+                0: pw.Alignment.topLeft,
+                1: pw.Alignment.topLeft,
+                2: pw.Alignment.topRight,
+                3: pw.Alignment.topRight,
+                4: pw.Alignment.topCenter,
+                5: pw.Alignment.topLeft,
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => doc.save(),
+      name: 'Meal_Breakdown_Report.pdf',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Organic calm gradient background matching index.dart
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -127,22 +274,33 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Meal Management',
-                      style: TextStyle(
-                        fontFamily: 'Orbitron',
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 1.2,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black26,
-                            offset: Offset(2, 2),
-                            blurRadius: 6,
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: const Text(
+                          'Meal Management',
+                          style: TextStyle(
+                            fontFamily: 'Orbitron',
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black26,
+                                offset: Offset(2, 2),
+                                blurRadius: 6,
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
+                    ),
+                    // 🟢 PDF Download Button
+                    IconButton(
+                      icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                      tooltip: 'Download Breakdown PDF',
+                      onPressed: _generateAndPrintPdf,
                     ),
                   ],
                 ),
@@ -156,7 +314,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                       child: _MealStatCard(
                         value: totalMeals.toString(),
                         label: 'Total Meals',
-                        icon: Icons.restaurant,
+                        icon: Icons.restaurant_menu,
                         color: Colors.blue,
                       ),
                     ),
@@ -173,7 +331,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                     Expanded(
                       child: _MealStatCard(
                         value: vegetarianMeals.toString(),
-                        label: 'Vegetarian',
+                        label: 'Veg/Vegan',
                         icon: Icons.eco,
                         color: Colors.orange,
                       ),
@@ -181,7 +339,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                   ],
                 ),
                 
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 
                 // Search Bar
                 Container(
@@ -198,39 +356,54 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                   ),
                   child: TextField(
                     controller: _searchController,
+                    onChanged: _filterMeals,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.search, color: const Color(0xFF184E77)),
-                      hintText: 'Search meals by name or category...',
-                      border: InputBorder.none,
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      suffixIcon: _searchQuery.isNotEmpty
+                      hintText: 'Search meals...',
+                      hintStyle: TextStyle(
+                        color: Colors.grey[600],
+                        fontFamily: 'Orbitron',
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: const Color(0xFF184E77),
+                      ),
+                      suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear, color: Color(0xFF184E77)),
+                              icon: Icon(
+                                Icons.clear,
+                                color: const Color(0xFF184E77),
+                              ),
                               onPressed: () {
                                 _searchController.clear();
-                                _searchQuery = '';
-                                _filterMeals();
+                                _filterMeals('');
                               },
                             )
                           : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                     ),
-                    onChanged: (value) {
-                      _searchQuery = value;
-                      _filterMeals();
-                    },
+                    style: const TextStyle(
+                      fontFamily: 'Orbitron',
+                      color: Color(0xFF184E77),
+                    ),
                   ),
                 ),
                 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 
-                // Section Title
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                // Results count
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text(
-                    'All Meals',
-                    style: TextStyle(
+                    _searchQuery.isEmpty
+                        ? 'All Meals ($totalMeals)'
+                        : 'Search Results (${_filteredMeals.length})',
+                    style: const TextStyle(
                       fontFamily: 'Orbitron',
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       letterSpacing: 1.1,
@@ -261,24 +434,29 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    Icons.restaurant_menu,
+                                    _searchQuery.isEmpty
+                                        ? Icons.restaurant
+                                        : Icons.search_off,
                                     size: 80,
                                     color: Colors.white.withOpacity(0.7),
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
-                                    _searchQuery.isEmpty ? 'No meals found' : 'No matching meals found',
+                                    _searchQuery.isEmpty
+                                        ? 'No meals found'
+                                        : 'No meals found for "$_searchQuery"',
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: Colors.green,
                                       fontSize: 18,
                                       fontFamily: 'Orbitron',
                                     ),
+                                    textAlign: TextAlign.center,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     _searchQuery.isEmpty
                                         ? 'Tap the + button to add your first meal'
-                                        : 'Try adjusting your search terms',
+                                        : 'Try a different search term',
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.7),
                                       fontSize: 14,
@@ -292,10 +470,8 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                               itemCount: _filteredMeals.length,
                               itemBuilder: (context, index) {
                                 final meal = _filteredMeals[index];
-                                final isAvailable = _isMealAvailable(meal);
                                 return _MealCard(
                                   meal: meal,
-                                  isAvailable: isAvailable,
                                   onRefresh: _refreshMeals,
                                 );
                               },
@@ -334,6 +510,10 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
     final categoryController = TextEditingController();
     final priceController = TextEditingController();
     final caloriesController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final instructionsController = TextEditingController();
+    final servingsController = TextEditingController();
+    final timeController = TextEditingController();
     final fromController = TextEditingController();
     final toController = TextEditingController();
     final restrictionsController = TextEditingController();
@@ -398,6 +578,26 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                       ),
                     ],
                   ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: servingsController,
+                          label: 'Servings',
+                          icon: Icons.people,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: timeController,
+                          label: 'Cooking Time',
+                          icon: Icons.timer,
+                        ),
+                      ),
+                    ],
+                  ),
                   _buildTextField(
                     controller: restrictionsController,
                     label: 'Dietary Restrictions',
@@ -422,6 +622,19 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                       ),
                     ],
                   ),
+                  _buildTextField(
+                    controller: descriptionController,
+                    label: 'Description',
+                    icon: Icons.description,
+                    maxLines: 3,
+                  ),
+                  _buildTextField(
+                    controller: instructionsController,
+                    label: 'Instructions',
+                    icon: Icons.list,
+                    maxLines: 5,
+                  ),
+                  
                   const SizedBox(height: 20),
                   const Text(
                     'Default Meal Image',
@@ -494,6 +707,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                         ),
                       ),
                     ),
+                  
                   const SizedBox(height: 24),
                   const Text(
                     'Additional Images (up to 5)',
@@ -572,6 +786,7 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                         ),
                       ),
                     ),
+
                   const SizedBox(height: 24),
                   Row(
                     children: [
@@ -598,13 +813,13 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
                               'category': categoryController.text,
                               'price': double.tryParse(priceController.text) ?? 0.0,
                               'calories': int.tryParse(caloriesController.text) ?? 0,
-                              'hasDietaryRestrictions': restrictionsController.text,
+                              'servings': int.tryParse(servingsController.text) ?? 1,
+                              'cookingTime': timeController.text,
+                              'content': descriptionController.text,
+                              'instructions': instructionsController.text,
                               'availableFrom': fromController.text,
                               'availableTo': toController.text,
-                              'servings': 2,
-                              'cookingTime': '30 minutes',
-                              'content': '',
-                              'instructions': '',
+                              'hasDietaryRestrictions': restrictionsController.text,
                               'mealPicture': _selectedImagePath,
                               'additionalPictures': _additionalImages.join(','),
                             };
@@ -657,15 +872,18 @@ class _AdminMealsPageState extends State<AdminMealsPage> {
     required String label,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: const Color(0xFF76C893)),
+          alignLabelWithHint: maxLines > 1,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF76C893)),
@@ -740,12 +958,10 @@ class _MealStatCard extends StatelessWidget {
 
 class _MealCard extends StatelessWidget {
   final Map<String, dynamic> meal;
-  final bool isAvailable;
   final VoidCallback onRefresh;
 
   const _MealCard({
     required this.meal,
-    required this.isAvailable,
     required this.onRefresh,
   });
 
@@ -761,6 +977,17 @@ class _MealCard extends StatelessWidget {
         child: Icon(Icons.restaurant, color: const Color(0xFF184E77).withOpacity(0.7)),
       );
     }
+    
+    // 🟢 Handle Firebase URLs
+    if (path.startsWith('http')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(path, width: 60, height: 60, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
+          return Container(width: 60, height: 60, decoration: BoxDecoration(color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(12)), child: Icon(Icons.broken_image, color: const Color(0xFF184E77).withOpacity(0.7)));
+        }),
+      );
+    }
+    
     if (path.startsWith('assets/')) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -781,6 +1008,16 @@ class _MealCard extends StatelessWidget {
           );
         }),
       );
+    }
+  }
+
+  String _formatPrice(dynamic price) {
+    if (price is num) {
+      return price.toStringAsFixed(2);
+    } else if (price != null) {
+      return price.toString();
+    } else {
+      return '0.00';
     }
   }
 
@@ -831,7 +1068,7 @@ class _MealCard extends StatelessWidget {
                         children: [
                           _MealInfoItem(
                             icon: Icons.attach_money,
-                            text: '₱${meal['price']?.toStringAsFixed(2) ?? '0.00'}',
+                            text: '₱${_formatPrice(meal['price'])}',
                             color: Colors.green,
                           ),
                           const SizedBox(width: 12),
@@ -980,7 +1217,7 @@ class _MealCard extends StatelessWidget {
                         foregroundColor: const Color(0xFF184E77),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: Color(0xFF76C893)),
+                          side: const BorderSide(color: Color(0xFF184E77)),
                         ),
                       ),
                       child: const Text('Cancel'),
@@ -1015,9 +1252,6 @@ class _MealCard extends StatelessWidget {
   }
 
   Future<void> _showMealDetails(BuildContext context) async {
-    final dbHelper = DatabaseHelper();
-    final ingredients = await dbHelper.getMealIngredients(meal['mealID']);
-    print('Meal additionalPictures: ${meal['additionalPictures']}');
     final additionalPictures = (meal['additionalPictures'] as String? ?? '').split(',').where((p) => p.isNotEmpty).toList();
     final allImages = [meal['mealPicture'] as String?, ...additionalPictures].where((p) => p != null && p.isNotEmpty).cast<String>().toList();
 
@@ -1063,7 +1297,11 @@ class _MealCard extends StatelessWidget {
                                 builder: (context) => GestureDetector(
                                   onTap: () => Navigator.pop(context),
                                   child: PhotoView(
-                                    imageProvider: path.startsWith('assets/') ? AssetImage(path) : FileImage(File(path)),
+                                    imageProvider: path.startsWith('http')
+                                        ? NetworkImage(path) as ImageProvider
+                                        : path.startsWith('assets/') 
+                                            ? AssetImage(path) 
+                                            : FileImage(File(path)),
                                     backgroundDecoration: const BoxDecoration(color: Colors.black),
                                     minScale: PhotoViewComputedScale.contained,
                                     maxScale: PhotoViewComputedScale.covered * 4.0,
@@ -1076,11 +1314,13 @@ class _MealCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(15),
                               child: SizedBox(
                                 width: 200,
-                                child: path.startsWith('assets/') 
-                                  ? Image.asset(path, fit: BoxFit.cover)
-                                  : Image.file(File(path), fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.broken_image, size: 100);
-                                    }),
+                                child: path.startsWith('http')
+                                  ? Image.network(path, fit: BoxFit.cover, errorBuilder: (c,e,s) => const Icon(Icons.broken_image, size: 100))
+                                  : path.startsWith('assets/') 
+                                      ? Image.asset(path, fit: BoxFit.cover)
+                                      : Image.file(File(path), fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) {
+                                          return const Icon(Icons.broken_image, size: 100);
+                                        }),
                               ),
                             ),
                           ),
@@ -1093,41 +1333,17 @@ class _MealCard extends StatelessWidget {
                 const SizedBox(height: 20),
                 _buildDetailItem('Name', meal['mealName'] ?? 'Unknown'),
                 _buildDetailItem('Category', meal['category'] ?? ''),
-                _buildDetailItem('Price', '₱${meal['price']?.toStringAsFixed(2)}'),
+                _buildDetailItem('Price', '₱${_formatPrice(meal['price'])}'),
                 _buildDetailItem('Calories', '${meal['calories']} cal'),
                 _buildDetailItem('Servings', '${meal['servings']}'),
-                _buildDetailItem('Cooking Time', meal['cookingTime'] ?? ''),
-                _buildDetailItem('Available From', meal['availableFrom'] ?? ''),
-                _buildDetailItem('Available To', meal['availableTo'] ?? ''),
-                _buildDetailItem('Dietary Restrictions', meal['hasDietaryRestrictions'] ?? 'None'),
-                
-                if (meal['content']?.toString().isNotEmpty == true) ...[
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Content:',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF184E77)),
-                  ),
-                  Text(meal['content'] ?? ''),
-                ],
-                
-                if (meal['instructions']?.toString().isNotEmpty == true) ...[
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Instructions:',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF184E77)),
-                  ),
-                  Text(meal['instructions'] ?? ''),
-                ],
+                _buildDetailItem('Cooking Time', meal['cookingTime'] ?? 'N/A'),
                 
                 const SizedBox(height: 16),
-                const Text(
-                  'Ingredients:',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF184E77)),
-                ),
-                ...ingredients.map((ing) => Padding(
-                  padding: const EdgeInsets.only(left: 8.0, top: 4),
-                  child: Text('• ${ing['ingredientName']} (${ing['quantity'] ?? ''})'),
-                )).toList(),
+                const Text('Description:', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF184E77))),
+                Text(meal['content'] ?? 'No description provided'),
+                const SizedBox(height: 16),
+                const Text('Instructions:', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF184E77))),
+                Text(meal['instructions'] ?? 'No instructions provided'),
                 
                 const SizedBox(height: 20),
                 SizedBox(
@@ -1179,9 +1395,10 @@ class _MealCard extends StatelessWidget {
     final categoryController = TextEditingController(text: meal['category']);
     final priceController = TextEditingController(text: meal['price']?.toString());
     final caloriesController = TextEditingController(text: meal['calories']?.toString());
-    final fromController = TextEditingController(text: meal['availableFrom']);
-    final toController = TextEditingController(text: meal['availableTo']);
-    final restrictionsController = TextEditingController(text: meal['hasDietaryRestrictions']);
+    final descriptionController = TextEditingController(text: meal['content']);
+    final instructionsController = TextEditingController(text: meal['instructions']);
+    final servingsController = TextEditingController(text: meal['servings']?.toString());
+    final timeController = TextEditingController(text: meal['cookingTime']);
     String? _selectedImagePath = meal['mealPicture'];
     List<String> _additionalImages = (meal['additionalPictures'] as String? ?? '').split(',').where((p) => p.isNotEmpty).toList();
 
@@ -1243,36 +1460,44 @@ class _MealCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  _buildTextField(
-                    controller: restrictionsController,
-                    label: 'Dietary Restrictions',
-                    icon: Icons.health_and_safety,
-                  ),
                   Row(
                     children: [
                       Expanded(
                         child: _buildTextField(
-                          controller: fromController,
-                          label: 'Available From (HH:MM)',
-                          icon: Icons.access_time,
+                          controller: servingsController,
+                          label: 'Servings',
+                          icon: Icons.people,
+                          keyboardType: TextInputType.number,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildTextField(
-                          controller: toController,
-                          label: 'Available To (HH:MM)',
-                          icon: Icons.access_time,
+                          controller: timeController,
+                          label: 'Cooking Time',
+                          icon: Icons.timer,
                         ),
                       ),
                     ],
+                  ),
+                  _buildTextField(
+                    controller: descriptionController,
+                    label: 'Description',
+                    icon: Icons.description,
+                    maxLines: 3,
+                  ),
+                  _buildTextField(
+                    controller: instructionsController,
+                    label: 'Instructions',
+                    icon: Icons.list,
+                    maxLines: 5,
                   ),
                   const SizedBox(height: 20),
                   const Text(
                     'Default Meal Image',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF76C893),
+                      color: Color(0xFF184E77),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1435,19 +1660,22 @@ class _MealCard extends StatelessWidget {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () async {
-                            final updates = {
-                              'mealName': nameController.text,
-                              'category': categoryController.text,
-                              'price': double.tryParse(priceController.text) ?? 0.0,
-                              'calories': int.tryParse(caloriesController.text) ?? 0,
-                              'hasDietaryRestrictions': restrictionsController.text,
-                              'availableFrom': fromController.text,
-                              'availableTo': toController.text,
-                              'mealPicture': _selectedImagePath,
-                              'additionalPictures': _additionalImages.join(','),
-                            };
                             final dbHelper = DatabaseHelper();
-                            await dbHelper.updateMeal(meal['mealID'], updates);
+                            await dbHelper.updateMeal(
+                              meal['mealID'], 
+                              {
+                                'mealName': nameController.text,
+                                'category': categoryController.text,
+                                'price': double.tryParse(priceController.text) ?? 0.0,
+                                'calories': int.tryParse(caloriesController.text) ?? 0,
+                                'servings': int.tryParse(servingsController.text) ?? 1,
+                                'cookingTime': timeController.text,
+                                'content': descriptionController.text,
+                                'instructions': instructionsController.text,
+                                'mealPicture': _selectedImagePath,
+                                'additionalPictures': _additionalImages.join(','),
+                              }
+                            );
                             Navigator.pop(dialogContext);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -1471,7 +1699,7 @@ class _MealCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           child: const Text(
-                            'Save Changes',
+                            'Update Meal',
                             style: TextStyle(
                               fontFamily: 'Orbitron',
                               fontWeight: FontWeight.w600,
@@ -1495,15 +1723,18 @@ class _MealCard extends StatelessWidget {
     required String label,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: const Color(0xFF76C893)),
+          alignLabelWithHint: maxLines > 1,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF76C893)),
@@ -1536,12 +1767,15 @@ class _MealInfoItem extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            color: color,
-            fontWeight: FontWeight.w500,
+        Flexible(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../database/db_helper.dart';
 import '../pages/meal_details.dart';
 import 'package:intl/intl.dart';
@@ -43,7 +44,6 @@ class _HistoryPageState extends State<HistoryPage> {
     super.dispose();
   }
 
-  // --- START NEW PRICE LOGIC ---
   double _parseQuantity(String quantityStr) {
     if (quantityStr.contains('.') && double.tryParse(quantityStr) != null) {
       return double.parse(quantityStr);
@@ -159,7 +159,6 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return total;
   }
-  // --- END NEW PRICE LOGIC ---
 
   Future<void> _loadUserFavorites() async {
     final user = await _dbHelper.getUserById(widget.userId);
@@ -201,15 +200,12 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  // Changed to async to support price calculation
   Future<void> _loadHistory() async {
     List<Map<String, dynamic>> tempHistory = List.from(HistoryPage._completedMeals);
     List<Map<String, dynamic>> updatedHistory = [];
 
     for (var meal in tempHistory) {
       var mealMap = Map<String, dynamic>.from(meal);
-      
-      // Calculate real cost if mealID exists
       if (mealMap['mealID'] != null) {
         try {
           double realCost = await _calculateRealMealCost(mealMap['mealID']);
@@ -217,7 +213,6 @@ class _HistoryPageState extends State<HistoryPage> {
             mealMap['price'] = realCost;
           }
         } catch (e) {
-          // If calculation fails, keep original price
           debugPrint('Error calculating history price: $e');
         }
       }
@@ -282,14 +277,18 @@ class _HistoryPageState extends State<HistoryPage> {
                 child: SizedBox(
                   height: 100,
                   width: double.infinity,
-                  child: Image.asset(
-                    recipe['mealPicture'] ?? 'assets/default_meal.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
-                    ),
-                  ),
+                  child: (recipe['mealPicture']?.toString().startsWith('http') ?? false)
+                      ? CachedNetworkImage(
+                          imageUrl: recipe['mealPicture'],
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+                          errorWidget: (context, url, error) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                        )
+                      : Image.asset(
+                          recipe['mealPicture'] ?? 'assets/default_meal.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                        ),
                 ),
               ),
               if (widget.userId != 0)
@@ -320,7 +319,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color(0xFF184E77),
-                        fontFamily: 'Exo', // Updated to Exo
+                        fontFamily: 'Exo',
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -334,7 +333,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       Flexible(
                         child: Text(
                           "Est. ${recipe['cookingTime']}",
-                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'), // Updated to Poppins
+                          style: const TextStyle(fontSize: 10, color: Colors.black54, fontFamily: 'Poppins'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -352,7 +351,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
                             color: Colors.black54,
-                            fontFamily: 'Exo', // Updated to Exo for price emphasis
+                            fontFamily: 'Exo',
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -367,7 +366,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       style: const TextStyle(
                         fontSize: 10,
                         color: Colors.black54,
-                        fontFamily: 'Poppins', // Updated to Poppins
+                        fontFamily: 'Poppins',
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -380,7 +379,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       style: const TextStyle(
                         fontSize: 10,
                         color: Colors.black54,
-                        fontFamily: 'Poppins', // Updated to Poppins
+                        fontFamily: 'Poppins',
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -415,7 +414,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
-                        fontFamily: 'Poppins', // Updated to Poppins
+                        fontFamily: 'Poppins',
                       ),
                     ),
                   ),
@@ -471,10 +470,10 @@ class _HistoryPageState extends State<HistoryPage> {
                         ),
                         child: TextField(
                           controller: searchController,
-                          style: const TextStyle(fontFamily: 'Poppins'), // Updated
+                          style: const TextStyle(fontFamily: 'Poppins'),
                           decoration: const InputDecoration(
                             hintText: 'Search your completed recipes',
-                            hintStyle: TextStyle(fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'), // Updated
+                            hintStyle: TextStyle(fontSize: 14, color: Colors.black54, fontFamily: 'Poppins'),
                             suffixIcon: Icon(Icons.search, color: Color(0xFF184E77)),
                             border: InputBorder.none,
                           ),
@@ -491,14 +490,14 @@ class _HistoryPageState extends State<HistoryPage> {
                         ? Center(
                             child: Text(
                               errorMessage!,
-                              style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                              style: const TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                             ),
                           )
                         : historyRecipes.isEmpty
                             ? const Center(
                                 child: Text(
                                   'No completed recipes yet',
-                                  style: TextStyle(color: Colors.white, fontFamily: 'Poppins'), // Updated
+                                  style: TextStyle(color: Colors.white, fontFamily: 'Poppins'),
                                 ),
                               )
                             : GridView.builder(

@@ -49,6 +49,8 @@ dependencies:
   fl_chart: ^0.68.0
   animate_do: ^3.3.4
   photo_view: ^0.15.0
+  pdf: ^3.10.4
+  printing: ^5.11.0
 
 
 
@@ -58,6 +60,7 @@ dependencies:
   firebase_core: ^4.2.1
   firebase_database: ^12.1.0
   firebase_auth: ^6.1.2
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
@@ -179,7 +182,13 @@ flutter:
     - assets/models/final_dynamic_mobile_bestquant.tflite
     - assets/models/final_float.tflite
     - assets/models/efficientnet_multilabel.tflite
-
+    - assets/models/model_multilabel.tflite
+    - assets/models/healthtingi_safe.tflite
+    - assets/models/healthtingi_safe-1.tflite
+    - assets/models/afterdefense.tflite
+    - assets/models/garden.tflite
+    - assets/models/guiwan.tflite
+    - assets/models/guiwan-2.tflite
 
   fonts:
     - family: Orbitron

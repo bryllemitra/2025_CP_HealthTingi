@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../database/db_helper.dart';
 import 'meal_details.dart';
 
@@ -72,7 +73,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
 
   Future<void> _initializeData() async {
     await _loadAvailableIngredients();
-    await _loadOriginalMealIngredients(); // Load real recipe quantities first
+    await _loadOriginalMealIngredients();
     await _loadExistingCustomization(); 
     await _loadIngredientAlternatives();
     await _loadSimilarMeals();
@@ -115,8 +116,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       if (mounted) {
         setState(() {
           originalDefaults = defaults;
-          
-          // Apply these defaults to our current list
           for (var entry in defaults.entries) {
             if (allIngredients.contains(entry.key)) {
                ingredientDetails[entry.key] = entry.value;
@@ -129,7 +128,6 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     }
   }
 
-  // --- NEW: Edit Quantity Logic ---
   void _updateIngredientDetails(String ingredientName, String qty, String unit) {
     setState(() {
       ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
@@ -150,7 +148,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     String selectedQty = currentDetails['qty']!;
     String selectedUnit = currentDetails['unit']!;
     
-    final List<String> units = ['piece', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'pack', 'can', 'clove', 'head', 'bottle', 'cloves', 'ml', 'l', 'bundle', 'small', 'medium', 'large', 'extra large']; 
+    final List<String> units = ['piece', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'pack', 'can', 'clove', 'head', 'tie', 'bottle', 'cloves', 'ml', 'l', 'bundle', 'small', 'medium', 'large', 'extra large']; 
 
     await showDialog(
       context: context,
@@ -324,15 +322,19 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       if (crossedOutIngredients.contains(ingredientName)) {
         crossedOutIngredients.remove(ingredientName);
         ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
-        recentChanges.add({'type': 'add_back', 'ingredient': ingredientName});
-      } 
-      else if (!allIngredients.contains(ingredientName)) {
+      } else if (!allIngredients.contains(ingredientName)) {
         allIngredients.add(ingredientName);
         ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
-        ingredientDisplay[ingredientName] = ingredientName;
+        ingredientDisplay[ingredientName] = ingredientName; // Ensure display name exists
       } else {
         ingredientDetails[ingredientName] = {'qty': qty, 'unit': unit};
       }
+      
+      // Force a display refresh for the new ingredient
+      if (!ingredientDisplay.containsKey(ingredientName)) {
+        ingredientDisplay[ingredientName] = ingredientName;
+      }
+      
       _searchController.clear();
       showAddIngredient = false;
       _loadSimilarMeals();
@@ -485,6 +487,7 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
     }
   }
 
+  // REPLACE your existing _saveCustomizedMeal with this:
   Future<void> _saveCustomizedMeal() async {
     try {
       final dbHelper = DatabaseHelper();
@@ -500,45 +503,42 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
       for (final ingredientName in allIngredients) {
         originalIngredientsMap[ingredientName] = ingredientName;
         
-        if (selectedAlternatives.containsKey(ingredientName)) {
-          final details = ingredientDetails[ingredientName];
-          String userQty = details?['qty'] ?? '1';
-          String userUnit = details?['unit'] ?? 'piece';
+        final details = ingredientDetails[ingredientName];
+        String userQty = details?['qty'] ?? '1';
+        String userUnit = details?['unit'] ?? 'piece';
+        String formattedQtyString = '$userQty $userUnit';
 
+        if (selectedAlternatives.containsKey(ingredientName)) {
+          // SUBSTITUTED
           substitutedIngredientsMap[ingredientName] = {
             'type': 'substituted',
             'value': selectedAlternatives[ingredientName]!,
-            'quantity': '$userQty $userUnit' 
+            'quantity': formattedQtyString 
           };
         } else if (crossedOutIngredients.contains(ingredientName)) {
+          // REMOVED
           substitutedIngredientsMap[ingredientName] = {
             'type': 'removed',
             'value': 'REMOVED'
           };
         } else if (!originalIngredientNames.contains(ingredientName)) {
-          final details = ingredientDetails[ingredientName];
-          String userQty = details?['qty'] ?? '1';
-          String userUnit = details?['unit'] ?? 'piece';
-          
+          // NEW ADDITION
           substitutedIngredientsMap[ingredientName] = {
             'type': 'new',
             'value': ingredientName,
-            'quantity': '$userQty $userUnit' 
+            'quantity': formattedQtyString 
           };
         } else {
-          // ORIGINAL INGREDIENT (Possibly Edited)
-          final details = ingredientDetails[ingredientName];
-          String userQty = details?['qty'] ?? '1';
-          String userUnit = details?['unit'] ?? 'piece';
-          
+          // ORIGINAL (WITH POTENTIAL QTY EDITS)
           substitutedIngredientsMap[ingredientName] = {
             'type': 'original',
             'value': ingredientName,
-            'quantity': '$userQty $userUnit' // Save the current quantity state
+            'quantity': formattedQtyString
           };
         }
       }
       
+      // Handle ingredients removed from the list entirely
       for (final originalName in originalIngredientNames) {
         if (!allIngredients.contains(originalName)) {
           originalIngredientsMap[originalName] = originalName;
@@ -557,17 +557,15 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
         customizedName: 'Customized ${originalMeal?['mealName'] ?? 'Meal'}',
       );
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Customized meal saved!', style: TextStyle(fontFamily: 'Orbitron')),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Customization Saved!'), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context); // Triggers the .then() in meal_details
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving: $e', style: const TextStyle(fontFamily: 'Orbitron')), backgroundColor: Colors.red),
+        SnackBar(content: Text('Error saving: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -745,7 +743,9 @@ class _ReverseIngredientPageState extends State<ReverseIngredientPage> {
                                     borderRadius: BorderRadius.circular(12),
                                     image: mealPicture != null
                                         ? DecorationImage(
-                                            image: AssetImage(mealPicture),
+                                            image: mealPicture.startsWith('http') 
+                                                ? CachedNetworkImageProvider(mealPicture) as ImageProvider
+                                                : AssetImage(mealPicture),
                                             fit: BoxFit.cover,
                                           )
                                         : const DecorationImage(

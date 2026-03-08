@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'register.dart';
 import 'meal_scan.dart';
 import 'onboarding_screen.dart';
@@ -85,6 +86,35 @@ class _LoginPageState extends State<LoginPage> {
           user = await dbHelper.getUserByUsername(input);
         }
 
+        if (user == null) {
+          try {
+            final snapshot = await FirebaseDatabase.instance.ref('users').get();
+            if (snapshot.exists && snapshot.value is Map) {
+              final data = snapshot.value as Map<dynamic, dynamic>;
+              
+              for (var key in data.keys) {
+                var cloudUser = Map<String, dynamic>.from(data[key]);
+                String cloudEmail = cloudUser['emailAddress']?.toString() ?? '';
+                String cloudUsername = cloudUser['username']?.toString() ?? '';
+
+                if (cloudEmail == input || cloudUsername == input) {
+                  user = cloudUser;
+                  
+                  user.remove('local_id');
+                  user.remove('id');
+                  
+                  final db = await dbHelper.database;
+                  int newLocalId = await db.insert('users', user);
+                  user['id'] = newLocalId; 
+                  break;
+                }
+              }
+            }
+          } catch (e) {
+            debugPrint("Cloud login check failed: $e");
+          }
+        }
+
         if (user == null || user['password'] != hashedPassword) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -120,13 +150,12 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        // Organic calm gradient background matching IndexPage
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77), 
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -141,7 +170,6 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo with soft highlight glow
                     Container(
                       decoration: BoxDecoration(
                         boxShadow: [
@@ -161,7 +189,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 40),
 
-                    // App name - Using EXO for the title
                     const Text(
                       'HealthTingi',
                       style: TextStyle(
@@ -182,7 +209,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 50),
 
-                    // Email or Username
                     TextFormField(
                       controller: _emailOrUsernameController,
                       style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
@@ -211,7 +237,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 20),
 
-                    // Password Field
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -250,7 +275,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 30),
 
-                    // Login Button - Using Poppins for UI elements
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -288,7 +312,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 20),
 
-                    // Register Link
                     GestureDetector(
                       onTap: _isLoading
                           ? null
@@ -315,7 +338,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 60),
 
-                    // Subtle Tagline / Footer
                     const Text(
                       'Eat Smart. Live Better.',
                       style: TextStyle(

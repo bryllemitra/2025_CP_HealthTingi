@@ -5,6 +5,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:photo_view/photo_view.dart';
+// 🟢 NEW IMPORTS FOR PDF GENERATION
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class AdminIngredientsPage extends StatefulWidget {
   final int userId;
@@ -70,23 +74,93 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
       _ingredients = ingredients;
       _filteredIngredients = ingredients;
       totalIngredients = ingredients.length;
-      availableIngredients = ingredients.length; // All ingredients are available by default
+      availableIngredients = ingredients.length; 
       vegetableIngredients = veg;
       _isLoading = false;
     });
   }
 
+  Future<void> _generateAndPrintPdf() async {
+    final font = await PdfGoogleFonts.openSansRegular();
+    final fontBold = await PdfGoogleFonts.openSansBold();
+
+    final doc = pw.Document();
+
+    doc.addPage(
+      pw.MultiPage(
+        maxPages: 100, 
+        theme: pw.ThemeData.withFont(
+          base: font,
+          bold: fontBold,
+        ),
+        
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            pw.Header(
+              level: 0,
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('Ingredient Inventory Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                  pw.Text('Generated: ${DateTime.now().toString().split('.')[0]}', style: const pw.TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Table.fromTextArray(
+              headers: ['Name', 'Category', 'Price', 'Calories', 'Nutritional Value'],
+              columnWidths: {
+                0: const pw.FlexColumnWidth(2),   // Name
+                1: const pw.FlexColumnWidth(1.5), // Category
+                2: const pw.FlexColumnWidth(1),   // Price
+                3: const pw.FlexColumnWidth(1),   // Calories
+                4: const pw.FlexColumnWidth(3),   // Nutri Value
+              },
+              data: _filteredIngredients.map((item) {
+                return [
+                  item['ingredientName']?.toString() ?? 'N/A',
+                  item['category']?.toString() ?? 'N/A',
+                  'Php ${(item['price'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
+                  '${item['calories']?.toString() ?? '0'} cal',
+                  item['nutritionalValue']?.toString() ?? 'N/A',
+                ];
+              }).toList(),
+              border: pw.TableBorder.all(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.blue900),
+              rowDecoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey300))),
+              cellAlignment: pw.Alignment.centerLeft,
+              cellAlignments: {
+                0: pw.Alignment.centerLeft,
+                1: pw.Alignment.centerLeft,
+                2: pw.Alignment.centerRight,
+                3: pw.Alignment.centerRight,
+                4: pw.Alignment.centerLeft,
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => doc.save(),
+      name: 'Ingredient_Report.pdf',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Organic calm gradient background matching index.dart
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C), 
+              Color(0xFF76C893), 
+              Color(0xFF184E77), 
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -127,6 +201,12 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                           ),
                         ),
                       ),
+                    ),
+                    // 🟢 PDF Download Button
+                    IconButton(
+                      icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                      tooltip: 'Download PDF Report',
+                      onPressed: _generateAndPrintPdf,
                     ),
                   ],
                 ),
@@ -277,17 +357,6 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _searchController.text.isEmpty
-                                        ? 'Tap the + button to add your first ingredient'
-                                        : 'Try a different search term',
-                                    style: TextStyle(
-                                      color: Colors.green.withOpacity(0.7),
-                                      fontSize: 14,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
                                 ],
                               ),
                             )
@@ -402,6 +471,8 @@ class _AdminIngredientsPageState extends State<AdminIngredientsPage> {
                     label: 'Nutritional Value',
                     icon: Icons.health_and_safety,
                   ),
+                  
+                  // Standard Image Selection UI
                   const SizedBox(height: 20),
                   const Text(
                     'Default Ingredient Image',
@@ -760,7 +831,7 @@ class _IngredientCard extends StatelessWidget {
     if (price is num) {
       return price.toStringAsFixed(2);
     } else if (price != null) {
-      return price.toString();  // Display strings as-is (e.g., "400/kg, 20-25/pack")
+      return price.toString();
     } else {
       return '0.00';
     }
@@ -1074,7 +1145,7 @@ class _IngredientCard extends StatelessWidget {
                 const SizedBox(height: 20),
                 _buildDetailItem('Name', ingredient['ingredientName'] ?? 'Unknown'),
                 _buildDetailItem('Category', ingredient['category'] ?? ''),
-                _buildDetailItem('Price', '₱${ingredient['price']?.toStringAsFixed(2)}'),
+                _buildDetailItem('Price', '₱${_formatPrice(ingredient['price'])}'),
                 _buildDetailItem('Calories', '${ingredient['calories']} cal'),
                 _buildDetailItem('Nutritional Value', ingredient['nutritionalValue'] ?? 'None'),
                 

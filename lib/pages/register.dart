@@ -21,6 +21,8 @@ class _RegisterPageState extends State<RegisterPage> {
   DateTime? _selectedBirthday;
   bool _isUnderage = false;
   bool _showPasswordNote = true;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController middleNameController = TextEditingController();
@@ -83,7 +85,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   bool _validatePasswordLength(String password) {
-    return RegExp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*(),.?":{}|<>_]).{6,30}$').hasMatch(password);
+    return password.length >= 6 && password.length <= 30;
   }
 
   int _calculateAge(DateTime birthDate) {
@@ -115,11 +117,14 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _selectBirthday(BuildContext context) async {
+    final DateTime now = DateTime.now();
+    final DateTime defaultDate = DateTime(now.year - 18, now.month, now.day);
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
+      initialDate: _selectedBirthday ?? defaultDate, 
       firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      lastDate: now,
       builder: (context, child) {
         return Theme(
           data: ThemeData.light().copyWith(
@@ -280,7 +285,7 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_validatePasswordLength(passwordController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Password must be between 6 and 30 characters and include uppercase, lowercase, and special characters.', style: TextStyle(fontFamily: 'Poppins')),
+          content: Text('Password must be between 6 and 30 characters.', style: TextStyle(fontFamily: 'Poppins')),
           duration: Duration(seconds: 3),
         ),
       );
@@ -369,9 +374,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildTextField(TextEditingController controller, String hintText,
       {bool isObscure = false, 
-       TextInputType? keyboardType, 
-       String? Function(String?)? validator,
-       bool isOptional = false}) {
+      TextInputType? keyboardType, 
+      String? Function(String?)? validator,
+      bool isOptional = false,
+      Widget? suffixIcon}) {  // Add this parameter
     return TextFormField(
       controller: controller,
       obscureText: isObscure,
@@ -389,6 +395,7 @@ class _RegisterPageState extends State<RegisterPage> {
           Icons.text_fields,
           color: const Color(0xFF184E77),
         ),
+        suffixIcon: suffixIcon,  // Add suffix icon here
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide.none,
@@ -544,21 +551,35 @@ class _RegisterPageState extends State<RegisterPage> {
             _buildTextField(
               passwordController, 
               'Password', 
-              isObscure: true,
+              isObscure: _obscurePassword,  // Use the state variable
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Password is required';
                 }
-                if (!_validatePasswordLength(value)) {
-                  return 'Password must be 6-30 characters with uppercase, lowercase, and special characters';
+                if (value.length < 6) {
+                  return 'Password must be at least 6 characters';
+                }
+                if (value.length > 30) {
+                  return 'Password must not exceed 30 characters';
                 }
                 return null;
               },
+              // Add suffix icon for password visibility toggle
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: const Color(0xFF184E77),
+                ),
+                onPressed: () {
+                  setState(() => _obscurePassword = !_obscurePassword);
+                },
+              ),
             ),
+            
             if (_showPasswordNote) ...[
               const SizedBox(height: 8),
               const Text(
-                'Password must be at least 6 characters with uppercase, lowercase, and special characters',
+                'Password must be at least 6 characters',
                 style: TextStyle(fontSize: 12, color: Colors.white70, fontFamily: 'Poppins'),
               ),
             ],
@@ -573,6 +594,15 @@ class _RegisterPageState extends State<RegisterPage> {
                 }
                 return null;
               },
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                  color: const Color(0xFF184E77),
+                ),
+                onPressed: () {
+                  setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                },
+              ),
             ),
           ],
         ),

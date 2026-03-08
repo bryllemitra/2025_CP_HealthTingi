@@ -1,7 +1,8 @@
-// Modified pages/home.dart with Pull-to-Refresh
+// Modified pages/home.dart with Smart Sync
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:currency_code_to_currency_symbol/currency_code_to_currency_symbol.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'dart:async';
 import 'budget_plan.dart';
@@ -52,7 +53,9 @@ class _HomePageState extends State<HomePage> {
 
   // Wrapper to call everything on startup
   void _initData() {
-    DatabaseHelper().forceUploadToFirebase();
+    // MODIFIED: Use Smart Sync to prevent duplicates
+    DatabaseHelper().syncCloudToLocal();
+    
     _loadPopularRecipes();
     _loadAllMeals();
     _loadAllIngredients();
@@ -63,7 +66,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _onRefresh() async {
-    await DatabaseHelper().forceUploadToFirebase();
+    // MODIFIED: Use Smart Sync here too
+    await DatabaseHelper().syncCloudToLocal();
+    
     await _loadPopularRecipes();
     await _loadAllMeals();
     await _loadAllIngredients();
@@ -216,15 +221,18 @@ class _HomePageState extends State<HomePage> {
                 final meal = searchResults[index];
                 final isFavorite = widget.userId != 0 && _favoriteMealIds.contains(meal['mealID']);
                 return ListTile(
-                  leading: Image.asset(
-                    meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.fastfood);
-                    },
-                  ),
+                  leading: (meal['mealPicture']?.toString().startsWith('http') ?? false)
+                      ? CachedNetworkImage(
+                          imageUrl: meal['mealPicture'],
+                          width: 40, height: 40, fit: BoxFit.cover,
+                          placeholder: (context, url) => const SizedBox(width: 40, height: 40, child: CircularProgressIndicator(strokeWidth: 2)),
+                          errorWidget: (context, url, error) => const Icon(Icons.fastfood),
+                        )
+                      : Image.asset(
+                          meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                          width: 40, height: 40, fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.fastfood),
+                        ),
                   title: Text(meal['mealName'], style: const TextStyle(fontFamily: 'Poppins')),
                   trailing: widget.userId != 0 
                       ? IconButton(
@@ -289,35 +297,30 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildMealImage(String imagePath) {
+    if (imagePath.startsWith('http')) {
+      return CachedNetworkImage( // 🟢 Cached
+        imageUrl: imagePath, height: 100, width: double.infinity, fit: BoxFit.cover,
+        placeholder: (context, url) => Container(height: 100, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+        errorWidget: (context, url, error) => Container(height: 100, color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+      );
+    }
     return Image.asset(
-      imagePath,
-      height: 100,
-      width: double.infinity,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          height: 100,
-          color: Colors.grey[200],
-          child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),
-        );
-      },
+      imagePath, height: 100, width: double.infinity, fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(height: 100, color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
     );
   }
 
   Widget _buildIngredientImage(String imagePath) {
+    if (imagePath.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: imagePath, height: 80, width: 80, fit: BoxFit.cover,
+        placeholder: (context, url) => Container(height: 80, width: 80, color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+        errorWidget: (context, url, error) => Container(height: 80, width: 80, color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 30, color: Colors.grey)),
+      );
+    }
     return Image.asset(
-      imagePath,
-      height: 80,
-      width: 80,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          height: 80,
-          width: 80,
-          color: Colors.grey[200],
-          child: const Icon(Icons.fastfood, size: 30, color: Colors.grey),
-        );
-      },
+      imagePath, height: 80, width: 80, fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(height: 80, width: 80, color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 30, color: Colors.grey)),
     );
   }
 
@@ -877,10 +880,17 @@ class _HomePageState extends State<HomePage> {
                         child: SizedBox(
                           width: 150,
                           height: double.infinity,
-                          child: Image.asset(
-                            meal['mealPicture'] ?? 'assets/default_meal.jpg',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
+                          child: (meal['mealPicture']?.toString().startsWith('http') ?? false)
+                            ? CachedNetworkImage( // 🟢 Cached
+                                imageUrl: meal['mealPicture'],
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(color: Colors.grey[200], child: const Center(child: CircularProgressIndicator())),
+                                errorWidget: (context, url, error) => Container(color: Colors.grey[200], child: const Icon(Icons.fastfood, size: 40, color: Colors.grey)),
+                              )
+                            : Image.asset(
+                                meal['mealPicture'] ?? 'assets/default_meal.jpg',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 color: Colors.grey[200],
                                 child: const Icon(Icons.fastfood, size: 40, color: Colors.grey),

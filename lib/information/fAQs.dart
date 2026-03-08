@@ -1,4 +1,3 @@
-// Modified information/fAQs.dart
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 
@@ -110,9 +109,9 @@ class _FAQSPageState extends State<FAQSPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFB5E48C), // soft lime green
-              Color(0xFF76C893), // muted forest green
-              Color(0xFF184E77), // deep slate blue
+              Color(0xFFB5E48C),
+              Color(0xFF76C893),
+              Color(0xFF184E77),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -137,7 +136,7 @@ class _FAQSPageState extends State<FAQSPage> {
                             Text(
                               'Frequently Asked',
                               style: TextStyle(
-                                fontFamily: 'Exo', // Updated to Exo
+                                fontFamily: 'Exo',
                                 fontWeight: FontWeight.bold,
                                 fontSize: 22,
                                 color: Colors.white,
@@ -153,7 +152,7 @@ class _FAQSPageState extends State<FAQSPage> {
                             Text(
                               'Questions',
                               style: TextStyle(
-                                fontFamily: 'Exo', // Updated to Exo
+                                fontFamily: 'Exo',
                                 fontWeight: FontWeight.bold,
                                 fontSize: 22,
                                 color: Colors.white,
@@ -176,7 +175,7 @@ class _FAQSPageState extends State<FAQSPage> {
                         onPressed: () => _showEditDialog(),
                       )
                     else
-                      const SizedBox(width: 48), // Balance the layout with back button
+                      const SizedBox(width: 48),
                   ],
                 ),
               ),
@@ -222,7 +221,7 @@ class _FAQSPageState extends State<FAQSPage> {
                                                 Text(
                                                   faq['question'],
                                                   style: const TextStyle(
-                                                    fontFamily: 'Exo', // Updated to Exo
+                                                    fontFamily: 'Exo',
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 16,
                                                     color: Color(0xFF184E77),
@@ -232,7 +231,7 @@ class _FAQSPageState extends State<FAQSPage> {
                                                 Text(
                                                   faq['answer'],
                                                   style: const TextStyle(
-                                                    fontFamily: 'Poppins', // Updated to Poppins
+                                                    fontFamily: 'Poppins',
                                                     fontSize: 14,
                                                     color: Color(0xFF184E77),
                                                     height: 1.5,
@@ -268,7 +267,7 @@ class _FAQSPageState extends State<FAQSPage> {
                                   fontSize: 12,
                                   fontStyle: FontStyle.italic,
                                   letterSpacing: 1.2,
-                                  fontFamily: 'Poppins', // Updated to Poppins
+                                  fontFamily: 'Poppins',
                                 ),
                               ),
                             ],

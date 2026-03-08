@@ -1,5 +1,5 @@
-// Modified ingredientScanner/ingredient_details.dart
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../database/db_helper.dart';
 import '../pages/meal_details.dart';
 
@@ -105,15 +105,16 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
           children: [
             Center(
               child: InteractiveViewer(
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.broken_image,
-                    size: 80,
-                    color: Colors.white70,
-                  ),
-                ),
+                child: imagePath.startsWith('http')
+                  ? CachedNetworkImage( // 🟢 Cached Zoom
+                      imageUrl: imagePath, fit: BoxFit.contain,
+                      placeholder: (context, url) => const CircularProgressIndicator(color: Colors.white),
+                      errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 80, color: Colors.white70),
+                    )
+                  : Image.asset(
+                      imagePath, fit: BoxFit.contain,
+                      errorBuilder: (c, e, s) => const Icon(Icons.broken_image, size: 80, color: Colors.white70),
+                    ),
               ),
             ),
             Positioned(
@@ -212,20 +213,16 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
                       width: double.infinity,
                       child: Stack(
                         children: [
-                          Image.asset(
-                            imagePath,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              color: const Color(0xFF184E77),
-                              child: const Icon(
-                                Icons.fastfood,
-                                size: 100,
-                                color: Colors.white70,
+                          imagePath.startsWith('http')
+                            ? CachedNetworkImage( // 🟢 Cached Header
+                                imageUrl: imagePath, fit: BoxFit.cover, width: double.infinity, height: double.infinity,
+                                placeholder: (context, url) => Container(color: const Color(0xFF184E77), child: const Center(child: CircularProgressIndicator(color: Colors.white))),
+                                errorWidget: (context, url, error) => Container(color: const Color(0xFF184E77), child: const Icon(Icons.fastfood, size: 100, color: Colors.white24)),
+                              )
+                            : Image.asset(
+                                imagePath, fit: BoxFit.cover, width: double.infinity, height: double.infinity,
+                                errorBuilder: (c, e, s) => Container(color: const Color(0xFF184E77), child: const Icon(Icons.fastfood, size: 100, color: Colors.white24)),
                               ),
-                            ),
-                          ),
                           Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -666,17 +663,16 @@ class _IngredientDetailsPageState extends State<IngredientDetailsPage> {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               child: Stack(
                 children: [
-                  Image.asset(
-                    imagePath,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 120,
-                      color: const Color(0xFFF3F2DF),
-                      child: const Icon(Icons.fastfood, size: 40, color: Color(0xFF184E77)),
-                    ),
-                  ),
+                  imagePath.startsWith('http')
+                    ? CachedNetworkImage( // 🟢 Cached Related Meal
+                        imageUrl: imagePath, height: 120, width: double.infinity, fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(height: 120, color: const Color(0xFFF3F2DF), child: const Center(child: CircularProgressIndicator())),
+                        errorWidget: (context, url, error) => Container(height: 120, color: const Color(0xFFF3F2DF), child: const Icon(Icons.fastfood, size: 40, color: Color(0xFF184E77))),
+                      )
+                    : Image.asset(
+                        imagePath, height: 120, width: double.infinity, fit: BoxFit.cover,
+                        errorBuilder: (c, e, s) => Container(height: 120, color: const Color(0xFFF3F2DF), child: const Icon(Icons.fastfood, size: 40, color: Color(0xFF184E77))),
+                      ),
                   Container(
                     height: 120,
                     decoration: BoxDecoration(
