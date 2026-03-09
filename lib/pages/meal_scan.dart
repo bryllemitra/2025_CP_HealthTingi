@@ -1,11 +1,9 @@
-// Modified meal_scan.dart with UI consistency to login.dart theme
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tflite_flutter/tflite_flutter.dart' as tfl;
 import 'package:image/image.dart' as img;
-
 import 'home.dart';
 import 'budget_plan.dart';
 import '../searchMeals/meal_search.dart';
@@ -24,13 +22,13 @@ class MealScanPage extends StatefulWidget {
 
 class _MealScanPageState extends State<MealScanPage> {
   CameraController? _controller;
-  Future<void>? _initializeControllerFuture; // Fixed: Changed from late to nullable
+  Future<void>? _initializeControllerFuture;
   bool _isFlashOn = false;
   bool _showInfo = false;
   List<dynamic> _recognitions = [];
   bool _isModelLoading = false;
   tfl.Interpreter? _interpreter;
-  tfl.IsolateInterpreter? _isolateInterpreter; // For async inference
+  tfl.IsolateInterpreter? _isolateInterpreter;
   List<String> _labels = [];
 
   @override
@@ -45,12 +43,11 @@ class _MealScanPageState extends State<MealScanPage> {
     try {
       _interpreter = await tfl.Interpreter.fromAsset('assets/models/efficientnet_multilabel_real40.tflite');
       
-      // Create isolate interpreter for async inference (prevents UI blocking)
+      // Create isolate interpreter for async inference
       _isolateInterpreter = await tfl.IsolateInterpreter.create(
         address: _interpreter!.address,
       );
-      
-      // Load labels from assets
+ 
       final labelFile = await DefaultAssetBundle.of(context)
           .loadString('assets/models/labels.txt');
       _labels = labelFile.split('\n')
@@ -58,7 +55,6 @@ class _MealScanPageState extends State<MealScanPage> {
           .where((label) => label.isNotEmpty)
           .toList();
 
-      // Print model info for debugging
       debugPrint('=== Model Details ===');
       debugPrint('Model loaded successfully');
       debugPrint('Model type: MobileNetV2 with sigmoid output');
